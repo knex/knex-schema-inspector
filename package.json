@@ -1,0 +1,28 @@
+{
+  "name": "knex-schema-inspector",
+  "version": "0.0.1",
+  "description": "Utility for extracting information about existing DB schema",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knex/knex-schema-inspector.git"
+  },
+  "keywords": [
+    "sql",
+    "knex",
+    "schema",
+    "mysql",
+    "postgresql",
+    "sqlite3",
+    "javascript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/knex/knex-schema-inspector/issues"
+  },
+  "homepage": "https://github.com/knex/knex-schema-inspector#readme"
+}
