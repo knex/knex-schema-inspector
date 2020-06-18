@@ -21,11 +21,11 @@ export default class MySQL implements SchemaInspector {
 
     const records = await this.knex.raw<RawTable[]>(
       `
-            SELECT TABLE_NAME, ENGINE, TABLE_SCHEMA, TABLE_COLLATION, TABLE_COMMENT 
-            FROM information_schema.tables 
-            WHERE table_schema = ? 
-            AND table_type = 'BASE TABLE' 
-            ORDER BY TABLE_NAME ASC
+        SELECT TABLE_NAME, ENGINE, TABLE_SCHEMA, TABLE_COLLATION, TABLE_COMMENT 
+        FROM information_schema.tables 
+        WHERE table_schema = ? 
+        AND table_type = 'BASE TABLE' 
+        ORDER BY TABLE_NAME ASC
         `,
       [this.knex.client.database()]
     );
@@ -65,34 +65,34 @@ export default class MySQL implements SchemaInspector {
 
     const records = await this.knex.raw<RawColumn[]>(
       `
-            SELECT 
-                c.COLUMN_NAME,
-                c.COLUMN_DEFAULT,
-                c.DATA_TYPE,
-                c.CHARACTER_MAXIMUM_LENGTH,
-                c.IS_NULLABLE,
-                c.COLUMN_KEY,
-                c.EXTRA,
-                c.COLLATION_NAME,
-                c.COLUMN_COMMENT,
-                fk.REFERENCED_TABLE_NAME,
-                fk.REFERENCED_COLUMN_NAME,
-                fk.CONSTRAINT_NAME,
-                rc.UPDATE_RULE,
-                rc.DELETE_RULE,
-                rc.MATCH_OPTION
-            FROM information_schema.columns c
-            LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk
-                ON fk.TABLE_NAME = c.TABLE_NAME
-                AND fk.COLUMN_NAME = c.COLUMN_NAME
-                AND fk.CONSTRAINT_SCHEMA = c.TABLE_SCHEMA
-            LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc 
-                ON rc.TABLE_NAME = fk.TABLE_NAME 
-                AND rc.CONSTRAINT_NAME = fk.CONSTRAINT_NAME
-                AND rc.CONSTRAINT_SCHEMA = fk.CONSTRAINT_SCHEMA
-            WHERE c.table_name = ? 
-                AND c.table_schema = ?
-            ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION
+        SELECT 
+            c.COLUMN_NAME,
+            c.COLUMN_DEFAULT,
+            c.DATA_TYPE,
+            c.CHARACTER_MAXIMUM_LENGTH,
+            c.IS_NULLABLE,
+            c.COLUMN_KEY,
+            c.EXTRA,
+            c.COLLATION_NAME,
+            c.COLUMN_COMMENT,
+            fk.REFERENCED_TABLE_NAME,
+            fk.REFERENCED_COLUMN_NAME,
+            fk.CONSTRAINT_NAME,
+            rc.UPDATE_RULE,
+            rc.DELETE_RULE,
+            rc.MATCH_OPTION
+        FROM information_schema.columns c
+        LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk
+            ON fk.TABLE_NAME = c.TABLE_NAME
+            AND fk.COLUMN_NAME = c.COLUMN_NAME
+            AND fk.CONSTRAINT_SCHEMA = c.TABLE_SCHEMA
+        LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc 
+            ON rc.TABLE_NAME = fk.TABLE_NAME 
+            AND rc.CONSTRAINT_NAME = fk.CONSTRAINT_NAME
+            AND rc.CONSTRAINT_SCHEMA = fk.CONSTRAINT_SCHEMA
+        WHERE c.table_name = ? 
+            AND c.table_schema = ?
+        ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION
         `,
       [table, this.knex.client.database()]
     );
