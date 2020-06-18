@@ -1,5 +1,5 @@
 import Knex from 'knex';
-import { SchemaInspector, SchemaInspectorConstructor } from './types';
+import { SchemaInspector, SchemaInspectorConstructor } from './types/schema-inspector';
 
 export default function SchemaInspector(knex: Knex) {
     let constructor: SchemaInspectorConstructor;

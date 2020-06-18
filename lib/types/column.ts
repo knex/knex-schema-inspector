@@ -1,9 +1,15 @@
 export interface Column {
     name: string;
-    dataType: string;
+    type: string;
+    defaultValue: any | null;
+    maxLength: number | null;
     isNullable: boolean;
-    columnDefault: any | null;
-    foreignKey: string | null;
+    isPrimaryKey: boolean;
+    hasAutoIncrement: boolean;
+    foreignKeyColumn: string | null;
+    foreignKeyTable: string | null;
+    onDelete: string | null;
+    onUpdate: string | null;
     comment: string | null;
 }
 

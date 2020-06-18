@@ -5,8 +5,8 @@ export interface Table {
 }
 
 export interface MySQLTable extends Table {
-    collation?: string;
-    engine?: string;
+    collation: string;
+    engine: string;
 }
 
 export interface PostgresTable extends Table {
