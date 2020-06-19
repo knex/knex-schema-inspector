@@ -19,16 +19,18 @@ export default class MySQL implements SchemaInspector {
       TABLE_COLLATION: string;
     };
 
-    const records = await this.knex.raw<RawTable[]>(
-      `
-        SELECT TABLE_NAME, ENGINE, TABLE_SCHEMA, TABLE_COLLATION, TABLE_COMMENT 
-        FROM information_schema.tables 
-        WHERE table_schema = ? 
-        AND table_type = 'BASE TABLE' 
-        ORDER BY TABLE_NAME ASC
-        `,
-      [this.knex.client.database()]
-    );
+    const records: RawTable[] = await this.knex
+      .select(
+        'TABLE_NAME',
+        'ENGINE',
+        'TABLE_SCHEMA',
+        'TABLE_COLLATION',
+        'TABLE_COMMENT'
+      )
+      .from('information_schema.tables')
+      .where({ table_schema: this.knex.client.database() })
+      .andWhere({ table_type: 'BASE TABLE' })
+      .orderBy('TABLE_NAME', 'asc');
 
     return records.map(
       (rawTable): MySQLTable => {
@@ -43,7 +45,7 @@ export default class MySQL implements SchemaInspector {
     );
   }
 
-  async columns(table: string) {
+  async columns(table?: string) {
     type RawColumn = {
       COLUMN_NAME: string;
       COLUMN_DEFAULT: any | null;
@@ -63,39 +65,43 @@ export default class MySQL implements SchemaInspector {
       CONSTRAINT_NAME: 'PRIMARY' | null;
     };
 
-    const records = await this.knex.raw<RawColumn[]>(
-      `
-        SELECT 
-            c.COLUMN_NAME,
-            c.COLUMN_DEFAULT,
-            c.DATA_TYPE,
-            c.CHARACTER_MAXIMUM_LENGTH,
-            c.IS_NULLABLE,
-            c.COLUMN_KEY,
-            c.EXTRA,
-            c.COLLATION_NAME,
-            c.COLUMN_COMMENT,
-            fk.REFERENCED_TABLE_NAME,
-            fk.REFERENCED_COLUMN_NAME,
-            fk.CONSTRAINT_NAME,
-            rc.UPDATE_RULE,
-            rc.DELETE_RULE,
-            rc.MATCH_OPTION
-        FROM information_schema.columns c
-        LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk
-            ON fk.TABLE_NAME = c.TABLE_NAME
-            AND fk.COLUMN_NAME = c.COLUMN_NAME
-            AND fk.CONSTRAINT_SCHEMA = c.TABLE_SCHEMA
-        LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc 
-            ON rc.TABLE_NAME = fk.TABLE_NAME 
-            AND rc.CONSTRAINT_NAME = fk.CONSTRAINT_NAME
-            AND rc.CONSTRAINT_SCHEMA = fk.CONSTRAINT_SCHEMA
-        WHERE c.table_name = ? 
-            AND c.table_schema = ?
-        ORDER BY c.TABLE_NAME, c.ORDINAL_POSITION
-        `,
-      [table, this.knex.client.database()]
-    );
+    const query = this.knex
+      .select(
+        'c.COLUMN_NAME',
+        'c.COLUMN_DEFAULT',
+        'c.DATA_TYPE',
+        'c.CHARACTER_MAXIMUM_LENGTH',
+        'c.IS_NULLABLE',
+        'c.COLUMN_KEY',
+        'c.EXTRA',
+        'c.COLLATION_NAME',
+        'c.COLUMN_COMMENT',
+        'fk.REFERENCED_TABLE_NAME',
+        'fk.REFERENCED_COLUMN_NAME',
+        'fk.CONSTRAINT_NAME',
+        'rc.UPDATE_RULE',
+        'rc.DELETE_RULE',
+        'rc.MATCH_OPTION'
+      )
+      .from('information_schema.columns c')
+      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk', function () {
+        this.on('fk.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
+          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+      })
+      .leftJoin('INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc', function () {
+        this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
+          .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
+      })
+      .where({ 'c.table_schema': this.knex.client.database() })
+      .orderBy(['c.TABLE_NAME', 'c.ORDINAL_POSITION']);
+
+    if (table) {
+      query.andWhere({ 'c.table_name': table });
+    }
+
+    const records: RawColumn[] = await query;
 
     return records.map(
       (rawColumn): MySQLColumn => ({
