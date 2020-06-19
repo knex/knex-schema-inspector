@@ -22,7 +22,10 @@ the git repo
 The package is initialized by passing it an instance of Knex:
 
 ```ts
-const knex = require('knex')({
+import knex from 'knex';
+import schemaInspector from 'knex/knex-schema-inspector';
+
+const database = knex({
   client: 'mysql',
   connection: {
     host     : '127.0.0.1',
@@ -33,27 +36,20 @@ const knex = require('knex')({
   }
 });
 
-const schemaInspector = require('knex/knex-schema-inspector')(knex);
+const inspector = schemaInspector(knex);
+
+export default inspector;
 ```
 
 ## Examples
 
 ```ts
-const knex = require('knex')({
-  client: 'mysql',
-  connection: process.env.MYSQL_DATABASE_CONNECTION
-});
+import inspector from './inspector';
 
-const schemaInspector = require('knex/knex-schema-inspector')(knex);
-
-schemaInspector
-  .tables()
-  .then((tables) => {
-    console.log(tables);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+async function logTables() {
+  const tables = await inspector.tables();
+  console.log(tables);
+}
 ```
 
 ## Contributing
