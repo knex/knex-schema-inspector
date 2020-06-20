@@ -12,3 +12,5 @@ export interface MySQLTable extends Table {
 export interface PostgresTable extends Table {
   owner?: string;
 }
+
+export interface MSSQLTable extends Table {}

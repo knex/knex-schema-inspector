@@ -16,3 +16,5 @@ export interface Column {
 export interface MySQLColumn extends Column {}
 
 export interface PostgresColumn extends Column {}
+
+export interface MSSQLColumn extends Column {}
