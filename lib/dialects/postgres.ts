@@ -10,15 +10,7 @@ export default class Postgres implements SchemaInspector {
     this.knex = knex;
   }
 
-  async tables() {
-    /**
-     * @todo
-     * Account for non-default schema name
-     */
-
-    // get this from knex.?.?.schema
-    const schema = 'public';
-
+  async tables(schema = 'public') {
     type RawTable = {
       table_name: string;
       table_schema: 'public' | string;
@@ -55,10 +47,6 @@ export default class Postgres implements SchemaInspector {
   }
 
   async columns(table?: string) {
-    /**
-     * oh boy..
-     */
-
     /*
       SELECT
         c.column_name,
@@ -129,22 +117,22 @@ export default class Postgres implements SchemaInspector {
         'c.column_default',
 
         this.knex
-          /** @todo selecting col description like this doesn't work. Needs RAW */
           .select(
-            'pg_catalog.col_description(pc.oid, c.ordinal_position:: int)'
+            this.knex.raw(
+              'pg_catalog.col_description(pc.oid, c.ordinal_position:: int)'
+            )
           )
           .from('pg_catalog.pg_class pc')
-          /** @todo turn into subquery */
+          /** @todo turn into subquery? */
           .where({
             'pc.oid': `(SELECT('"' || c.table_name || '"'):: regclass:: oid)`,
           })
           .andWhere({ 'pc.relname': 'c.table_name' })
           .as('column_comment'),
 
-        /** @todo as doesn't exist in this context */
-        this.knex
-          .raw('pg_get_serial_sequence(c.table_name, c.column_name)')
-          .as('serial'),
+        this.knex.raw(
+          'pg_get_serial_sequence(c.table_name, c.column_name) as serial'
+        ),
 
         this.knex
           .select('YES')
@@ -173,9 +161,8 @@ export default class Postgres implements SchemaInspector {
           )
             .from('information_schema.key_column_usage k1')
             /** @todo this is wrong..  */
-            .join(
-              'information_schema.referential_constraints fk',
-              'USING(constraint_schema, constraint_name)'
+            .joinRaw(
+              'join information_schema.referential_constraints fk USING(constraint_schema, constraint_name)'
             )
             .join('information_schema.key_column_usage k2', function () {
               this.on(
