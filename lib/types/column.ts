@@ -1,5 +1,6 @@
 export interface Column {
   name: string;
+  table: string;
   type: string;
   defaultValue: any | null;
   maxLength: number | null;
@@ -8,11 +9,14 @@ export interface Column {
   hasAutoIncrement: boolean;
   foreignKeyColumn: string | null;
   foreignKeyTable: string | null;
-  onDelete: string | null;
-  onUpdate: string | null;
   comment: string | null;
 }
 
 export interface MySQLColumn extends Column {}
 
-export interface PostgresColumn extends Column {}
+export interface PostgresColumn extends Column {
+  schema: string;
+  foreignKeySchema: string | null;
+}
+
+export interface MSSQLColumn extends Column {}
