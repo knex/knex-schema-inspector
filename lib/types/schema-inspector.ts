@@ -4,10 +4,13 @@ import { Column } from './column';
 
 export interface SchemaInspector {
   knex: Knex;
-  hasTable: (table: string) => Promise<boolean>;
-  table: (table: string) => Promise<Table>;
+
+  hasTable: (table: string, schema?: string) => Promise<boolean>;
+  table: (table: string, schema?: string) => Promise<Table>;
   tables: () => Promise<Table[]>;
-  columns: (table?: string) => Promise<Column[]>;
+  primary: (table: string, schema?: string) => Promise<string>;
+
+  columns: (table?: string, schema?: string) => Promise<Column[]>;
 }
 
 export interface SchemaInspectorConstructor {

@@ -32,18 +32,14 @@ export default class Postgres implements SchemaInspector {
   }
 
   async hasTable(table: string, schema = 'public') {
-    const { exists } = await this.knex.raw(
-      `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = ?
-        AND table_name = ?
-      )
-    `,
-      [schema, table]
-    );
-
-    return exists;
+    const subquery = this.knex
+      .select()
+      .from('information_schema.tables')
+      .where({ table_name: table, table_schema: schema });
+    const record = await this.knex
+      .select<{ exists: boolean }>(this.knex.raw('exists (?)', [subquery]))
+      .first();
+    return record?.exists || false;
   }
 
   async table(table: string, schema = 'public') {
