@@ -3,6 +3,27 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 
+type RawTable = {
+  table_name: string;
+  table_schema: 'public' | string;
+  table_comment: string | null;
+};
+
+type RawColumn = {
+  column_name: string;
+  table_name: string;
+  data_type: string;
+  column_default: any | null;
+  character_maximum_length: number | null;
+  is_nullable: 'YES' | 'NO';
+  is_primary: null | 'YES';
+  serial: null | string;
+  column_comment: string | null;
+  referenced_table_schema: null | string;
+  referenced_table_name: null | string;
+  referenced_column_name: null | string;
+};
+
 export default class Postgres implements SchemaInspector {
   knex: Knex;
 
@@ -10,13 +31,48 @@ export default class Postgres implements SchemaInspector {
     this.knex = knex;
   }
 
-  async tables(schema = 'public') {
-    type RawTable = {
-      table_name: string;
-      table_schema: 'public' | string;
-      table_comment: string | null;
-    };
+  async hasTable(table: string, schema = 'public') {
+    const { exists } = await this.knex.raw(
+      `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = ?
+        AND table_name = ?
+      )
+    `,
+      [schema, table]
+    );
 
+    return exists;
+  }
+
+  async table(table: string, schema = 'public') {
+    const rawTable: RawTable = await this.knex
+      .select(
+        'table_name',
+        'table_schema',
+        this.knex
+          .select(this.knex.raw('obj_description(oid)'))
+          .from('pg_class')
+          .where({ relkind: 'r' })
+          .andWhere({ relname: 'table_name ' })
+          .as('table_comment')
+      )
+      .from('information_schema.tables')
+      .where({ table_schema: schema })
+      .andWhere({ table_catalog: this.knex.client.database() })
+      .andWhere({ table_type: 'BASE TABLE' })
+      .andWhere({ table_name: table })
+      .first();
+
+    return {
+      name: rawTable.table_name,
+      schema: rawTable.table_schema,
+      comment: rawTable.table_comment,
+    };
+  }
+
+  async tables(schema = 'public') {
     const records: RawTable[] = await this.knex
       .select(
         'table_name',
@@ -47,21 +103,6 @@ export default class Postgres implements SchemaInspector {
 
   async columns(table?: string, schema = 'public') {
     const { knex } = this;
-
-    type RawColumn = {
-      column_name: string;
-      table_name: string;
-      data_type: string;
-      column_default: any | null;
-      character_maximum_length: number | null;
-      is_nullable: 'YES' | 'NO';
-      is_primary: null | 'YES';
-      serial: null | string;
-      column_comment: string | null;
-      referenced_table_schema: null | string;
-      referenced_table_name: null | string;
-      referenced_column_name: null | string;
-    };
 
     const records: RawColumn[] = await knex
       .select(

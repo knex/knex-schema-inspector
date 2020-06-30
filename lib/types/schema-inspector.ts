@@ -1,10 +1,12 @@
 import Knex from 'knex';
-import { Table, MySQLTable, PostgresTable } from './table';
-import { Column, MySQLColumn, PostgresColumn } from './column';
+import { Table } from './table';
+import { Column } from './column';
 
 export interface SchemaInspector {
   knex: Knex;
-  tables: () => Promise<Table[] | MySQLTable[] | PostgresTable[]>;
+  hasTable: (table: string) => Promise<boolean>;
+  table: (table: string) => Promise<Table>;
+  tables: () => Promise<Table[]>;
   columns: (table?: string) => Promise<Column[]>;
 }
 
