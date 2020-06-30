@@ -97,6 +97,25 @@ export default class Postgres implements SchemaInspector {
     );
   }
 
+  async primary(table: string, schema = 'public'): Promise<string> {
+    const { column_name } = await this.knex
+      .select('information_schema.key_column_usage.column_name')
+      .from('information_schema.key_column_usage')
+      .leftJoin(
+        'information_schema.table_constraints',
+        'information_schema.table_constraints.constraint_name',
+        'information_schema.key_column_usage.constraint_name'
+      )
+      .where({
+        'information_schema.table_constraints.constraint_type': 'PRIMARY KEY',
+        'information_schema.table_constraints.table_name': table,
+        'information_schema.table_constraints.table_schema': schema,
+      })
+      .first();
+
+    return column_name;
+  }
+
   async columns(table?: string, schema = 'public') {
     const { knex } = this;
 
