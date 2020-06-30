@@ -3,6 +3,34 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 
+type RawTable = {
+  TABLE_NAME: string;
+  TABLE_SCHEMA: string;
+  TABLE_COMMENT: string | null;
+  ENGINE: string;
+  TABLE_COLLATION: string;
+};
+
+type RawColumn = {
+  TABLE_NAME: string;
+  COLUMN_NAME: string;
+  COLUMN_DEFAULT: any | null;
+  DATA_TYPE: string;
+  CHARACTER_MAXIMUM_LENGTH: number | null;
+  IS_NULLABLE: boolean;
+  COLLATION_NAME: string | null;
+  COLUMN_COMMENT: string | null;
+  REFERENCED_TABLE_NAME: string | null;
+  REFERENCED_COLUMN_NAME: string | null;
+  UPDATE_RULE: string | null;
+  DELETE_RULE: string | null;
+
+  /** @TODO Extend with other possible values */
+  COLUMN_KEY: 'PRI' | null;
+  EXTRA: 'auto_increment' | null;
+  CONSTRAINT_NAME: 'PRIMARY' | null;
+};
+
 export default class MySQL implements SchemaInspector {
   knex: Knex;
 
@@ -10,15 +38,42 @@ export default class MySQL implements SchemaInspector {
     this.knex = knex;
   }
 
-  async tables() {
-    type RawTable = {
-      TABLE_NAME: string;
-      TABLE_SCHEMA: string;
-      TABLE_COMMENT: string | null;
-      ENGINE: string;
-      TABLE_COLLATION: string;
-    };
+  async hasTable(table: string): Promise<boolean> {
+    const { count } = this.knex
+      .count<{ count: 0 | 1 }>({ count: '*' })
+      .from('information_schema.tables')
+      .where({ table_schema: this.knex.client.database(), table_name: table })
+      .first();
+    return !!count;
+  }
 
+  async table(table: string) {
+    const rawTable: RawTable = await this.knex
+      .select(
+        'TABLE_NAME',
+        'ENGINE',
+        'TABLE_SCHEMA',
+        'TABLE_COLLATION',
+        'TABLE_COMMENT'
+      )
+      .from('information_schema.tables')
+      .where({
+        table_schema: this.knex.client.database(),
+        table_type: 'BASE TABLE',
+        table_name: table,
+      })
+      .first();
+
+    return {
+      name: rawTable.TABLE_NAME,
+      schema: rawTable.TABLE_SCHEMA,
+      comment: rawTable.TABLE_COMMENT,
+      collation: rawTable.TABLE_COLLATION,
+      engine: rawTable.ENGINE,
+    };
+  }
+
+  async tables() {
     const records: RawTable[] = await this.knex
       .select(
         'TABLE_NAME',
@@ -45,27 +100,15 @@ export default class MySQL implements SchemaInspector {
     );
   }
 
+  async primary(table: string) {
+    const { rows } = await this.knex.raw(
+      `SHOW KEYS FROM ? WHERE Key_name = 'PRIMARY'`,
+      table
+    );
+    return rows[0]['Column_name'] as string;
+  }
+
   async columns(table?: string) {
-    type RawColumn = {
-      TABLE_NAME: string;
-      COLUMN_NAME: string;
-      COLUMN_DEFAULT: any | null;
-      DATA_TYPE: string;
-      CHARACTER_MAXIMUM_LENGTH: number | null;
-      IS_NULLABLE: boolean;
-      COLLATION_NAME: string | null;
-      COLUMN_COMMENT: string | null;
-      REFERENCED_TABLE_NAME: string | null;
-      REFERENCED_COLUMN_NAME: string | null;
-      UPDATE_RULE: string | null;
-      DELETE_RULE: string | null;
-
-      /** @TODO Extend with other possible values */
-      COLUMN_KEY: 'PRI' | null;
-      EXTRA: 'auto_increment' | null;
-      CONSTRAINT_NAME: 'PRIMARY' | null;
-    };
-
     const query = this.knex
       .select(
         'c.TABLE_NAME',
