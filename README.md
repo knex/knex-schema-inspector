@@ -36,7 +36,7 @@ const database = knex({
   }
 });
 
-const inspector = schemaInspector(knex);
+const inspector = schemaInspector(database);
 
 export default inspector;
 ```
@@ -50,6 +50,71 @@ async function logTables() {
   const tables = await inspector.tables();
   console.log(tables);
 }
+```
+
+## API
+
+Note: MySQL doesn't support the `schema` parameter, as schema and database are ambiguous in MySQL.
+
+Note 2: Some database types might return slightly more information than others. See the type files for a specific overview what to expect from driver to driver.
+
+### `hasTable(table: string, schema?: string): Promise<boolean>`
+
+Check if a table exists in the current database.
+
+```ts
+await inspector.hasTable('articles');
+// => true | false
+```
+
+### `table(table: string, schema?: string): Promise<Table>`
+
+Retrieve the table information for a given table.
+
+```ts
+await inspector.table('articles');
+// => { name: 'articles', schema: 'project', comment: 'Informational blog posts' }
+```
+
+### `tables(schema?: string): Promise<Table[]>`
+
+Retrieve all tables in the current database.
+
+```ts
+await inspector.tables();
+// => [{ name: 'articles', schema: 'project', comment: 'Informational blog posts' }, {...}, {...}]
+```
+
+### `primary(table: string, schema?: string): Promise<string>`
+
+Retrieve the primary key column for a given table
+
+```ts
+await inspector.primary('articles');
+// => "id"
+```
+
+### `columns(table?: string, schema?: string): Promise<Column[]>`
+
+Retrieve all columns from a given table. Returns all columns if `table` parameter is undefined.
+
+```ts
+await inspector.columns('articles');
+// => [
+//   {
+//     name: "id",
+//     table: "articles",
+//     type: "VARCHAR",
+//     defaultValue: null,
+//     maxLength: null,
+//     isNullable: false,
+//     isPrimaryKey: true,
+//     hasAutoIncrement: true,
+//     foreignKeyColumn: null,
+//     foreignKeyTable: null,
+//     comment: "Primary key for the articles collection"
+//   }
+// ]
 ```
 
 ## Contributing
