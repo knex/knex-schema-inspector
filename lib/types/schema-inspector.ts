@@ -10,6 +10,7 @@ export interface SchemaInspector {
   tables: () => Promise<Table[]>;
   primary: (table: string) => Promise<string>;
 
+  column: (table: string, column: string) => Promise<Column>;
   columns: (table?: string) => Promise<Column[]>;
 }
 

@@ -123,10 +123,104 @@ export default class Postgres implements SchemaInspector {
     return column_name;
   }
 
+  async column(table: string, column: string) {
+    const { knex } = this;
+
+    const rawColumn: RawColumn = await knex
+      .select(
+        'c.column_name',
+        'c.table_name',
+        'c.data_type',
+        'c.column_default',
+        'c.character_maximum_length',
+        'c.is_nullable',
+
+        knex
+          .select(knex.raw(`'YES'`))
+          .from('pg_index')
+          .join('pg_attribute', function () {
+            this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
+              knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
+            );
+          })
+          .whereRaw('pg_index.indrelid = c.table_name::regclass')
+          .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
+          .andWhere(knex.raw('pg_index.indisprimary'))
+          .as('is_primary'),
+
+        knex
+          .select(
+            knex.raw(
+              'pg_catalog.col_description(pg_catalog.pg_class.oid, c.ordinal_position:: int)'
+            )
+          )
+          .from('pg_catalog.pg_class')
+          .whereRaw(
+            `pg_catalog.pg_class.oid = (select('"' || c.table_name || '"'):: regclass:: oid)`
+          )
+          .andWhere({ 'pg_catalog.pg_class.relname': 'c.table_name' })
+          .as('column_comment'),
+
+        knex.raw(
+          'pg_get_serial_sequence(c.table_name, c.column_name) as serial'
+        ),
+
+        'ffk.referenced_table_schema',
+        'ffk.referenced_table_name',
+        'ffk.referenced_column_name'
+      )
+      .from(knex.raw('information_schema.columns c'))
+      .joinRaw(
+        `
+        LEFT JOIN (
+          SELECT 
+            k1.table_schema, 
+            k1.table_name, 
+            k1.column_name, 
+            k2.table_schema AS referenced_table_schema, 
+            k2.table_name AS referenced_table_name, 
+            k2.column_name AS referenced_column_name 
+          FROM 
+            information_schema.key_column_usage k1 
+            JOIN information_schema.referential_constraints fk using (
+              constraint_schema, constraint_name
+            ) 
+            JOIN information_schema.key_column_usage k2 ON k2.constraint_schema = fk.unique_constraint_schema 
+            AND k2.constraint_name = fk.unique_constraint_name 
+            AND k2.ordinal_position = k1.position_in_unique_constraint
+        ) ffk ON ffk.table_name = c.table_name 
+        AND ffk.column_name = c.column_name 
+      `
+      )
+      .where({
+        'c.table_schema': this.schema,
+        'c.table_name': table,
+        'c.column_name': column,
+      })
+      .limit(1)
+      .first();
+
+    return {
+      name: rawColumn.column_name,
+      table: rawColumn.table_name,
+      type: rawColumn.data_type,
+      defaultValue: rawColumn.column_default,
+      maxLength: rawColumn.character_maximum_length,
+      isNullable: rawColumn.is_nullable === 'YES',
+      isPrimaryKey: rawColumn.is_primary === 'YES',
+      hasAutoIncrement: rawColumn.serial !== null,
+      foreignKeyColumn: rawColumn.referenced_column_name,
+      foreignKeyTable: rawColumn.referenced_table_name,
+      comment: rawColumn.column_comment,
+      schema: this.schema,
+      foreignKeySchema: rawColumn.referenced_table_schema,
+    };
+  }
+
   async columns(table?: string) {
     const { knex } = this;
 
-    const records: RawColumn[] = await knex
+    const query = knex
       .select(
         'c.column_name',
         'c.table_name',
@@ -193,6 +287,12 @@ export default class Postgres implements SchemaInspector {
       `
       )
       .where({ 'c.table_schema': this.schema });
+
+    if (table) {
+      query.andWhere({ 'c.table_name': table });
+    }
+
+    const records: RawColumn[] = await query;
 
     return records.map(
       (rawColumn): Column => {

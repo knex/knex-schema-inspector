@@ -108,6 +108,64 @@ export default class MySQL implements SchemaInspector {
     return rows[0]['Column_name'] as string;
   }
 
+  async column(table: string, column: string) {
+    const query = this.knex
+      .select(
+        'c.TABLE_NAME',
+        'c.COLUMN_NAME',
+        'c.COLUMN_DEFAULT',
+        'c.DATA_TYPE',
+        'c.CHARACTER_MAXIMUM_LENGTH',
+        'c.IS_NULLABLE',
+        'c.COLUMN_KEY',
+        'c.EXTRA',
+        'c.COLLATION_NAME',
+        'c.COLUMN_COMMENT',
+        'fk.REFERENCED_TABLE_NAME',
+        'fk.REFERENCED_COLUMN_NAME',
+        'fk.CONSTRAINT_NAME',
+        'rc.UPDATE_RULE',
+        'rc.DELETE_RULE',
+        'rc.MATCH_OPTION'
+      )
+      .from('information_schema.columns c')
+      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk', function () {
+        this.on('fk.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
+          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+      })
+      .leftJoin('INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc', function () {
+        this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
+          .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
+      })
+      .where({
+        'c.TABLE_SCHEMA': this.knex.client.database(),
+        'c.COLUMN_NAME': column,
+        'c.TABLE_NAME': table,
+      })
+      .limit(1)
+      .first();
+
+    const rawColumn: RawColumn = await query;
+
+    return {
+      name: rawColumn.COLUMN_NAME,
+      table: rawColumn.TABLE_NAME,
+      type: rawColumn.DATA_TYPE,
+      defaultValue: rawColumn.COLUMN_DEFAULT,
+      maxLength: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+      isNullable: rawColumn.IS_NULLABLE,
+      isPrimaryKey: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
+      hasAutoIncrement: rawColumn.EXTRA === 'auto_increment',
+      foreignKeyColumn: rawColumn.REFERENCED_COLUMN_NAME,
+      foreignKeyTable: rawColumn.REFERENCED_TABLE_NAME,
+      comment: rawColumn.COLUMN_COMMENT,
+      // onDelete: rawColumn.DELETE_RULE,
+      // onUpdate: rawColumn.UPDATE_RULE,
+    };
+  }
+
   async columns(table?: string) {
     const query = this.knex
       .select(

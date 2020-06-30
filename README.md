@@ -104,6 +104,27 @@ await inspector.primary('articles');
 // => "id"
 ```
 
+### `column(table: string, column: string): Promise<Column>`
+
+Retrieve a given column from a given table.
+
+```ts
+await inspector.columns('articles', 'id');
+// => {
+//   name: "id",
+//   table: "articles",
+//   type: "VARCHAR",
+//   defaultValue: null,
+//   maxLength: null,
+//   isNullable: false,
+//   isPrimaryKey: true,
+//   hasAutoIncrement: true,
+//   foreignKeyColumn: null,
+//   foreignKeyTable: null,
+//   comment: "Primary key for the articles collection"
+// }
+```
+
 ### `columns(table?: string): Promise<Column[]>`
 
 Retrieve all columns from a given table. Returns all columns if `table` parameter is undefined.
