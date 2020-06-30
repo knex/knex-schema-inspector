@@ -1,7 +1,7 @@
 import Knex from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
-import { PostgresTable } from '../types/table';
-import { PostgresColumn } from '../types/column';
+import { Table } from '../types/table';
+import { Column } from '../types/column';
 
 export default class Postgres implements SchemaInspector {
   knex: Knex;
@@ -35,7 +35,7 @@ export default class Postgres implements SchemaInspector {
       .orderBy('table_name', 'asc');
 
     return records.map(
-      (rawTable): PostgresTable => {
+      (rawTable): Table => {
         return {
           name: rawTable.table_name,
           schema: rawTable.table_schema,
@@ -132,7 +132,7 @@ export default class Postgres implements SchemaInspector {
       .where({ 'c.table_schema': schema });
 
     return records.map(
-      (rawColumn): PostgresColumn => {
+      (rawColumn): Column => {
         return {
           name: rawColumn.column_name,
           table: rawColumn.table_name,

@@ -10,13 +10,8 @@ export interface Column {
   foreignKeyColumn: string | null;
   foreignKeyTable: string | null;
   comment: string | null;
+
+  // Postgres Only
+  schema?: string;
+  foreignKeySchema?: string | null;
 }
-
-export interface MySQLColumn extends Column {}
-
-export interface PostgresColumn extends Column {
-  schema: string;
-  foreignKeySchema: string | null;
-}
-
-export interface MSSQLColumn extends Column {}

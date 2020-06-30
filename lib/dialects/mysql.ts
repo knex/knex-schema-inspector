@@ -1,7 +1,7 @@
 import Knex from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
-import { MySQLTable } from '../types/table';
-import { MySQLColumn } from '../types/column';
+import { Table } from '../types/table';
+import { Column } from '../types/column';
 
 export default class MySQL implements SchemaInspector {
   knex: Knex;
@@ -33,7 +33,7 @@ export default class MySQL implements SchemaInspector {
       .orderBy('TABLE_NAME', 'asc');
 
     return records.map(
-      (rawTable): MySQLTable => {
+      (rawTable): Table => {
         return {
           name: rawTable.TABLE_NAME,
           schema: rawTable.TABLE_SCHEMA,
@@ -47,6 +47,7 @@ export default class MySQL implements SchemaInspector {
 
   async columns(table?: string) {
     type RawColumn = {
+      TABLE_NAME: string;
       COLUMN_NAME: string;
       COLUMN_DEFAULT: any | null;
       DATA_TYPE: string;
@@ -67,6 +68,7 @@ export default class MySQL implements SchemaInspector {
 
     const query = this.knex
       .select(
+        'c.TABLE_NAME',
         'c.COLUMN_NAME',
         'c.COLUMN_DEFAULT',
         'c.DATA_TYPE',
@@ -104,8 +106,9 @@ export default class MySQL implements SchemaInspector {
     const records: RawColumn[] = await query;
 
     return records.map(
-      (rawColumn): MySQLColumn => ({
+      (rawColumn): Column => ({
         name: rawColumn.COLUMN_NAME,
+        table: rawColumn.TABLE_NAME,
         type: rawColumn.DATA_TYPE,
         defaultValue: rawColumn.COLUMN_DEFAULT,
         maxLength: rawColumn.CHARACTER_MAXIMUM_LENGTH,
@@ -114,9 +117,9 @@ export default class MySQL implements SchemaInspector {
         hasAutoIncrement: rawColumn.EXTRA === 'auto_increment',
         foreignKeyColumn: rawColumn.REFERENCED_COLUMN_NAME,
         foreignKeyTable: rawColumn.REFERENCED_TABLE_NAME,
-        onDelete: rawColumn.DELETE_RULE,
-        onUpdate: rawColumn.UPDATE_RULE,
         comment: rawColumn.COLUMN_COMMENT,
+        // onDelete: rawColumn.DELETE_RULE,
+        // onUpdate: rawColumn.UPDATE_RULE,
       })
     );
   }
