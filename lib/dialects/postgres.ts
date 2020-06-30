@@ -26,23 +26,30 @@ type RawColumn = {
 
 export default class Postgres implements SchemaInspector {
   knex: Knex;
+  schema: string;
 
   constructor(knex: Knex) {
     this.knex = knex;
+    this.schema = 'public';
   }
 
-  async hasTable(table: string, schema = 'public') {
+  withSchema(schema: string) {
+    this.schema = schema;
+    return this;
+  }
+
+  async hasTable(table: string) {
     const subquery = this.knex
       .select()
       .from('information_schema.tables')
-      .where({ table_name: table, table_schema: schema });
+      .where({ table_name: table, table_schema: this.schema });
     const record = await this.knex
       .select<{ exists: boolean }>(this.knex.raw('exists (?)', [subquery]))
       .first();
     return record?.exists || false;
   }
 
-  async table(table: string, schema = 'public') {
+  async table(table: string) {
     const rawTable: RawTable = await this.knex
       .select(
         'table_name',
@@ -55,7 +62,7 @@ export default class Postgres implements SchemaInspector {
           .as('table_comment')
       )
       .from('information_schema.tables')
-      .where({ table_schema: schema })
+      .where({ table_schema: this.schema })
       .andWhere({ table_catalog: this.knex.client.database() })
       .andWhere({ table_type: 'BASE TABLE' })
       .andWhere({ table_name: table })
@@ -97,7 +104,7 @@ export default class Postgres implements SchemaInspector {
     );
   }
 
-  async primary(table: string, schema = 'public'): Promise<string> {
+  async primary(table: string): Promise<string> {
     const { column_name } = await this.knex
       .select('information_schema.key_column_usage.column_name')
       .from('information_schema.key_column_usage')
@@ -109,14 +116,14 @@ export default class Postgres implements SchemaInspector {
       .where({
         'information_schema.table_constraints.constraint_type': 'PRIMARY KEY',
         'information_schema.table_constraints.table_name': table,
-        'information_schema.table_constraints.table_schema': schema,
+        'information_schema.table_constraints.table_schema': this.schema,
       })
       .first();
 
     return column_name;
   }
 
-  async columns(table?: string, schema = 'public') {
+  async columns(table?: string) {
     const { knex } = this;
 
     const records: RawColumn[] = await knex
@@ -185,7 +192,7 @@ export default class Postgres implements SchemaInspector {
         AND ffk.column_name = c.column_name 
       `
       )
-      .where({ 'c.table_schema': schema });
+      .where({ 'c.table_schema': this.schema });
 
     return records.map(
       (rawColumn): Column => {
@@ -201,7 +208,7 @@ export default class Postgres implements SchemaInspector {
           foreignKeyColumn: rawColumn.referenced_column_name,
           foreignKeyTable: rawColumn.referenced_table_name,
           comment: rawColumn.column_comment,
-          schema: schema,
+          schema: this.schema,
           foreignKeySchema: rawColumn.referenced_table_schema,
         };
       }

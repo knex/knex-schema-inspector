@@ -58,7 +58,17 @@ Note: MySQL doesn't support the `schema` parameter, as schema and database are a
 
 Note 2: Some database types might return slightly more information than others. See the type files for a specific overview what to expect from driver to driver.
 
-### `hasTable(table: string, schema?: string): Promise<boolean>`
+### `withSchema(schema: string): void`
+
+_Not supported in MySQL_
+
+Set the schema to use. Note: this is set on the inspector instance and only has to be done once:
+
+```ts
+inspector.withSchema('my-schema');
+```
+
+### `hasTable(table: string): Promise<boolean>`
 
 Check if a table exists in the current database.
 
@@ -67,7 +77,7 @@ await inspector.hasTable('articles');
 // => true | false
 ```
 
-### `table(table: string, schema?: string): Promise<Table>`
+### `table(table: string): Promise<Table>`
 
 Retrieve the table information for a given table.
 
@@ -85,7 +95,7 @@ await inspector.tables();
 // => [{ name: 'articles', schema: 'project', comment: 'Informational blog posts' }, {...}, {...}]
 ```
 
-### `primary(table: string, schema?: string): Promise<string>`
+### `primary(table: string): Promise<string>`
 
 Retrieve the primary key column for a given table
 
@@ -94,7 +104,7 @@ await inspector.primary('articles');
 // => "id"
 ```
 
-### `columns(table?: string, schema?: string): Promise<Column[]>`
+### `columns(table?: string): Promise<Column[]>`
 
 Retrieve all columns from a given table. Returns all columns if `table` parameter is undefined.
 
