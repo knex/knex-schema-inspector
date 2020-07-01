@@ -2,25 +2,27 @@ import Knex from 'knex';
 import { Table } from './table';
 import { Column } from './column';
 
-export interface SchemaInspector {
+export declare class SchemaInspector {
   knex: Knex;
 
-  tables: () => Promise<string[]>;
-  tableInfo: <T extends string | undefined>(
-    table?: T
-  ) => Promise<T extends string ? Table : Table[]>;
-  hasTable: (table: string) => Promise<boolean>;
-  primary: (table: string) => Promise<string>;
+  table(): Promise<string[]>;
 
-  columns: (table?: string) => Promise<{ table: string; column: string }[]>;
-  columnInfo: <T extends string | undefined>(
-    table?: string,
-    column?: T
-  ) => Promise<T extends string ? Column : Column[]>;
-  hasColumn: (table: string, column: string) => Promise<boolean>;
+  tableInfo(): Promise<Table[]>;
+  tableInfo(table: string): Promise<Table>;
+
+  hasTable(table: string): Promise<boolean>;
+
+  columns(table?: string): Promise<{ table: string; column: string }[]>;
+
+  columnInfo(): Promise<Column[]>;
+  columnInfo(table: string): Promise<Column[]>;
+  columnInfo(table: string, column: string): Promise<Column[]>;
+
+  hasColumn(table: string, column: string): Promise<boolean>;
+  primary(table: string): Promise<string>;
 
   // Not in MySQL
-  withSchema?: (schema: string) => void;
+  withSchema(schema: string): void;
 }
 
 export interface SchemaInspectorConstructor {
