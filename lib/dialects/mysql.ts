@@ -149,7 +149,7 @@ export default class MySQL implements SchemaInspector {
    */
   columnInfo(): Promise<Column[]>;
   columnInfo(table: string): Promise<Column[]>;
-  columnInfo(table: string, column: string): Promise<Column[]>;
+  columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
     const query = this.knex
       .select(
