@@ -198,17 +198,17 @@ export default class MySQL implements SchemaInspector {
         name: rawColumn.COLUMN_NAME,
         table: rawColumn.TABLE_NAME,
         type: rawColumn.DATA_TYPE,
-        defaultValue: rawColumn.COLUMN_DEFAULT,
-        maxLength: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-        isNullable: rawColumn.IS_NULLABLE,
-        isPrimaryKey: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-        hasAutoIncrement: rawColumn.EXTRA === 'auto_increment',
-        foreignKeyColumn: rawColumn.REFERENCED_COLUMN_NAME,
-        foreignKeyTable: rawColumn.REFERENCED_TABLE_NAME,
+        default_value: rawColumn.COLUMN_DEFAULT,
+        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+        is_nullable: rawColumn.IS_NULLABLE,
+        is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
+        has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+        foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+        foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
         comment: rawColumn.COLUMN_COMMENT,
         // onDelete: rawColumn.DELETE_RULE,
         // onUpdate: rawColumn.UPDATE_RULE,
-      } as T extends string ? Column : Column[];
+      } as Column;
     }
 
     const records: RawColumn[] = await query;
@@ -219,19 +219,19 @@ export default class MySQL implements SchemaInspector {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
           type: rawColumn.DATA_TYPE,
-          defaultValue: rawColumn.COLUMN_DEFAULT,
-          maxLength: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          isNullable: rawColumn.IS_NULLABLE,
-          isPrimaryKey: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-          hasAutoIncrement: rawColumn.EXTRA === 'auto_increment',
-          foreignKeyColumn: rawColumn.REFERENCED_COLUMN_NAME,
-          foreignKeyTable: rawColumn.REFERENCED_TABLE_NAME,
+          default_value: rawColumn.COLUMN_DEFAULT,
+          max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+          is_nullable: rawColumn.IS_NULLABLE,
+          is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
+          has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+          foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+          foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
           comment: rawColumn.COLUMN_COMMENT,
           // onDelete: rawColumn.DELETE_RULE,
           // onUpdate: rawColumn.UPDATE_RULE,
         };
       }
-    ) as T extends string ? Column : Column[];
+    ) as Column[];
   }
 
   /**
