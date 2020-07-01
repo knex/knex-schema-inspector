@@ -62,7 +62,9 @@ export default class Postgres implements SchemaInspector {
    * Get the table info for a given table. If table parameter is undefined, it will return all tables
    * in the current schema/database
    */
-  async tableInfo<T>(table?: string) {
+  tableInfo(): Promise<Table[]>;
+  tableInfo(table: string): Promise<Table>;
+  async tableInfo(table?: string) {
     const query = this.knex
       .select(
         'table_name',
@@ -90,7 +92,7 @@ export default class Postgres implements SchemaInspector {
         name: rawTable.table_name,
         schema: rawTable.table_schema,
         comment: rawTable.table_comment,
-      } as T extends string ? Table : Table[];
+      } as Table;
     }
 
     const records = await query;
@@ -103,7 +105,7 @@ export default class Postgres implements SchemaInspector {
           comment: rawTable.table_comment,
         };
       }
-    ) as T extends string ? Table : Table[];
+    );
   }
 
   /**
@@ -150,6 +152,9 @@ export default class Postgres implements SchemaInspector {
   /**
    * Get the column info for all columns, columns in a given table, or a specific column.
    */
+  columnInfo(): Promise<Column[]>;
+  columnInfo(table: string): Promise<Column[]>;
+  columnInfo(table: string, column: string): Promise<Column[]>;
   async columnInfo<T>(table?: string, column?: string) {
     const { knex } = this;
 

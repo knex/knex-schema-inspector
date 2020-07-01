@@ -59,6 +59,8 @@ export default class MySQL implements SchemaInspector {
    * Get the table info for a given table. If table parameter is undefined, it will return all tables
    * in the current schema/database
    */
+  tableInfo(): Promise<Table[]>;
+  tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
     const query = this.knex
       .select(
@@ -145,6 +147,9 @@ export default class MySQL implements SchemaInspector {
   /**
    * Get the column info for all columns, columns in a given table, or a specific column.
    */
+  columnInfo(): Promise<Column[]>;
+  columnInfo(table: string): Promise<Column[]>;
+  columnInfo(table: string, column: string): Promise<Column[]>;
   async columnInfo<T>(table?: string, column?: string) {
     const query = this.knex
       .select(

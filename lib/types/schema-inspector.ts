@@ -2,7 +2,7 @@ import Knex from 'knex';
 import { Table } from './table';
 import { Column } from './column';
 
-export declare class SchemaInspector {
+export interface SchemaInspector {
   knex: Knex;
 
   table(): Promise<string[]>;
