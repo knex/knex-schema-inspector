@@ -5,7 +5,7 @@ import { Column } from './column';
 export interface SchemaInspector {
   knex: Knex;
 
-  table(): Promise<string[]>;
+  tables(): Promise<string[]>;
 
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
