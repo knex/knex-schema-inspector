@@ -58,74 +58,87 @@ Note: MySQL doesn't support the `schema` parameter, as schema and database are a
 
 Note 2: Some database types might return slightly more information than others. See the type files for a specific overview what to expect from driver to driver.
 
-### `withSchema(schema: string): void`
+### Tables
 
-_Not supported in MySQL_
-
-Set the schema to use. Note: this is set on the inspector instance and only has to be done once:
-
-```ts
-inspector.withSchema('my-schema');
-```
-
-### `hasTable(table: string): Promise<boolean>`
-
-Check if a table exists in the current database.
-
-```ts
-await inspector.hasTable('articles');
-// => true | false
-```
-
-### `table(table: string): Promise<Table>`
-
-Retrieve the table information for a given table.
-
-```ts
-await inspector.table('articles');
-// => { name: 'articles', schema: 'project', comment: 'Informational blog posts' }
-```
-
-### `tables(schema?: string): Promise<Table[]>`
+#### `tables(): Promise<string[]>`
 
 Retrieve all tables in the current database.
 
 ```ts
 await inspector.tables();
-// => [{ name: 'articles', schema: 'project', comment: 'Informational blog posts' }, {...}, {...}]
+// => ['articles', 'images', 'reviews']
 ```
 
-### `primary(table: string): Promise<string>`
+#### `tableInfo(table?: string): Promise<Table | Table[]>`
 
-Retrieve the primary key column for a given table
-
-```ts
-await inspector.primary('articles');
-// => "id"
-```
-
-### `column(table: string, column: string): Promise<Column>`
-
-Retrieve a given column from a given table.
+Retrieve the table info for the given table, or all tables if no table is specified
 
 ```ts
-await inspector.columns('articles', 'id');
+await inspector.tableInfo('articles');
 // => {
-//   name: "id",
-//   table: "articles",
-//   type: "VARCHAR",
-//   defaultValue: null,
-//   maxLength: null,
-//   isNullable: false,
-//   isPrimaryKey: true,
-//   hasAutoIncrement: true,
-//   foreignKeyColumn: null,
-//   foreignKeyTable: null,
-//   comment: "Primary key for the articles collection"
+//   name: 'articles',
+//   schema: 'project',
+//   comment: 'Informational blog posts'
 // }
+
+await inspector.tableInfo();
+// => [
+//   {
+//     name: 'articles',
+//     schema: 'project',
+//     comment: 'Informational blog posts'
+//   },
+//   { ... },
+//   { ... }
+// ]
 ```
 
-### `columns(table?: string): Promise<Column[]>`
+#### `hasTable(table: string): Promise<boolean>`
+
+Check if a table exists in the current database.
+
+```ts
+await inspector.hasTable('articles');
+// => true
+```
+
+### Columns
+
+#### `columns(table?: string): Promise<{ table: string, column: string }[]>`
+
+Retrieve all columns in a given table, or all columns if no table is specified
+
+```ts
+await inspector.columns();
+// => [
+//   {
+//     "table": "articles",
+//     "column": "id"
+//   },
+//   {
+//     "table": "articles",
+//     "column": "title"
+//   },
+//   {
+//     "table": "images",
+//     "column": "id"
+//   }
+// ]
+
+await inspector.columns('articles');
+// => [
+//   {
+//     "table": "articles",
+//     "column": "id"
+//   },
+//   {
+//     "table": "articles",
+//     "column": "title"
+//   }
+// ]
+```
+
+#### `columnInfo(table?: string, column?: string): Promise<Column[] | Column>`
 
 Retrieve all columns from a given table. Returns all columns if `table` parameter is undefined.
 
@@ -144,8 +157,46 @@ await inspector.columns('articles');
 //     foreignKeyColumn: null,
 //     foreignKeyTable: null,
 //     comment: "Primary key for the articles collection"
-//   }
+//   },
+//   { ... },
+//   { ... }
 // ]
+
+await inspector.columns('articles', 'id');
+// => {
+//   name: "id",
+//   table: "articles",
+//   type: "VARCHAR",
+//   defaultValue: null,
+//   maxLength: null,
+//   isNullable: false,
+//   isPrimaryKey: true,
+//   hasAutoIncrement: true,
+//   foreignKeyColumn: null,
+//   foreignKeyTable: null,
+//   comment: "Primary key for the articles collection"
+// }
+```
+
+#### `primary(table: string): Promise<string>`
+
+Retrieve the primary key column for a given table
+
+```ts
+await inspector.primary('articles');
+// => "id"
+```
+
+### Misc.
+
+#### `withSchema(schema: string): void`
+
+_Not supported in MySQL_
+
+Set the schema to use. Note: this is set on the inspector instance and only has to be done once:
+
+```ts
+inspector.withSchema('my-schema');
 ```
 
 ## Contributing

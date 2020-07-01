@@ -5,13 +5,22 @@ import { Column } from './column';
 export interface SchemaInspector {
   knex: Knex;
 
+  tables: () => Promise<string[]>;
+  tableInfo: <T extends string | undefined>(
+    table?: T
+  ) => Promise<T extends string ? Table : Table[]>;
   hasTable: (table: string) => Promise<boolean>;
-  table: (table: string) => Promise<Table>;
-  tables: () => Promise<Table[]>;
   primary: (table: string) => Promise<string>;
 
-  column: (table: string, column: string) => Promise<Column>;
-  columns: (table?: string) => Promise<Column[]>;
+  columns: (table?: string) => Promise<{ table: string; column: string }[]>;
+  columnInfo: <T extends string | undefined>(
+    table?: string,
+    column?: T
+  ) => Promise<T extends string ? Column : Column[]>;
+  hasColumn: (table: string, column: string) => Promise<boolean>;
+
+  // Not in MySQL
+  withSchema?: (schema: string) => void;
 }
 
 export interface SchemaInspectorConstructor {
