@@ -81,7 +81,7 @@ export default class Postgres implements SchemaInspector {
       .orderBy('table_name', 'asc');
 
     if (table) {
-      const rawTable = await query
+      const rawTable: RawTable = await query
         .andWhere({ table_name: table })
         .limit(1)
         .first();
@@ -96,7 +96,7 @@ export default class Postgres implements SchemaInspector {
     const records = await query;
 
     return records.map(
-      (rawTable): Table => {
+      (rawTable: RawTable): Table => {
         return {
           name: rawTable.table_name,
           schema: rawTable.table_schema,
