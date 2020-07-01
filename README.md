@@ -143,7 +143,7 @@ await inspector.columns('articles');
 Retrieve all columns from a given table. Returns all columns if `table` parameter is undefined.
 
 ```ts
-await inspector.columns('articles');
+await inspector.columnInfo('articles');
 // => [
 //   {
 //     name: "id",
@@ -162,7 +162,7 @@ await inspector.columns('articles');
 //   { ... }
 // ]
 
-await inspector.columns('articles', 'id');
+await inspector.columnInfo('articles', 'id');
 // => {
 //   name: "id",
 //   table: "articles",
