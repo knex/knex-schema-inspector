@@ -59,8 +59,6 @@ export default class Postgres implements SchemaInspector {
       value = value.slice(1, -1);
     }
 
-    console.log(value);
-
     if (parts[1] && parts[1].includes('json')) return JSON.parse(value);
     if (parts[1] && (parts[1].includes('char') || parts[1].includes('text')))
       return String(value);
