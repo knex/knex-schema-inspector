@@ -44,6 +44,32 @@ export default class Postgres implements SchemaInspector {
     return this;
   }
 
+  /**
+   * Converts Postgres default value to JS
+   * Eg `'example'::character varying` => `example`
+   */
+  parseDefaultValue(type: string) {
+    if (type.startsWith('nextval(')) return null; // auto-increment
+
+    const parts = type.split('::');
+
+    let value = parts[0];
+
+    if (value.startsWith("'") && value.endsWith("'")) {
+      value = value.slice(1, -1);
+    }
+
+    console.log(value);
+
+    if (parts[1] && parts[1].includes('json')) return JSON.parse(value);
+    if (parts[1] && (parts[1].includes('char') || parts[1].includes('text')))
+      return String(value);
+
+    if (Number.isNaN(Number(value))) return value;
+
+    return Number(value);
+  }
+
   // Tables
   // ===============================================================================================
 
@@ -239,7 +265,9 @@ export default class Postgres implements SchemaInspector {
         name: rawColumn.column_name,
         table: rawColumn.table_name,
         type: rawColumn.data_type,
-        default_value: rawColumn.column_default,
+        default_value: rawColumn.column_default
+          ? this.parseDefaultValue(rawColumn.column_default)
+          : null,
         max_length: rawColumn.character_maximum_length,
         is_nullable: rawColumn.is_nullable === 'YES',
         is_primary_key: rawColumn.is_primary === 'YES',
@@ -260,7 +288,9 @@ export default class Postgres implements SchemaInspector {
           name: rawColumn.column_name,
           table: rawColumn.table_name,
           type: rawColumn.data_type,
-          default_value: rawColumn.column_default,
+          default_value: rawColumn.column_default
+            ? this.parseDefaultValue(rawColumn.column_default)
+            : null,
           max_length: rawColumn.character_maximum_length,
           is_nullable: rawColumn.is_nullable === 'YES',
           is_primary_key: rawColumn.is_primary === 'YES',
