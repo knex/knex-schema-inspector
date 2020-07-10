@@ -22,7 +22,7 @@ export interface SchemaInspector {
   primary(table: string): Promise<string>;
 
   // Not in MySQL
-  withSchema(schema: string): void;
+  withSchema?(schema: string): void;
 }
 
 export interface SchemaInspectorConstructor {
