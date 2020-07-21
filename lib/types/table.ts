@@ -1,7 +1,9 @@
 export interface Table {
   name: string;
-  schema: string;
-  comment: string | null;
+
+  // Not supported in SQLite
+  comment?: string | null;
+  schema?: string;
 
   // MySQL Only
   collation?: string;
@@ -9,4 +11,7 @@ export interface Table {
 
   // Postgres Only
   owner?: string;
+
+  // SQLite Only
+  sql?: string;
 }

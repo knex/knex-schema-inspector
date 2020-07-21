@@ -9,7 +9,9 @@ export interface Column {
   has_auto_increment: boolean;
   foreign_key_column: string | null;
   foreign_key_table: string | null;
-  comment: string | null;
+
+  // Not supported in SQLite
+  comment?: string | null;
 
   // Postgres Only
   schema?: string;
