@@ -2,20 +2,27 @@
 
 Utility for extracting information about existing DB schema
 
+**NOTE: This is a work in progress.**
+
+The API might change unexpectedly between patch / minor versions.
+
+The IO of the library isn't set in stone (yet). If you have any bright ideas or recommendations, please feel free to open
+an issue or pull request.
+
+This library currently supports Postgres, MySQL, and SQLite. We aim to have support for the same databases as the main
+knex project.
+
 ## Installation
 
 Install the package through NPM or Yarn:
 
 ```
-npm install knex/knex-schema-inspector
+npm install knex-schema-inspector
 ```
 
 ```
-yarn knex/knex-schema-inspector
+yarn knex-schema-inspector
 ```
-
-Note: The package is currently not yet published to npm. The above commands install the package through
-the git repo
 
 ## Usage
 
@@ -23,7 +30,7 @@ The package is initialized by passing it an instance of Knex:
 
 ```ts
 import knex from 'knex';
-import schemaInspector from 'knex/knex-schema-inspector';
+import schemaInspector from 'knex-schema-inspector';
 
 const database = knex({
   client: 'mysql',

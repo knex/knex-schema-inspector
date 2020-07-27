@@ -1,7 +1,7 @@
 {
   "name": "knex-schema-inspector",
   "version": "0.0.1",
-  "description": "Utility for extracting information about existing DB schema",
+  "description": "[WIP] Utility for extracting information about existing DB schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
