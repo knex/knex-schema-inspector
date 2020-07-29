@@ -170,23 +170,26 @@ export default class MySQL implements SchemaInspector {
         'rc.DELETE_RULE',
         'rc.MATCH_OPTION'
       )
-      .from('information_schema.columns c')
-      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE fk', function () {
+      .from('INFORMATION_SCHEMA.COLUMNS as c')
+      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
         this.on('fk.TABLE_NAME', '=', 'fk.TABLE_NAME')
           .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
           .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
       })
-      .leftJoin('INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc', function () {
-        this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
-          .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
-          .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
-      })
+      .leftJoin(
+        'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
+        function () {
+          this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
+            .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
+            .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
+        }
+      )
       .where({
         'c.TABLE_SCHEMA': this.knex.client.database(),
       });
 
     if (table) {
-      query.andWhere({ TABLE_NAME: table });
+      query.andWhere({ 'c.TABLE_NAME': table });
     }
 
     if (column) {
