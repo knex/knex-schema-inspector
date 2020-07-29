@@ -125,22 +125,22 @@ export default class MySQL implements SchemaInspector {
    */
   async columns(table?: string) {
     const query = this.knex
-      .select<{ table_name: string; column_name: string }[]>(
-        'table_name',
-        'column_name'
+      .select<{ TABLE_NAME: string; COLUMN_NAME: string }[]>(
+        'TABLE_NAME',
+        'COLUMN_NAME'
       )
-      .from('information_schema.columns')
-      .where({ table_schema: this.knex.client.database() });
+      .from('INFORMATION_SCHEMA.COLUMNS')
+      .where({ TABLE_SCHEMA: this.knex.client.database() });
 
     if (table) {
-      query.andWhere({ table_name: table });
+      query.andWhere({ TABLE_NAME: table });
     }
 
     const records = await query;
 
-    return records.map(({ table_name, column_name }) => ({
-      table: table_name,
-      column: column_name,
+    return records.map(({ TABLE_NAME, COLUMN_NAME }) => ({
+      table: TABLE_NAME,
+      column: COLUMN_NAME,
     }));
   }
 
