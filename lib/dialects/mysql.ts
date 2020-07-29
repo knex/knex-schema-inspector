@@ -172,7 +172,7 @@ export default class MySQL implements SchemaInspector {
       )
       .from('INFORMATION_SCHEMA.COLUMNS as c')
       .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
-        this.on('fk.TABLE_NAME', '=', 'fk.TABLE_NAME')
+        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
           .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
           .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
       })
