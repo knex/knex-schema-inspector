@@ -255,7 +255,7 @@ export default class MySQL implements SchemaInspector {
    */
   async primary(table: string) {
     const { rows } = await this.knex.raw(
-      `SHOW KEYS FROM ? WHERE Key_name = 'PRIMARY'`,
+      `SHOW KEYS FROM ?? WHERE Key_name = 'PRIMARY'`,
       table
     );
     return rows[0]['Column_name'] as string;
