@@ -109,12 +109,12 @@ export default class MySQL implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasTable(table: string): Promise<boolean> {
-    const { count } = this.knex
+    const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
       .where({ table_schema: this.knex.client.database(), table_name: table })
       .first();
-    return !!count;
+    return (result && result.count === 1) || false;
   }
 
   // Columns
