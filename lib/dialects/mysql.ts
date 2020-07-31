@@ -46,13 +46,13 @@ export default class MySQL implements SchemaInspector {
    */
   async tables() {
     const records = await this.knex
-      .select<{ table_name: string }[]>('table_namename')
-      .from('information_schema.tables')
+      .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
+      .from('INFORMATION_SCHEMA.TABLES')
       .where({
-        table_type: 'BASE TABLE',
-        table_schema: this.knex.client.database(),
+        TABLE_TYPE: 'BASE TABLE',
+        TABLE_SCHEMA: this.knex.client.database(),
       });
-    return records.map(({ table_name }) => table_name);
+    return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
 
   /**
