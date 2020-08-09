@@ -14,4 +14,7 @@ export interface Table {
 
   // SQLite Only
   sql?: string;
+
+  //MSSQL only
+  catalog?: string;
 }
