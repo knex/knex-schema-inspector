@@ -6,7 +6,9 @@ import { Column } from '../types/column';
 type RawTable = {
   TABLE_NAME: string;
   TABLE_SCHEMA: string;
-  TABLE_CATALOG: string;
+  TABLE_COMMENT: string | null;
+  ENGINE: string;
+  TABLE_COLLATION: string;
 };
 
 type RawColumn = {
@@ -29,7 +31,7 @@ type RawColumn = {
   CONSTRAINT_NAME: 'PRIMARY' | null;
 };
 
-export default class MSSQL implements SchemaInspector {
+export default class MySQL implements SchemaInspector {
   knex: Knex;
 
   constructor(knex: Knex) {
@@ -43,13 +45,12 @@ export default class MSSQL implements SchemaInspector {
    * List all existing tables in the current schema/database
    */
   async tables() {
-
     const records = await this.knex
       .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
       .from('INFORMATION_SCHEMA.TABLES')
       .where({
-        TABLE_CATALOG: this.knex.client.database(),
         TABLE_TYPE: 'BASE TABLE',
+        TABLE_SCHEMA: this.knex.client.database(),
       });
     return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
@@ -64,24 +65,28 @@ export default class MSSQL implements SchemaInspector {
     const query = this.knex
       .select(
         'TABLE_NAME',
+        'ENGINE',
         'TABLE_SCHEMA',
-        'TABLE_CATALOG',
+        'TABLE_COLLATION',
+        'TABLE_COMMENT'
       )
-      .from('INFORMATION_SCHEMA.TABLES')
+      .from('information_schema.tables')
       .where({
-        TABLE_CATALOG: this.knex.client.database(),
-        TABLE_TYPE: 'BASE TABLE',
+        table_schema: this.knex.client.database(),
+        table_type: 'BASE TABLE',
       });
 
     if (table) {
       const rawTable: RawTable = await query
-        .andWhere({ TABLE_NAME: table })
+        .andWhere({ table_name: table })
         .first();
 
       return {
         name: rawTable.TABLE_NAME,
         schema: rawTable.TABLE_SCHEMA,
-        catalog: rawTable.TABLE_CATALOG,
+        comment: rawTable.TABLE_COMMENT,
+        collation: rawTable.TABLE_COLLATION,
+        engine: rawTable.ENGINE,
       } as T extends string ? Table : Table[];
     }
 
@@ -92,7 +97,9 @@ export default class MSSQL implements SchemaInspector {
         return {
           name: rawTable.TABLE_NAME,
           schema: rawTable.TABLE_SCHEMA,
-          catalog: rawTable.TABLE_CATALOG,
+          comment: rawTable.TABLE_COMMENT,
+          collation: rawTable.TABLE_COLLATION,
+          engine: rawTable.ENGINE,
         };
       }
     ) as T extends string ? Table : Table[];
@@ -105,7 +112,7 @@ export default class MSSQL implements SchemaInspector {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
-      .where({ TABLE_CATALOG: this.knex.client.database(), TABLE_NAME: table })
+      .where({ table_schema: this.knex.client.database(), table_name: table })
       .first();
     return (result && result.count === 1) || false;
   }
@@ -123,7 +130,7 @@ export default class MSSQL implements SchemaInspector {
         'COLUMN_NAME'
       )
       .from('INFORMATION_SCHEMA.COLUMNS')
-      .where({ TABLE_CATALOG: this.knex.client.database() });
+      .where({ TABLE_SCHEMA: this.knex.client.database() });
 
     if (table) {
       query.andWhere({ TABLE_NAME: table });
@@ -191,12 +198,12 @@ export default class MSSQL implements SchemaInspector {
         .first();
 
       return {
-        name: rawColumn.COLUMN_NAME, //got
-        table: rawColumn.TABLE_NAME, //Got
-        type: rawColumn.DATA_TYPE, //GOT
-        default_value: rawColumn.COLUMN_DEFAULT, //GOT
-        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH, //GOT
-        is_nullable: rawColumn.IS_NULLABLE === 'YES', //GOT
+        name: rawColumn.COLUMN_NAME,
+        table: rawColumn.TABLE_NAME,
+        type: rawColumn.DATA_TYPE,
+        default_value: rawColumn.COLUMN_DEFAULT,
+        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+        is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
         has_auto_increment: rawColumn.EXTRA === 'auto_increment',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
