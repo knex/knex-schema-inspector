@@ -10,7 +10,7 @@ export interface Column {
   foreign_key_column: string | null;
   foreign_key_table: string | null;
 
-  // Not supported in SQLite
+  // Not supported in SQLite or MSSQL
   comment?: string | null;
 
   // Postgres Only
