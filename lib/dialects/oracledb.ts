@@ -5,18 +5,19 @@ import { Column } from '../types/column';
 
 type RawTable = {
   TABLE_NAME: string;
-  OWNER: string;
+  SCHEMA_NAME: string;
  
 };
+
+
 
 type RawColumn = {
   TABLE_NAME: string;
   COLUMN_NAME: string;
-  COLUMN_DEFAULT: any | null;
+  DATA_DEFAULT: any | null;
   DATA_TYPE: string;
-  CHARACTER_MAXIMUM_LENGTH: number | null;
-  IS_NULLABLE: 'YES' | 'NO';
-  COLLATION_NAME: string | null;
+  DATA_LENGTH: number | null;
+  NULLABLE: 'YES' | 'NO';
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
@@ -25,8 +26,10 @@ type RawColumn = {
 
   /** @TODO Extend with other possible values */
   COLUMN_KEY: 'PRI' | null;
-  EXTRA: 'auto_increment' | null;
-  CONSTRAINT_NAME: 'PRIMARY' | null;
+  CONTRAINT_NAME: string| null;
+  CONSTRAINT_TYPE: 'P' | null;
+
+
 };
 
 export default class oracleDB implements SchemaInspector {
@@ -71,7 +74,7 @@ export default class oracleDB implements SchemaInspector {
 
       return {
         name: rawTable.TABLE_NAME,
-        owner: rawTable.OWNER,
+        schema: rawTable.SCHEMA_NAME,
       } as T extends string ? Table : Table[];
     }
 
@@ -81,7 +84,7 @@ export default class oracleDB implements SchemaInspector {
       (rawTable): Table => {
         return {
           name: rawTable.TABLE_NAME,
-          owner: rawTable.OWNER
+          schema: rawTable.SCHEMA_NAME
         };
       }
     ) as T extends string ? Table : Table[];
@@ -136,35 +139,52 @@ export default class oracleDB implements SchemaInspector {
       .select(
         'c.TABLE_NAME',
         'c.COLUMN_NAME',
-        'c.COLUMN_DEFAULT',
+        'c.DATA_DEFAULT',
         'c.DATA_TYPE',
-        'c.CHARACTER_MAXIMUM_LENGTH',
-        'c.IS_NULLABLE',
-        'c.COLUMN_KEY',
-        'c.EXTRA',
-        'c.COLLATION_NAME',
-        'c.COLUMN_COMMENT',
-        'fk.REFERENCED_TABLE_NAME',
-        'fk.REFERENCED_COLUMN_NAME',
-        'fk.CONSTRAINT_NAME',
-        'rc.UPDATE_RULE',
+        'c.DATA_LENGTH',
+        'c.NULLABLE',
+        'pk.CONSTRAINT_NAME', 
+        'pk.CONSTRAINT_TYPE',
+        'cm.COMMENTS AS COLUMN_COMMENT',
+        'fk.TABLE_NAME as REFERENCE_TABLE_NAME',
+        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME',
         'rc.DELETE_RULE',
-        'rc.MATCH_OPTION'
+        'rc.SEARCH_CONDITION'
       )
       .from('DBA_TAB_COLUMNS as c')
-      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
-        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
-          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
-          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+      .leftJoin('DBA_COL_COMMENTS as cm', function () {
+        this.on('c.TABLE_NAME', '=', 'cm.TABLE_NAME')
+          .andOn('cm.COLUMN_NAME', '=', 'c.COLUMN_NAME')
+          .andOn('cm.OWNER', '=', 'c.OWNER');
       })
-      .leftJoin(
-        'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
+      .leftJoin('all_constraints  as pk',
+      function () {
+        this.on('c.TABLE_NAME', '=', 'pk.TABLE_NAME')
+          .andOn('c.CONSTRAINT_NAME', '=', 'pk.CONSTRAINT_NAME')
+          .andOn('c.OWNER', '=', 'pk.OWNER');
+         
+      }
+     
+    )
+    .where({'pk.CONSTRAINT_TYPE': 'P' })
+    .leftJoin('all_constraints  as fk',
+    function () {
+      this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
+        .andOn('c.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
+        .andOn('c.OWNER', '=', 'fk.OWNER');
+       
+    }
+   
+  )
+  .where({'fk.CONSTRAINT_TYPE': 'R' })
+      .leftJoin('all_constraints  as rc',
         function () {
-          this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
-            .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
-            .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
+          this.on('c.TABLE_NAME', '=', 'rc.TABLE_NAME')
+            .andOn('c.CONSTRAINT_NAME', '=', 'rc.CONSTRAINT_NAME')
+            .andOn('c.OWNER', '=', 'rc.OWNER');
         }
       )
+    
    
 
     if (table) {
@@ -177,19 +197,16 @@ export default class oracleDB implements SchemaInspector {
         .first();
 
       return {
-        name: rawColumn.COLUMN_NAME, //got
-        table: rawColumn.TABLE_NAME, //Got
-        type: rawColumn.DATA_TYPE, //GOT
-        default_value: rawColumn.COLUMN_DEFAULT, //GOT
-        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH, //GOT
-        is_nullable: rawColumn.IS_NULLABLE === 'YES', //GOT
-        is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-        has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+        name: rawColumn.COLUMN_NAME, 
+        table: rawColumn.TABLE_NAME, 
+        type: rawColumn.DATA_TYPE, 
+        default_value: rawColumn.DATA_DEFAULT, 
+        max_length: rawColumn.DATA_LENGTH, 
+        is_nullable: rawColumn.NULLABLE === 'YES', 
+        is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
         foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
         comment: rawColumn.COLUMN_COMMENT,
-        // onDelete: rawColumn.DELETE_RULE,
-        // onUpdate: rawColumn.UPDATE_RULE,
       } as Column;
     }
 
@@ -201,16 +218,14 @@ export default class oracleDB implements SchemaInspector {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
           type: rawColumn.DATA_TYPE,
-          default_value: rawColumn.COLUMN_DEFAULT,
-          max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          is_nullable: rawColumn.IS_NULLABLE === 'YES',
-          is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-          has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+          default_value: rawColumn.DATA_DEFAULT,
+          max_length: rawColumn.DATA_DEFAULT,
+          is_nullable: rawColumn.NULLABLE === 'YES',
+          is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
+          has_auto_increment: rawColumn.DATA_DEFAULT,
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
           foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
           comment: rawColumn.COLUMN_COMMENT,
-          // onDelete: rawColumn.DELETE_RULE,
-          // onUpdate: rawColumn.UPDATE_RULE,
         };
       }
     ) as Column[];
@@ -222,7 +237,7 @@ export default class oracleDB implements SchemaInspector {
   async hasColumn(table: string, column: string): Promise<boolean> {
     const { count } = this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('information_schema.tables')
+      .from('DBA_TAB_COLUMNS')
       .where({
         table_schema: this.knex.client.database(),
         table_name: table,
@@ -235,11 +250,22 @@ export default class oracleDB implements SchemaInspector {
   /**
    * Get the primary key column for the given table
    */
-  async primary(table: string) {
-    const results = await this.knex.raw(
-      `SHOW KEYS FROM ?? WHERE Key_name = 'PRIMARY'`,
-      table
-    );
-    return results[0][0]['Column_name'] as string;
+
+
+
+  async primary(table: string): Promise<string> {
+    const { column_name } = await this.knex
+      .select('all_constraints.column_name')
+      .from('all_constraints')
+      
+      .where({
+        'all_constraints.CONSTRAINT_TYPE': 'P',
+        'all_constraints.TABLE_NAME': table,
+      })
+      .first();
+
+    return column_name;
   }
+}
+
 }
