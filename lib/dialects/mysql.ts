@@ -201,7 +201,7 @@ export default class MySQL implements SchemaInspector {
         name: rawColumn.COLUMN_NAME,
         table: rawColumn.TABLE_NAME,
         type: rawColumn.DATA_TYPE,
-        default_value: rawColumn.COLUMN_DEFAULT,
+        default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
@@ -222,7 +222,7 @@ export default class MySQL implements SchemaInspector {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
           type: rawColumn.DATA_TYPE,
-          default_value: rawColumn.COLUMN_DEFAULT,
+          default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
@@ -235,6 +235,12 @@ export default class MySQL implements SchemaInspector {
         };
       }
     ) as Column[];
+
+    function parseDefault(value: any) {
+      // MariaDB returns string NULL for not-nullable varchar fields
+      if (value === 'NULL' || value === 'null') return null;
+      return value;
+    }
   }
 
   /**
