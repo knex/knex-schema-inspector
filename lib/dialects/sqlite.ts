@@ -1,4 +1,5 @@
 import Knex from 'knex';
+import flatten from 'lodash.flatten';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
@@ -95,7 +96,7 @@ export default class SQLite implements SchemaInspector {
     const columnsPerTable = await Promise.all(
       tables.map(async (table) => await this.columns(table))
     );
-    return columnsPerTable.flat();
+    return flatten(columnsPerTable);
   }
 
   /**
@@ -148,7 +149,7 @@ export default class SQLite implements SchemaInspector {
       const columnsPerTable = await Promise.all(
         tables.map(async (table) => await getColumnsForTable(table))
       );
-      return columnsPerTable.flat();
+      return flatten(columnsPerTable);
     }
 
     if (table && !column) {
