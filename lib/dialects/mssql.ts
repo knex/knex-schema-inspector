@@ -254,6 +254,6 @@ export default class MSSQL implements SchemaInspector {
     const results = await this.knex.raw(
       `SELECT Col.Column_Name from INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab, INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col WHERE Col.Constraint_Name = Tab.Constraint_Name AND Col.Table_Name = Tab.Table_Name AND Constraint_Type = 'PRIMARY KEY' AND Col.Table_Name = '${table}'`
     );
-    return results[0]['Col.Column_name'] as string;
+    return results[0]['Column_Name'] as string;
   }
 }
