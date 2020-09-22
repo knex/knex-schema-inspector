@@ -48,7 +48,7 @@ export default class MSSQL implements SchemaInspector {
       .from('INFORMATION_SCHEMA.TABLES')
       .where({
         TABLE_TYPE: 'BASE TABLE',
-        TABLE_SCHEMA: this.knex.client.database(),
+        TABLE_CATALOG: this.knex.client.database(),
       });
     return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
@@ -64,8 +64,8 @@ export default class MSSQL implements SchemaInspector {
       .select('TABLE_NAME', 'TABLE_SCHEMA', 'TABLE_CATALOG', 'TABLE_TYPE')
       .from('information_schema.tables')
       .where({
-        table_catalog: this.knex.client.database(),
-        table_type: 'BASE TABLE',
+        TABLE_CATALOG: this.knex.client.database(),
+        TABLE_TYPE: 'BASE TABLE',
       });
 
     if (table) {
@@ -100,7 +100,7 @@ export default class MSSQL implements SchemaInspector {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
-      .where({ table_catalog: this.knex.client.database(), table_name: table })
+      .where({ TABLE_CATALOG: this.knex.client.database(), table_name: table })
       .first();
     return (result && result.count === 1) || false;
   }
@@ -197,8 +197,6 @@ export default class MSSQL implements SchemaInspector {
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
         foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
         comment: rawColumn.COLUMN_COMMENT,
-        // onDelete: rawColumn.DELETE_RULE,
-        // onUpdate: rawColumn.UPDATE_RULE,
       } as Column;
     }
 
@@ -218,8 +216,6 @@ export default class MSSQL implements SchemaInspector {
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
           foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
           comment: rawColumn.COLUMN_COMMENT,
-          // onDelete: rawColumn.DELETE_RULE,
-          // onUpdate: rawColumn.UPDATE_RULE,
         };
       }
     ) as Column[];
@@ -239,9 +235,9 @@ export default class MSSQL implements SchemaInspector {
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
       .where({
-        table_catalog: this.knex.client.database(),
-        table_name: table,
-        column_name: column,
+        TABLE_CATALOG: this.knex.client.database(),
+        TABLE_NAME: table,
+        COLUMN_NAME: column,
       })
       .first();
     return !!count;
