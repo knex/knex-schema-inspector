@@ -65,6 +65,8 @@ Note: MySQL doesn't support the `schema` parameter, as schema and database are a
 
 Note 2: Some database types might return slightly more information than others. See the type files for a specific overview what to expect from driver to driver.
 
+Note 3: MSSQL doesn't support comment for either tables or columns
+
 ### Tables
 
 #### `tables(): Promise<string[]>`

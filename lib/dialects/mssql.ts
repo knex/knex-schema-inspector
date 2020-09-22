@@ -17,15 +17,14 @@ type RawColumn = {
   CHARACTER_MAXIMUM_LENGTH: number | null;
   IS_NULLABLE: 'YES' | 'NO';
   COLLATION_NAME: string | null;
-  COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
+  EXTRA: string | null;
   UPDATE_RULE: string | null;
   DELETE_RULE: string | null;
 
   /** @TODO Extend with other possible values */
   COLUMN_KEY: 'PRI' | null;
-  EXTRA: 'auto_increment' | null;
   CONSTRAINT_NAME: 'PRIMARY' | null;
 };
 
@@ -147,12 +146,9 @@ export default class MSSQL implements SchemaInspector {
         'c.DATA_TYPE',
         'c.CHARACTER_MAXIMUM_LENGTH',
         'c.IS_NULLABLE',
-        'c.COLUMN_KEY',
-        'c.EXTRA',
         'c.COLLATION_NAME',
-        'c.COLUMN_COMMENT',
-        'fk.REFERENCED_TABLE_NAME',
-        'fk.REFERENCED_COLUMN_NAME',
+        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
+        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME',
         'fk.CONSTRAINT_NAME',
         'rc.UPDATE_RULE',
         'rc.DELETE_RULE',
@@ -162,15 +158,32 @@ export default class MSSQL implements SchemaInspector {
       .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
         this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
           .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
-          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+          .andOn('fk.CONSTRAINT_CATALOG', '=', 'c.TABLE_CATALOG');
       })
       .leftJoin(
         'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
         function () {
-          this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          this.on('rc.CONSTRAINT_CATALOG', '=', 'fk.CONSTRAINT_CATALOG')
             .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
             .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
         }
+      )
+      .joinRaw(
+        `
+           LEFT JOIN
+            (SELECT
+               COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') as EXTRA,
+                TABLE_NAME,
+                COLUMN_NAME,
+                TABLE_CATALOG
+             FROM
+              INFORMATION_SCHEMA.COLUMNS
+             WHERE
+              COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') = 1) AS ac
+               ON [c].[TABLE_NAME] = [ac].[TABLE_NAME]
+                AND [c].[TABLE_CATALOG] = [ac].[TABLE_CATALOG]
+                 AND [c].[COLUMN_NAME] = [ac].[COLUMN_NAME]
+          `
       )
       .where({
         'c.TABLE_CATALOG': this.knex.client.database(),
@@ -196,7 +209,6 @@ export default class MSSQL implements SchemaInspector {
         has_auto_increment: rawColumn.EXTRA === 'auto_increment',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
         foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-        comment: rawColumn.COLUMN_COMMENT,
       } as Column;
     }
 
@@ -215,7 +227,6 @@ export default class MSSQL implements SchemaInspector {
           has_auto_increment: rawColumn.EXTRA === 'auto_increment',
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
           foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-          comment: rawColumn.COLUMN_COMMENT,
         };
       }
     ) as Column[];
