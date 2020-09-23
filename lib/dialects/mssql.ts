@@ -17,15 +17,15 @@ type RawColumn = {
   CHARACTER_MAXIMUM_LENGTH: number | null;
   IS_NULLABLE: 'YES' | 'NO';
   COLLATION_NAME: string | null;
-  REFERENCED_TABLE_NAME: string | null;
-  REFERENCED_COLUMN_NAME: string | null;
+  CONSTRAINT_TABLE_NAME: string | null;
+  CONSTRAINT_COLUMN_NAME: string | null;
   EXTRA: string | null;
   UPDATE_RULE: string | null;
   DELETE_RULE: string | null;
 
   /** @TODO Extend with other possible values */
   COLUMN_KEY: 'PRI' | null;
-  CONSTRAINT_NAME: 'PRIMARY' | null;
+  PK_SET: 'PRIMARY' | null;
 };
 
 export default class MSSQL implements SchemaInspector {
@@ -138,6 +138,7 @@ export default class MSSQL implements SchemaInspector {
   columnInfo(table: string): Promise<Column[]>;
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
+    const dbName = this.knex.client.database();
     const query = this.knex
       .select(
         'c.TABLE_NAME',
@@ -147,26 +148,35 @@ export default class MSSQL implements SchemaInspector {
         'c.CHARACTER_MAXIMUM_LENGTH',
         'c.IS_NULLABLE',
         'c.COLLATION_NAME',
-        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
-        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME',
-        'fk.CONSTRAINT_NAME',
+        'pk.CONSTRAINT_TABLE_NAME',
+        'pk.CONSTRAINT_COLUMN_NAME',
+        'pk.CONSTRAINT_NAME',
+        'pk.PK_SET',
         'rc.UPDATE_RULE',
         'rc.DELETE_RULE',
         'rc.MATCH_OPTION'
       )
-      .from('INFORMATION_SCHEMA.COLUMNS as c')
-      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
-        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
-          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
-          .andOn('fk.CONSTRAINT_CATALOG', '=', 'c.TABLE_CATALOG');
-      })
-      .leftJoin(
-        'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
-        function () {
-          this.on('rc.CONSTRAINT_CATALOG', '=', 'fk.CONSTRAINT_CATALOG')
-            .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
-            .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
-        }
+      .from(dbName + '.INFORMATION_SCHEMA.COLUMNS as c')
+      .joinRaw(
+        `left join (
+          select CONSTRAINT_NAME AS CONSTRAINT_NAME, TABLE_NAME as CONSTRAINT_TABLE_NAME, COLUMN_NAME AS CONSTRAINT_COLUMN_NAME, CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, PK_SET =   CASE
+          WHEN CONSTRAINT_NAME  like '%pk%' THEN 'PRIMARY' 
+        ELSE NULL  
+       END  from ${dbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+          ) as pk
+          ON [c].[TABLE_NAME] = [pk].[CONSTRAINT_TABLE_NAME]
+                          AND [c].[TABLE_CATALOG] = [pk].[CONSTRAINT_CATALOG]
+                           AND [c].[COLUMN_NAME] = [pk].[CONSTRAINT_COLUMN_NAME]
+        `
+      )
+      .joinRaw(
+        `left join (
+      select CONSTRAINT_NAME,CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, MATCH_OPTION, DELETE_RULE, UPDATE_RULE from ${dbName}.INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+      
+      ) as rc
+      ON [pk].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME]
+                      AND [pk].[CONSTRAINT_CATALOG] = [rc].[CONSTRAINT_CATALOG]
+                       AND [pk].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA]`
       )
       .joinRaw(
         `
@@ -205,10 +215,10 @@ export default class MSSQL implements SchemaInspector {
         default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
-        is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-        has_auto_increment: rawColumn.EXTRA === 'auto_increment',
-        foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-        foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+        is_primary_key: rawColumn.PK_SET === 'PRIMARY',
+        has_auto_increment: rawColumn.EXTRA === '1',
+        foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
+        foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
       } as Column;
     }
 
@@ -223,10 +233,10 @@ export default class MSSQL implements SchemaInspector {
           default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
-          is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
-          has_auto_increment: rawColumn.EXTRA === 'auto_increment',
-          foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-          foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+          is_primary_key: rawColumn.PK_SET === 'PRIMARY',
+          has_auto_increment: rawColumn.EXTRA === '1',
+          foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
+          foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
         };
       }
     ) as Column[];
