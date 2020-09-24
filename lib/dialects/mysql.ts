@@ -248,8 +248,8 @@ export default class MySQL implements SchemaInspector {
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
     const result = await this.knex
-      .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('information_schema.tables')
+      .count<{ count: 0 | 1 }>('*', { as: 'count' })
+      .from('information_schema.columns')
       .where({
         table_schema: this.knex.client.database(),
         table_name: table,
