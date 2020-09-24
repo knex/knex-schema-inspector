@@ -247,7 +247,7 @@ export default class MySQL implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
-    const { count } = this.knex
+    const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
       .where({
@@ -256,7 +256,7 @@ export default class MySQL implements SchemaInspector {
         column_name: column,
       })
       .first();
-    return !!count;
+    return !!(result && result.count);
   }
 
   /**
