@@ -164,11 +164,15 @@ export default class SQLite implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
-    const results = await this.knex
-      .select(1)
-      .from(this.knex.raw(`pragma_table_info(??)`, table))
-      .where({ name: column });
-    return results.length > 0;
+    let isColumn = false;
+    const results = await this.knex.raw(
+      `SELECT COUNT(*) AS ct FROM pragma_table_info('${table}') WHERE name='${column}'`
+    );
+    const resultsVal = results[0]['ct'];
+    if (resultsVal !== 0) {
+      isColumn = true;
+    }
+    return isColumn;
   }
 
   /**
