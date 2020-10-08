@@ -229,23 +229,23 @@ export default class Postgres implements SchemaInspector {
       .joinRaw(
         `
         LEFT JOIN (
-          SELECT 
-            k1.table_schema, 
-            k1.table_name, 
-            k1.column_name, 
-            k2.table_schema AS referenced_table_schema, 
-            k2.table_name AS referenced_table_name, 
-            k2.column_name AS referenced_column_name 
-          FROM 
-            information_schema.key_column_usage k1 
+          SELECT
+            k1.table_schema,
+            k1.table_name,
+            k1.column_name,
+            k2.table_schema AS referenced_table_schema,
+            k2.table_name AS referenced_table_name,
+            k2.column_name AS referenced_column_name
+          FROM
+            information_schema.key_column_usage k1
             JOIN information_schema.referential_constraints fk using (
               constraint_schema, constraint_name
-            ) 
-            JOIN information_schema.key_column_usage k2 ON k2.constraint_schema = fk.unique_constraint_schema 
-            AND k2.constraint_name = fk.unique_constraint_name 
+            )
+            JOIN information_schema.key_column_usage k2 ON k2.constraint_schema = fk.unique_constraint_schema
+            AND k2.constraint_name = fk.unique_constraint_name
             AND k2.ordinal_position = k1.position_in_unique_constraint
-        ) ffk ON ffk.table_name = c.table_name 
-        AND ffk.column_name = c.column_name 
+        ) ffk ON ffk.table_name = c.table_name
+        AND ffk.column_name = c.column_name
       `
       )
       .where({ 'c.table_schema': this.schema });
@@ -325,7 +325,7 @@ export default class Postgres implements SchemaInspector {
    * Get the primary key column for the given table
    */
   async primary(table: string): Promise<string> {
-    const { column_name } = await this.knex
+    const result = await this.knex
       .select('information_schema.key_column_usage.column_name')
       .from('information_schema.key_column_usage')
       .leftJoin(
@@ -340,6 +340,6 @@ export default class Postgres implements SchemaInspector {
       })
       .first();
 
-    return column_name;
+    return result ? result.column_name : null;
   }
 }

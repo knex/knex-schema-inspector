@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -28,12 +29,17 @@
   },
   "homepage": "https://github.com/knex/knex-schema-inspector#readme",
   "devDependencies": {
+    "@types/jest": "^26.0.14",
     "@types/lodash.flatten": "^4.4.6",
     "@types/node": "^14.0.13",
     "husky": "^4.2.5",
+    "jest": "^26.5.2",
     "knex": "^0.21.1",
     "lint-staged": "^10.2.11",
+    "mysql": "^2.18.1",
+    "pg": "^8.4.0",
     "prettier": "^2.0.5",
+    "ts-jest": "^26.4.1",
     "typescript": "^3.9.5"
   },
   "peerDependencies": {
