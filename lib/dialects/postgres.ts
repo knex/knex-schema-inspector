@@ -17,6 +17,8 @@ type RawColumn = {
   character_maximum_length: number | null;
   is_nullable: 'YES' | 'NO';
   is_primary: null | 'YES';
+  numeric_precision: null | number;
+  numeric_scale: null | number;
   serial: null | string;
   column_comment: string | null;
   referenced_table_schema: null | string;
@@ -190,6 +192,8 @@ export default class Postgres implements SchemaInspector {
         'c.column_default',
         'c.character_maximum_length',
         'c.is_nullable',
+        'c.numeric_precision',
+        'c.numeric_scale',
 
         knex
           .select(knex.raw(`'YES'`))
@@ -267,6 +271,8 @@ export default class Postgres implements SchemaInspector {
           ? this.parseDefaultValue(rawColumn.column_default)
           : null,
         max_length: rawColumn.character_maximum_length,
+        precision: rawColumn.numeric_precision,
+        scale: rawColumn.numeric_scale,
         is_nullable: rawColumn.is_nullable === 'YES',
         is_primary_key: rawColumn.is_primary === 'YES',
         has_auto_increment: rawColumn.serial !== null,
@@ -290,11 +296,14 @@ export default class Postgres implements SchemaInspector {
             ? this.parseDefaultValue(rawColumn.column_default)
             : null,
           max_length: rawColumn.character_maximum_length,
+          precision: rawColumn.numeric_precision,
+          scale: rawColumn.numeric_scale,
           is_nullable: rawColumn.is_nullable === 'YES',
           is_primary_key: rawColumn.is_primary === 'YES',
           has_auto_increment: rawColumn.serial !== null,
           foreign_key_column: rawColumn.referenced_column_name,
           foreign_key_table: rawColumn.referenced_table_name,
+
           comment: rawColumn.column_comment,
           schema: this.schema,
           foreign_key_schema: rawColumn.referenced_table_schema,

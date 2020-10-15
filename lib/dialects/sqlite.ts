@@ -105,7 +105,7 @@ export default class SQLite implements SchemaInspector {
   columnInfo(): Promise<Column[]>;
   columnInfo(table: string): Promise<Column[]>;
   columnInfo(table: string, column: string): Promise<Column>;
-  async columnInfo<T>(table?: string, column?: string) {
+  async columnInfo(table?: string, column?: string) {
     const getColumnsForTable = async (table: string): Promise<Column[]> => {
       const tablesWithAutoIncrementPrimaryKeys = (
         await this.knex
@@ -118,6 +118,7 @@ export default class SQLite implements SchemaInspector {
         `PRAGMA table_info(??)`,
         table
       );
+
       const foreignKeys = await this.knex.raw<
         { table: string; from: string; to: string }[]
       >(`PRAGMA foreign_key_list(??)`, table);
@@ -132,6 +133,9 @@ export default class SQLite implements SchemaInspector {
             type: raw.type,
             default_value: raw.dflt_value,
             max_length: extractMaxLength(raw.dflt_value),
+            /** @NOTE SQLite3 doesn't support precision/scale */
+            precision: null,
+            scale: null,
             is_nullable: raw.notnull === 0,
             is_primary_key: raw.pk === 1,
             has_auto_increment:

@@ -4,6 +4,9 @@ export interface Column {
   type: string;
   default_value: any | null;
   max_length: number | null;
+  precision: number | null;
+  scale: number | null;
+
   is_nullable: boolean;
   is_primary_key: boolean;
   has_auto_increment: boolean;
