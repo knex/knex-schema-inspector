@@ -15,6 +15,8 @@ type RawColumn = {
   COLUMN_DEFAULT: any | null;
   DATA_TYPE: string;
   CHARACTER_MAXIMUM_LENGTH: number | null;
+  NUMERIC_PRECISION: number | null;
+  NUMERIC_SCALE: number | null;
   IS_NULLABLE: 'YES' | 'NO';
   COLLATION_NAME: string | null;
   CONSTRAINT_TABLE_NAME: string | null;
@@ -146,6 +148,8 @@ export default class MSSQL implements SchemaInspector {
         'c.COLUMN_DEFAULT',
         'c.DATA_TYPE',
         'c.CHARACTER_MAXIMUM_LENGTH',
+        'c.NUMERIC_PRECISION',
+        'c.NUMERIC_SCALE',
         'c.IS_NULLABLE',
         'c.COLLATION_NAME',
         'pk.CONSTRAINT_TABLE_NAME',
@@ -214,6 +218,8 @@ export default class MSSQL implements SchemaInspector {
         type: rawColumn.DATA_TYPE,
         default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+        precision: rawColumn.NUMERIC_PRECISION,
+        scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_primary_key: rawColumn.PK_SET === 'PRIMARY',
         has_auto_increment: rawColumn.EXTRA === '1',
@@ -232,6 +238,8 @@ export default class MSSQL implements SchemaInspector {
           type: rawColumn.DATA_TYPE,
           default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+          precision: rawColumn.NUMERIC_PRECISION,
+          scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_primary_key: rawColumn.PK_SET === 'PRIMARY',
           has_auto_increment: rawColumn.EXTRA === '1',

@@ -17,6 +17,8 @@ type RawColumn = {
   COLUMN_DEFAULT: any | null;
   DATA_TYPE: string;
   CHARACTER_MAXIMUM_LENGTH: number | null;
+  NUMERIC_PRECISION: number | null;
+  NUMERIC_SCALE: number | null;
   IS_NULLABLE: 'YES' | 'NO';
   COLLATION_NAME: string | null;
   COLUMN_COMMENT: string | null;
@@ -163,6 +165,8 @@ export default class MySQL implements SchemaInspector {
         'c.EXTRA',
         'c.COLLATION_NAME',
         'c.COLUMN_COMMENT',
+        'c.NUMERIC_PRECISION',
+        'c.NUMERIC_SCALE',
         'fk.REFERENCED_TABLE_NAME',
         'fk.REFERENCED_COLUMN_NAME',
         'fk.CONSTRAINT_NAME',
@@ -203,6 +207,8 @@ export default class MySQL implements SchemaInspector {
         type: rawColumn.DATA_TYPE,
         default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+        precision: rawColumn.NUMERIC_PRECISION,
+        scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
         has_auto_increment: rawColumn.EXTRA === 'auto_increment',
@@ -224,6 +230,8 @@ export default class MySQL implements SchemaInspector {
           type: rawColumn.DATA_TYPE,
           default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+          precision: rawColumn.NUMERIC_PRECISION,
+          scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
           has_auto_increment: rawColumn.EXTRA === 'auto_increment',

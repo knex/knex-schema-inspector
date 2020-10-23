@@ -14,6 +14,8 @@ type RawColumn = {
   DATA_DEFAULT: any | null;
   DATA_TYPE: string;
   DATA_LENGTH: number | null;
+  DATA_PRECISION: number | null;
+  DATA_SCALE: number | null;
   NULLABLE: 'YES' | 'NO';
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
@@ -131,6 +133,8 @@ export default class oracleDB implements SchemaInspector {
         'c.DATA_DEFAULT',
         'c.DATA_TYPE',
         'c.DATA_LENGTH',
+        'c.DATA_PRECISION',
+        'c.DATA_SCALE',
         'c.NULLABLE',
         'pk.CONSTRAINT_NAME',
         'pk.CONSTRAINT_TYPE',
@@ -179,6 +183,8 @@ export default class oracleDB implements SchemaInspector {
         type: rawColumn.DATA_TYPE,
         default_value: rawColumn.DATA_DEFAULT,
         max_length: rawColumn.DATA_LENGTH,
+        precision: rawColumn.DATA_PRECISION,
+        scale: rawColumn.DATA_SCALE,
         is_nullable: rawColumn.NULLABLE === 'YES',
         is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
@@ -197,6 +203,8 @@ export default class oracleDB implements SchemaInspector {
           type: rawColumn.DATA_TYPE,
           default_value: rawColumn.DATA_DEFAULT,
           max_length: rawColumn.DATA_DEFAULT,
+          precision: rawColumn.DATA_PRECISION,
+          scale: rawColumn.DATA_SCALE,
           is_nullable: rawColumn.NULLABLE === 'YES',
           is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
           has_auto_increment: rawColumn.DATA_DEFAULT,
