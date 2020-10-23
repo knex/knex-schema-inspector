@@ -23,10 +23,9 @@ jobs:
 
       - run: docker-compose up -d
 
-      - run: npm install
+      - run: npm ci
 
       - run: "while ! docker-compose logs mysql | grep -q 'mysqld: ready for connections.'; do sleep 2; done"
       - run: "while ! docker-compose logs postgres | grep -q 'database system is ready to accept connections'; do sleep 2; done"
 
-      - run: npm ci
       - run: npm test
