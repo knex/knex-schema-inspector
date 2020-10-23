@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "ts-mocha test/**/*.spec.ts"
+    "lint": "prettier --check .",
+    "test": "npm run lint && ts-mocha test/**/*.spec.ts"
   },
   "repository": {
     "type": "git",
