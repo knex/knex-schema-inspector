@@ -228,6 +228,12 @@ Then run tests:
 $ npm test
 ```
 
+Standard mocha filter (grep) can be used:
+
+```shell
+$ npm test -- -g '.tableInfo'
+```
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

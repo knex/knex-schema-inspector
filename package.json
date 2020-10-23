@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "jest"
+    "test": "ts-mocha test/**/*.spec.ts"
   },
   "repository": {
     "type": "git",
@@ -29,17 +29,19 @@
   },
   "homepage": "https://github.com/knex/knex-schema-inspector#readme",
   "devDependencies": {
-    "@types/jest": "^26.0.14",
+    "@types/chai": "^4.2.14",
     "@types/lodash.flatten": "^4.4.6",
+    "@types/mocha": "^8.0.3",
     "@types/node": "^14.0.13",
+    "chai": "^4.2.0",
     "husky": "^4.2.5",
-    "jest": "^26.5.2",
     "knex": "^0.21.1",
     "lint-staged": "^10.2.11",
+    "mocha": "^8.2.0",
     "mysql": "^2.18.1",
     "pg": "^8.4.0",
     "prettier": "^2.0.5",
-    "ts-jest": "^26.4.1",
+    "ts-mocha": "^7.0.0",
     "typescript": "^3.9.5"
   },
   "peerDependencies": {

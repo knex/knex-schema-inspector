@@ -1,4 +1,5 @@
 import Knex from 'knex';
+import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
 
@@ -6,7 +7,7 @@ describe('postgres', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
-  beforeAll(() => {
+  before(() => {
     database = Knex({
       client: 'pg',
       connection: {
@@ -22,13 +23,13 @@ describe('postgres', () => {
     // inspector.withSchema!('public');
   });
 
-  afterAll(async () => {
+  after(async () => {
     await database.destroy();
   });
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).toEqual([
+      expect(await inspector.tables()).to.deep.equal([
         'teams',
         'users',
         'page_visits',
@@ -38,7 +39,7 @@ describe('postgres', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).toEqual([
+      expect(await inspector.tableInfo()).to.deep.equal([
         { name: 'page_visits', schema: 'public', comment: null },
         { name: 'teams', schema: 'public', comment: null },
         { name: 'users', schema: 'public', comment: null },
@@ -46,7 +47,7 @@ describe('postgres', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.tableInfo('teams')).toEqual({
+      expect(await inspector.tableInfo('teams')).to.deep.equal({
         comment: null,
         name: 'teams',
         schema: 'public',
@@ -56,14 +57,14 @@ describe('postgres', () => {
 
   describe('.hasTable', () => {
     it('returns if table exists or not', async () => {
-      expect(await inspector.hasTable('teams')).toEqual(true);
-      expect(await inspector.hasTable('foobar')).toEqual(false);
+      expect(await inspector.hasTable('teams')).to.equal(true);
+      expect(await inspector.hasTable('foobar')).to.equal(false);
     });
   });
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).toEqual([
+      expect(await inspector.columns()).to.deep.equal([
         { table: 'page_visits', column: 'user_agent' },
         { table: 'teams', column: 'name' },
         { table: 'teams', column: 'created_at' },
@@ -81,7 +82,7 @@ describe('postgres', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).toEqual([
+      expect(await inspector.columns('teams')).to.deep.equal([
         { table: 'teams', column: 'id' },
         { table: 'teams', column: 'name' },
         { table: 'teams', column: 'description' },
@@ -94,7 +95,7 @@ describe('postgres', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).toEqual([
+      expect(await inspector.columnInfo()).to.deep.equal([
         {
           name: 'team_id',
           table: 'users',
@@ -294,7 +295,7 @@ describe('postgres', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).toEqual([
+      expect(await inspector.columnInfo('teams')).to.deep.equal([
         {
           name: 'id',
           table: 'teams',
@@ -389,7 +390,7 @@ describe('postgres', () => {
     });
 
     it('returns information for a specific column in a specific table', async () => {
-      expect(await inspector.columnInfo('teams', 'name')).toEqual({
+      expect(await inspector.columnInfo('teams', 'name')).to.deep.equal({
         schema: 'public',
         name: 'name',
         table: 'teams',
@@ -409,8 +410,8 @@ describe('postgres', () => {
 
   describe('.primary', () => {
     it('returns primary key for a table', async () => {
-      expect(await inspector.primary('teams')).toEqual('id');
-      expect(await inspector.primary('page_visits')).toEqual(null);
+      expect(await inspector.primary('teams')).to.equal('id');
+      expect(await inspector.primary('page_visits')).to.equal(null);
     });
   });
 });
