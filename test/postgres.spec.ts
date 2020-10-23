@@ -93,7 +93,7 @@ describe('postgres', () => {
   });
 
   describe('.columnInfo', () => {
-    it('returns information for all columns in all tables tables', async () => {
+    it('returns information for all columns in all tables', async () => {
       expect(await inspector.columnInfo()).toEqual([
         {
           name: 'team_id',
