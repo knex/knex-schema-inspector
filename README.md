@@ -35,12 +35,12 @@ import schemaInspector from 'knex-schema-inspector';
 const database = knex({
   client: 'mysql',
   connection: {
-    host     : '127.0.0.1',
-    user     : 'your_database_user',
-    password : 'your_database_password',
-    database : 'myapp_test',
-    charset  : 'utf8'
-  }
+    host: '127.0.0.1',
+    user: 'your_database_user',
+    password: 'your_database_password',
+    database: 'myapp_test',
+    charset: 'utf8',
+  },
 });
 
 const inspector = schemaInspector(database);
@@ -213,6 +213,26 @@ inspector.withSchema('my-schema');
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
+
+### Tests
+
+First start docker containers:
+
+```shell
+$ docker-compose up -d
+```
+
+Then run tests:
+
+```shell
+$ npm test
+```
+
+Standard mocha filter (grep) can be used:
+
+```shell
+$ npm test -- -g '.tableInfo'
+```
 
 ## License
 

@@ -275,6 +275,9 @@ export default class MySQL implements SchemaInspector {
       `SHOW KEYS FROM ?? WHERE Key_name = 'PRIMARY'`,
       table
     );
-    return results[0][0]['Column_name'] as string;
+    if (results.length && results[0].length) {
+      return results[0][0]['Column_name'] as string;
+    }
+    return null;
   }
 }

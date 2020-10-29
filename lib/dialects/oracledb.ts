@@ -46,7 +46,6 @@ export default class oracleDB implements SchemaInspector {
     const records = await this.knex
       .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
       .from('DBA_TABLES');
-
     return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
 
