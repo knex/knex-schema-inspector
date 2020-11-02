@@ -9,6 +9,7 @@ describe('postgres', () => {
 
   before(() => {
     database = Knex({
+      searchPath: ['public', 'test'],
       client: 'pg',
       connection: {
         host: '127.0.0.1',
