@@ -3,13 +3,12 @@ import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
 
-describe('postgres', () => {
+describe('postgres-no-search-path', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
   before(() => {
     database = Knex({
-      searchPath: ['public', 'test'],
       client: 'pg',
       connection: {
         host: '127.0.0.1',
@@ -21,7 +20,6 @@ describe('postgres', () => {
       },
     });
     inspector = schemaInspector(database);
-    // inspector.withSchema!('public');
   });
 
   after(async () => {
@@ -65,6 +63,23 @@ describe('postgres', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
+      database.transaction(async (trx) => {
+        expect(await schemaInspector(trx).columns()).to.deep.equal([
+          { table: 'page_visits', column: 'user_agent' },
+          { table: 'teams', column: 'name' },
+          { table: 'teams', column: 'created_at' },
+          { table: 'users', column: 'team_id' },
+          { table: 'users', column: 'id' },
+          { table: 'users', column: 'password' },
+          { table: 'teams', column: 'activated_at' },
+          { table: 'users', column: 'email' },
+          { table: 'teams', column: 'credits' },
+          { table: 'page_visits', column: 'created_at' },
+          { table: 'teams', column: 'id' },
+          { table: 'teams', column: 'description' },
+          { table: 'page_visits', column: 'request_path' },
+        ]);
+      });
       expect(await inspector.columns()).to.deep.equal([
         { table: 'page_visits', column: 'user_agent' },
         { table: 'teams', column: 'name' },
@@ -453,6 +468,53 @@ describe('postgres', () => {
     it('returns primary key for a table', async () => {
       expect(await inspector.primary('teams')).to.equal('id');
       expect(await inspector.primary('page_visits')).to.equal(null);
+    });
+  });
+
+  describe('.transaction', () => {
+    it('works with transactions transaction', async () => {
+      database.transaction(async (trx) => {
+        expect(await schemaInspector(trx).primary('teams')).to.equal('id');
+      });
+    });
+  });
+});
+
+describe('postgres-with-search-path', () => {
+  let database: Knex;
+  let inspector: SchemaInspector;
+
+  before(() => {
+    database = Knex({
+      searchPath: ['public', 'test'],
+      client: 'pg',
+      connection: {
+        host: '127.0.0.1',
+        port: 5101,
+        user: 'postgres',
+        password: 'secret',
+        database: 'test_db',
+        charset: 'utf8',
+      },
+    });
+    inspector = schemaInspector(database);
+  });
+
+  after(async () => {
+    await database.destroy();
+  });
+
+  describe('.primary', () => {
+    it('returns primary key for a table', async () => {
+      expect(await inspector.primary('test')).to.equal('id');
+    });
+  });
+
+  describe('.transaction', () => {
+    it('works with transactions transaction', async () => {
+      database.transaction(async (trx) => {
+        expect(await schemaInspector(trx).primary('test')).to.equal('id');
+      });
     });
   });
 });
