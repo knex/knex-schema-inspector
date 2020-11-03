@@ -34,16 +34,16 @@ export default class Postgres implements SchemaInspector {
 
   constructor(knex: Knex) {
     this.knex = knex;
-    this.schema = knex.client.searchPath || 'public';
-    if (!knex.client.searchPath) {
+    const config = knex.client.config;
+    if (!config.searchPath) {
       this.schema = 'public';
       this.explodedSchema = [this.schema];
-    } else if (typeof this.knex.client.searchPath === 'string') {
-      this.schema = knex.client.searchPath;
-      this.explodedSchema = [knex.client.searchPath];
+    } else if (typeof config.searchPath === 'string') {
+      this.schema = config.searchPath;
+      this.explodedSchema = [config.searchPath];
     } else {
-      this.schema = this.knex.client.searchPath[0];
-      this.explodedSchema = this.knex.client.searchPath;
+      this.schema = config.searchPath[0];
+      this.explodedSchema = config.searchPath;
     }
   }
 

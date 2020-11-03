@@ -24,3 +24,10 @@ create table page_visits (
   user_agent varchar(200),
   created_at timestamp
 );
+
+-- One table in a schema
+create schema test;
+create table test.test (
+    id serial primary key,
+    number int not null
+);
