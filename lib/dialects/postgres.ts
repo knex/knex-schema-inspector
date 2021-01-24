@@ -85,6 +85,16 @@ export default class Postgres implements SchemaInspector {
     return Number(value);
   }
 
+  parseEnumValues(value: string) {
+    if (!value) return null;
+    const parts = value.split('|');
+    return parts.map((item) => {
+      const num = Number(item);
+      if (!Number.isNaN(num)) return num;
+      return item;
+    });
+  }
+
   // Tables
   // ===============================================================================================
 
@@ -293,9 +303,7 @@ export default class Postgres implements SchemaInspector {
         table: rawColumn.table_name,
         type: rawColumn.data_type,
         udt_name: rawColumn.udt_name,
-        enum_values: rawColumn.enum_values
-          ? rawColumn.enum_values.split('|')
-          : null,
+        enum_values: this.parseEnumValues(rawColumn.enum_values),
         default_value: rawColumn.column_default
           ? this.parseDefaultValue(rawColumn.column_default)
           : null,
@@ -321,7 +329,7 @@ export default class Postgres implements SchemaInspector {
           table: rawColumn.table_name,
           type: rawColumn.data_type,
           udt_name: rawColumn.udt_name,
-          enum_values: (rawColumn.enum_values || '').split('|'),
+          enum_values: this.parseEnumValues(rawColumn.enum_values),
           default_value: rawColumn.column_default
             ? this.parseDefaultValue(rawColumn.column_default)
             : null,

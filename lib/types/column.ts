@@ -3,7 +3,7 @@ export interface Column {
   table: string;
   type: string;
   udt_name?: string;
-  enum_values?: Array<string | number>;
+  enum_values?: Array<string | number> | null;
   default_value: any | null;
   max_length: number | null;
   precision: number | null;
