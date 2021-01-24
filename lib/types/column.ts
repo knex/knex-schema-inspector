@@ -2,6 +2,8 @@ export interface Column {
   name: string;
   table: string;
   type: string;
+  udt_name?: string;
+  enum_values?: Array<string | number>;
   default_value: any | null;
   max_length: number | null;
   precision: number | null;

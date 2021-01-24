@@ -14,6 +14,8 @@ type RawColumn = {
   table_name: string;
   table_schema: string;
   data_type: string;
+  udt_name: string;
+  enum_values: string;
   column_default: any | null;
   character_maximum_length: number | null;
   is_nullable: 'YES' | 'NO';
@@ -209,6 +211,14 @@ export default class Postgres implements SchemaInspector {
         'c.numeric_precision',
         'c.numeric_scale',
         'c.table_schema',
+        'c.udt_name',
+
+        knex
+          .select(knex.raw("string_agg(pg_catalog.pg_enum.enumlabel, '|')"))
+          .from('pg_enum')
+          .join('pg_type', 'pg_enum.enumtypid', '=', 'pg_type.oid')
+          .whereRaw('pg_type.typname = c.udt_name')
+          .as('enum_values'),
 
         knex
           .select(knex.raw(`'YES'`))
@@ -282,6 +292,10 @@ export default class Postgres implements SchemaInspector {
         name: rawColumn.column_name,
         table: rawColumn.table_name,
         type: rawColumn.data_type,
+        udt_name: rawColumn.udt_name,
+        enum_values: rawColumn.enum_values
+          ? rawColumn.enum_values.split('|')
+          : null,
         default_value: rawColumn.column_default
           ? this.parseDefaultValue(rawColumn.column_default)
           : null,
@@ -300,13 +314,14 @@ export default class Postgres implements SchemaInspector {
     }
 
     const records: RawColumn[] = await query;
-
     return records.map(
       (rawColumn): Column => {
         return {
           name: rawColumn.column_name,
           table: rawColumn.table_name,
           type: rawColumn.data_type,
+          udt_name: rawColumn.udt_name,
+          enum_values: (rawColumn.enum_values || '').split('|'),
           default_value: rawColumn.column_default
             ? this.parseDefaultValue(rawColumn.column_default)
             : null,
