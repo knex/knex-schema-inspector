@@ -147,6 +147,7 @@ export default class MSSQL implements SchemaInspector {
         'c.COLUMN_NAME',
         'c.COLUMN_DEFAULT',
         'c.DATA_TYPE',
+        'ac.EXTRA',
         'c.CHARACTER_MAXIMUM_LENGTH',
         'c.NUMERIC_PRECISION',
         'c.NUMERIC_SCALE',
@@ -164,8 +165,8 @@ export default class MSSQL implements SchemaInspector {
       .joinRaw(
         `left join (
           select CONSTRAINT_NAME AS CONSTRAINT_NAME, TABLE_NAME as CONSTRAINT_TABLE_NAME, COLUMN_NAME AS CONSTRAINT_COLUMN_NAME, CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, PK_SET =   CASE
-          WHEN CONSTRAINT_NAME  like '%pk%' THEN 'PRIMARY' 
-        ELSE NULL  
+          WHEN CONSTRAINT_NAME  like '%pk%' THEN 'PRIMARY'
+        ELSE NULL
        END  from ${dbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE
           ) as pk
           ON [c].[TABLE_NAME] = [pk].[CONSTRAINT_TABLE_NAME]
@@ -176,7 +177,7 @@ export default class MSSQL implements SchemaInspector {
       .joinRaw(
         `left join (
       select CONSTRAINT_NAME,CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, MATCH_OPTION, DELETE_RULE, UPDATE_RULE from ${dbName}.INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-      
+
       ) as rc
       ON [pk].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME]
                       AND [pk].[CONSTRAINT_CATALOG] = [rc].[CONSTRAINT_CATALOG]
@@ -222,9 +223,11 @@ export default class MSSQL implements SchemaInspector {
         scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_primary_key: rawColumn.PK_SET === 'PRIMARY',
-        has_auto_increment: rawColumn.EXTRA === '1',
+        has_auto_increment: rawColumn.EXTRA === 1,
         foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
         foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
+        onDelete: rawColumn.DELETE_RULE,
+        onUpdate: rawColumn.UPDATE_RULE,
       } as Column;
     }
 
@@ -242,9 +245,11 @@ export default class MSSQL implements SchemaInspector {
           scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_primary_key: rawColumn.PK_SET === 'PRIMARY',
-          has_auto_increment: rawColumn.EXTRA === '1',
+          has_auto_increment: rawColumn.EXTRA === 1,
           foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
           foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
+          onDelete: rawColumn.DELETE_RULE,
+          onUpdate: rawColumn.UPDATE_RULE,
         };
       }
     ) as Column[];
