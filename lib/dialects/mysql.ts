@@ -28,7 +28,7 @@ type RawColumn = {
   DELETE_RULE: string | null;
 
   /** @TODO Extend with other possible values */
-  COLUMN_KEY: 'PRI' | null;
+  COLUMN_KEY: 'PRI' | 'UNI' | null;
   EXTRA: 'auto_increment' | null;
   CONSTRAINT_NAME: 'PRIMARY' | null;
 };
@@ -210,6 +210,7 @@ export default class MySQL implements SchemaInspector {
         precision: rawColumn.NUMERIC_PRECISION,
         scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
+        is_unique: rawColumn.COLUMN_KEY === 'UNI',
         is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
         has_auto_increment: rawColumn.EXTRA === 'auto_increment',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
@@ -233,6 +234,7 @@ export default class MySQL implements SchemaInspector {
           precision: rawColumn.NUMERIC_PRECISION,
           scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
+          is_unique: rawColumn.COLUMN_KEY === 'UNI',
           is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
           has_auto_increment: rawColumn.EXTRA === 'auto_increment',
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,

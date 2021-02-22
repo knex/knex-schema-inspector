@@ -1,10 +1,12 @@
 create table teams (
   id int not null auto_increment primary key,
+  uuid char(36) not null,
   name varchar(100),
   description text,
   credits integer(11) comment "Remaining usage credits",
   created_at datetime,
-  activated_at date
+  activated_at date,
+  unique key uuid (uuid)
 );
 
 create table users (

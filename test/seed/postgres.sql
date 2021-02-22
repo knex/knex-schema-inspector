@@ -1,10 +1,12 @@
 create table teams (
   id serial primary key,
+  uuid char(36) not null,
   name varchar(100),
   description text,
   credits integer,
   created_at timestamp,
-  activated_at date
+  activated_at date,
+  unique(uuid)
 );
 comment on column teams.credits is 'Remaining usage credits';
 

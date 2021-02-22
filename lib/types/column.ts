@@ -8,6 +8,7 @@ export interface Column {
   scale: number | null;
 
   is_nullable: boolean;
+  is_unique: boolean;
   is_primary_key: boolean;
   has_auto_increment: boolean;
   foreign_key_column: string | null;
