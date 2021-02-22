@@ -10,6 +10,7 @@ type RawColumn = {
   name: string;
   type: string;
   notnull: 0 | 1;
+  unique: 0 | 1;
   dflt_value: any;
   pk: 0 | 1;
 };
@@ -137,6 +138,7 @@ export default class SQLite implements SchemaInspector {
             precision: null,
             scale: null,
             is_nullable: raw.notnull === 0,
+            is_unique: false,
             is_primary_key: raw.pk === 1,
             has_auto_increment:
               raw.pk === 1 &&

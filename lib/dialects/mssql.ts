@@ -18,6 +18,7 @@ type RawColumn = {
   NUMERIC_PRECISION: number | null;
   NUMERIC_SCALE: number | null;
   IS_NULLABLE: 'YES' | 'NO';
+  IS_UNIQUE: 'YES' | 'NO';
   COLLATION_NAME: string | null;
   CONSTRAINT_TABLE_NAME: string | null;
   CONSTRAINT_COLUMN_NAME: string | null;
@@ -26,7 +27,7 @@ type RawColumn = {
   DELETE_RULE: string | null;
 
   /** @TODO Extend with other possible values */
-  COLUMN_KEY: 'PRI' | null;
+  COLUMN_KEY: 'PRI' | 'UNI' | null;
   PK_SET: 'PRIMARY' | null;
 };
 
@@ -241,6 +242,7 @@ export default class MSSQL implements SchemaInspector {
           precision: rawColumn.NUMERIC_PRECISION,
           scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
+          is_unique: false,
           is_primary_key: rawColumn.PK_SET === 'PRIMARY',
           has_auto_increment: rawColumn.EXTRA === '1',
           foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
