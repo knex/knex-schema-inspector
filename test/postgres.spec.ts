@@ -64,42 +64,39 @@ describe('postgres-no-search-path', () => {
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
-        console.log(await schemaInspector(trx).columns());
         expect(await schemaInspector(trx).columns()).to.deep.equal([
-          { table: 'users', column: 'team_id' },
-          { table: 'page_visits', column: 'created_at' },
-          { table: 'page_visits', column: 'request_path' },
-          { table: 'teams', column: 'credits' },
+          { table: 'users', column: 'id' },
+          { table: 'users', column: 'password' },
+          { table: 'users', column: 'email' },
           { table: 'teams', column: 'uuid' },
-          { table: 'teams', column: 'name' },
-          { table: 'teams', column: 'activated_at' },
+          { table: 'page_visits', column: 'created_at' },
+          { table: 'teams', column: 'credits' },
+          { table: 'page_visits', column: 'request_path' },
+          { table: 'page_visits', column: 'user_agent' },
+          { table: 'teams', column: 'created_at' },
           { table: 'teams', column: 'description' },
           { table: 'teams', column: 'id' },
-          { table: 'page_visits', column: 'user_agent' },
-          { table: 'users', column: 'email' },
-          { table: 'teams', column: 'created_at' },
-          { table: 'users', column: 'password' },
-          { table: 'users', column: 'id' },
+          { table: 'users', column: 'team_id' },
+          { table: 'teams', column: 'name' },
+          { table: 'teams', column: 'activated_at' },
         ]);
       });
 
-      console.log(await inspector.columns());
-
       expect(await inspector.columns()).to.deep.equal([
-        { table: 'users', column: 'team_id' },
-        { table: 'page_visits', column: 'created_at' },
-        { table: 'page_visits', column: 'request_path' },
-        { table: 'teams', column: 'credits' },
+        { table: 'users', column: 'id' },
+        { table: 'users', column: 'password' },
+        { table: 'users', column: 'email' },
         { table: 'teams', column: 'uuid' },
-        { table: 'teams', column: 'name' },
-        { table: 'teams', column: 'activated_at' },
+        { table: 'page_visits', column: 'created_at' },
+        { table: 'teams', column: 'credits' },
+        { table: 'page_visits', column: 'request_path' },
+        { table: 'page_visits', column: 'user_agent' },
+        { table: 'teams', column: 'created_at' },
         { table: 'teams', column: 'description' },
         { table: 'teams', column: 'id' },
-        { table: 'page_visits', column: 'user_agent' },
-        { table: 'users', column: 'email' },
-        { table: 'teams', column: 'created_at' },
-        { table: 'users', column: 'password' },
-        { table: 'users', column: 'id' },
+        { table: 'users', column: 'team_id' },
+        { table: 'teams', column: 'name' },
+        { table: 'teams', column: 'activated_at' },
       ]);
     });
 
