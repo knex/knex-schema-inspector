@@ -64,8 +64,8 @@ describe('postgres-no-search-path', () => {
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
-        const x = await schemaInspector(trx).columns();
-        expect(x).to.deep.equal([
+        console.log(await schemaInspector(trx).columns());
+        expect(await schemaInspector(trx).columns()).to.deep.equal([
           { table: 'users', column: 'team_id' },
           { table: 'page_visits', column: 'created_at' },
           { table: 'page_visits', column: 'request_path' },
@@ -82,6 +82,9 @@ describe('postgres-no-search-path', () => {
           { table: 'users', column: 'id' },
         ]);
       });
+
+      console.log(await inspector.columns());
+
       expect(await inspector.columns()).to.deep.equal([
         { table: 'users', column: 'team_id' },
         { table: 'page_visits', column: 'created_at' },
