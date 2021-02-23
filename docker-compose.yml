@@ -1,37 +1,43 @@
 version: '3.1'
 services:
-  mysql:
-    image: mysql:5.7
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: test_db
-    ports:
-      - 5100:3306
-    volumes:
-      - ./test/seed/mysql.sql:/docker-entrypoint-initdb.d/seed.sql
-  postgres:
-    image: postgres:12.3
+  # mysql:
+  #   image: mysql:5.7
+  #   command: --default-authentication-plugin=mysql_native_password
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: secret
+  #     MYSQL_DATABASE: test_db
+  #   ports:
+  #     - 5100:3306
+  #   volumes:
+  #     - ./test/seed/mysql.sql:/docker-entrypoint-initdb.d/seed.sql
+  # postgres:
+  #   image: postgres:12.3
+  #   restart: always
+  #   environment:
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_DB: test_db
+  #   ports:
+  #     - 5101:5432
+  #   volumes:
+  #     - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
+  # mssql:
+  #   image: microsoft/mssql-server-linux
+  #   restart: always
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - SA_PASSWORD=Test@123
+  #   working_dir: /usr/src/app
+  #   command: sh -c ' chmod +x ./mssql-entrypoint.sh; ./mssql-entrypoint.sh & /opt/mssql/bin/sqlservr;'
+  #   ports:
+  #     - 1433:1433
+  #   volumes:
+  #     - mssql-volume:/var/opt/mssql/
+  #     - ./test/seed:/usr/src/app
+  oracle:
+    image: store/oracle/database-enterprise:12.2.0.1
     restart: always
-    environment:
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: test_db
     ports:
-      - 5101:5432
-    volumes:
-      - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
-  mssql:
-    image: microsoft/mssql-server-linux
-    restart: always
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=Test@123
-    working_dir: /usr/src/app
-    command: sh -c ' chmod +x ./mssql-entrypoint.sh; ./mssql-entrypoint.sh & /opt/mssql/bin/sqlservr;'
-    ports:
-      - 1433:1433
-    volumes:
-      - mssql-volume:/var/opt/mssql/
-      - ./test/seed:/usr/src/app
+      - 1521:1521
+
 volumes:
   mssql-volume:
