@@ -20,3 +20,18 @@ services:
       - 5101:5432
     volumes:
       - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
+  mssql:
+    image: microsoft/mssql-server-linux
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Test@123
+    working_dir: /usr/src/app
+    command: sh -c ' chmod +x ./mssql-entrypoint.sh; ./mssql-entrypoint.sh & /opt/mssql/bin/sqlservr;'
+    ports:
+      - 1433:1433
+    volumes:
+      - mssql-volume:/var/opt/mssql/
+      - ./test/seed:/usr/src/app
+volumes:
+  mssql-volume:
