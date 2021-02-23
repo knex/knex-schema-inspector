@@ -32,7 +32,7 @@ services:
       - 1433:1433
     volumes:
       - mssql-volume:/var/opt/mssql/
-      - ./test/seed:/usr/src/app
+      - ./test:/usr/src/app
   # oracle:
   #   image: store/oracle/database-enterprise:12.2.0.1
   #   restart: always

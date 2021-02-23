@@ -8,9 +8,9 @@ sleep $wait_time
 echo importing data...
 
 # run the init script to create the DB and the tables in /table
-/opt/mssql-tools/bin/sqlcmd -S 0.0.0.0 -U SA -P $password -i ./init-mssql.sql
+/opt/mssql-tools/bin/sqlcmd -S 0.0.0.0 -U SA -P $password -i ./seed/init-mssql.sql
 
-for entry in "./mssql.sql"
+for entry in "./seed/mssql.sql"
 do
   echo executing $entry
   /opt/mssql-tools/bin/sqlcmd -S 0.0.0.0 -U SA -P $password -i $entry
