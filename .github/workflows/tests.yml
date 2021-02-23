@@ -27,5 +27,6 @@ jobs:
 
       - run: "while ! docker-compose logs mysql | grep -q 'mysqld: ready for connections.'; do sleep 2; done"
       - run: "while ! docker-compose logs postgres | grep -q 'database system is ready to accept connections'; do sleep 2; done"
+      - run: "while ! docker-compose logs postgres | grep -q 'SQL Server is now ready for client connections'; do sleep 2; done"
 
       - run: npm test

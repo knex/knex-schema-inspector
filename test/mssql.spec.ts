@@ -108,7 +108,6 @@ describe('mssql', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      console.log(await inspector.columnInfo());
       expect(await inspector.columnInfo()).to.deep.equal([
         {
           name: 'id',
