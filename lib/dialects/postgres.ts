@@ -238,19 +238,6 @@ export default class Postgres implements SchemaInspector {
           .as('is_unique'),
 
         knex
-          .select(knex.raw(`'YES'`))
-          .from('pg_index')
-          .join('pg_attribute', function () {
-            this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
-              knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
-            );
-          })
-          .whereRaw('pg_index.indrelid = c.table_name::regclass')
-          .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
-          .andWhere(knex.raw('pg_index.indisunique'))
-          .as('is_unique'),
-
-        knex
           .select(
             knex.raw(
               'pg_catalog.col_description(pg_catalog.pg_class.oid, c.ordinal_position:: int)'
