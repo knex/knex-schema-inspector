@@ -39,9 +39,11 @@
     "knex": "^0.21.1",
     "lint-staged": "^10.2.11",
     "mocha": "^8.2.0",
+    "mssql": "^6.3.1",
     "mysql": "^2.18.1",
     "pg": "^8.4.0",
     "prettier": "^2.0.5",
+    "sqlite3": "^5.0.2",
     "ts-mocha": "^7.0.0",
     "typescript": "^3.9.5"
   },
@@ -59,8 +61,6 @@
     }
   },
   "dependencies": {
-    "lodash.flatten": "^4.4.0",
-    "mssql": "^6.3.1",
-    "sqlite3": "^5.0.2"
+    "lodash.flatten": "^4.4.0"
   }
 }

@@ -33,15 +33,23 @@ services:
     volumes:
       - mssql-volume:/var/opt/mssql/
       - ./test:/usr/src/app
-  # oracle:
+  # oracle: // Couldn't login
   #   image: store/oracle/database-enterprise:12.2.0.1
   #   restart: always
   #   ports:
   #     - 1521:32769
   #     - 5500:32768
-  #   environment:
-  #     - ORACLE_HOSTNAME=0.0.0.0
   #   tty: true
+  # oracle: // Couldn't login
+  #   image: truevoly/oracle-12c
+  #   restart: always
+  #   ports:
+  #     - 1521:32769
+  #     - 5500:32768
+  #     - 8080:8080
+  #   tty: true
+  #   volumes:
+  #     - ./oracle_data/:/u01/app/oracle
 
 volumes:
   mssql-volume:
