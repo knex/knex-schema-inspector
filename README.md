@@ -2,15 +2,7 @@
 
 Utility for extracting information about existing DB schema
 
-**NOTE: This is a work in progress.**
-
-The API might change unexpectedly between patch / minor versions.
-
-The IO of the library isn't set in stone (yet). If you have any bright ideas or recommendations, please feel free to open
-an issue or pull request.
-
-This library currently supports Postgres, MySQL, and SQLite. We aim to have support for the same databases as the main
-knex project.
+This library currently supports Postgres, MySQL, MS SQL, SQLite, and OracleDB. We aim to have support for the same databases as the main knex project.
 
 ## Installation
 
@@ -157,14 +149,17 @@ await inspector.columnInfo('articles');
 //   {
 //     name: "id",
 //     table: "articles",
-//     type: "VARCHAR",
-//     defaultValue: null,
-//     maxLength: null,
-//     isNullable: false,
-//     isPrimaryKey: true,
-//     hasAutoIncrement: true,
-//     foreignKeyColumn: null,
-//     foreignKeyTable: null,
+//     data_type: "VARCHAR",
+//     default_value: null,
+//     max_length: null,
+//     numeric_precision: null,
+//     numeric_scale: null,
+//     is_nullable: false,
+//     is_unique: false,
+//     is_primary_key: true,
+//     has_auto_increment: true,
+//     foreign_key_column: null,
+//     foreign_key_table: null,
 //     comment: "Primary key for the articles collection"
 //   },
 //   { ... },
@@ -173,18 +168,21 @@ await inspector.columnInfo('articles');
 
 await inspector.columnInfo('articles', 'id');
 // => {
-//   name: "id",
-//   table: "articles",
-//   type: "VARCHAR",
-//   defaultValue: null,
-//   maxLength: null,
-//   isNullable: false,
-//   isPrimaryKey: true,
-//   hasAutoIncrement: true,
-//   foreignKeyColumn: null,
-//   foreignKeyTable: null,
-//   comment: "Primary key for the articles collection"
-// }
+//    name: "id",
+//    table: "articles",
+//    data_type: "VARCHAR",
+//    default_value: null,
+//    max_length: null,
+//    numeric_precision: null,
+//    numeric_scale: null,
+//    is_nullable: false,
+//    is_unique: false,
+//    is_primary_key: true,
+//    has_auto_increment: true,
+//    foreign_key_column: null,
+//    foreign_key_table: null,
+//    comment: "Primary key for the articles collection"
+//  }
 ```
 
 #### `primary(table: string): Promise<string>`
