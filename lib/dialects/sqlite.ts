@@ -91,7 +91,10 @@ export default class SQLite implements SchemaInspector {
         `PRAGMA table_info(??)`,
         table
       );
-      return columns.map((column) => ({ table, column: column.name }));
+      return columns.map((column) => ({
+        table,
+        column: column.name,
+      }));
     }
 
     const tables = await this.tables();
@@ -137,12 +140,12 @@ export default class SQLite implements SchemaInspector {
           return {
             name: raw.name,
             table: table,
-            type: extractType(raw.type),
+            data_type: extractType(raw.type),
             default_value: raw.dflt_value,
             max_length: extractMaxLength(raw.type),
             /** @NOTE SQLite3 doesn't support precision/scale */
-            precision: null,
-            scale: null,
+            numeric_precision: null,
+            numeric_scale: null,
             is_nullable: raw.notnull === 0,
             is_unique: !!index?.unique,
             is_primary_key: raw.pk === 1,
@@ -196,6 +199,6 @@ export default class SQLite implements SchemaInspector {
       table
     );
     const pkColumn = columns.find((col) => col.pk !== 0);
-    return pkColumn ? pkColumn.name : null;
+    return pkColumn?.name || null;
   }
 }

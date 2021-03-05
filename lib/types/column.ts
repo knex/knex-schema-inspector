@@ -1,11 +1,11 @@
 export interface Column {
   name: string;
   table: string;
-  type: string;
+  data_type: string;
   default_value: any | null;
   max_length: number | null;
-  precision: number | null;
-  scale: number | null;
+  numeric_precision: number | null;
+  numeric_scale: number | null;
 
   is_nullable: boolean;
   is_unique: boolean;

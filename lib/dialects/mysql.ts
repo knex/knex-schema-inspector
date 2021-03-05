@@ -26,8 +26,6 @@ type RawColumn = {
   REFERENCED_COLUMN_NAME: string | null;
   UPDATE_RULE: string | null;
   DELETE_RULE: string | null;
-
-  /** @TODO Extend with other possible values */
   COLUMN_KEY: 'PRI' | 'UNI' | null;
   EXTRA: 'auto_increment' | null;
   CONSTRAINT_NAME: 'PRIMARY' | null;
@@ -114,7 +112,10 @@ export default class MySQL implements SchemaInspector {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
-      .where({ table_schema: this.knex.client.database(), table_name: table })
+      .where({
+        table_schema: this.knex.client.database(),
+        table_name: table,
+      })
       .first();
     return (result && result.count === 1) || false;
   }
@@ -204,14 +205,16 @@ export default class MySQL implements SchemaInspector {
       return {
         name: rawColumn.COLUMN_NAME,
         table: rawColumn.TABLE_NAME,
-        type: rawColumn.DATA_TYPE,
+        data_type: rawColumn.DATA_TYPE,
         default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-        precision: rawColumn.NUMERIC_PRECISION,
-        scale: rawColumn.NUMERIC_SCALE,
+        numeric_precision: rawColumn.NUMERIC_PRECISION,
+        numeric_scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_unique: rawColumn.COLUMN_KEY === 'UNI',
-        is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
+        is_primary_key:
+          rawColumn.CONSTRAINT_NAME === 'PRIMARY' ||
+          rawColumn.COLUMN_KEY === 'PRI',
         has_auto_increment: rawColumn.EXTRA === 'auto_increment',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
         foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
@@ -228,14 +231,16 @@ export default class MySQL implements SchemaInspector {
         return {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
-          type: rawColumn.DATA_TYPE,
+          data_type: rawColumn.DATA_TYPE,
           default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          precision: rawColumn.NUMERIC_PRECISION,
-          scale: rawColumn.NUMERIC_SCALE,
+          numeric_precision: rawColumn.NUMERIC_PRECISION,
+          numeric_scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_unique: rawColumn.COLUMN_KEY === 'UNI',
-          is_primary_key: rawColumn.CONSTRAINT_NAME === 'PRIMARY',
+          is_primary_key:
+            rawColumn.CONSTRAINT_NAME === 'PRIMARY' ||
+            rawColumn.COLUMN_KEY === 'PRI',
           has_auto_increment: rawColumn.EXTRA === 'auto_increment',
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
           foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
@@ -277,9 +282,11 @@ export default class MySQL implements SchemaInspector {
       `SHOW KEYS FROM ?? WHERE Key_name = 'PRIMARY'`,
       table
     );
-    if (results.length && results[0].length) {
+
+    if (results && results.length && results[0].length) {
       return results[0][0]['Column_name'] as string;
     }
+
     return null;
   }
 }

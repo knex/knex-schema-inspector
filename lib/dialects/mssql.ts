@@ -22,7 +22,7 @@ type RawColumn = {
   COLLATION_NAME: string | null;
   CONSTRAINT_TABLE_NAME: string | null;
   CONSTRAINT_COLUMN_NAME: string | null;
-  EXTRA: string | null;
+  EXTRA: number | null;
   UPDATE_RULE: string | null;
   DELETE_RULE: string | null;
 
@@ -102,7 +102,10 @@ export default class MSSQL implements SchemaInspector {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('information_schema.tables')
-      .where({ TABLE_CATALOG: this.knex.client.database(), table_name: table })
+      .where({
+        TABLE_CATALOG: this.knex.client.database(),
+        table_name: table,
+      })
       .first();
     return (result && result.count === 1) || false;
   }
@@ -165,80 +168,80 @@ export default class MSSQL implements SchemaInspector {
       .from(dbName + '.INFORMATION_SCHEMA.COLUMNS AS c')
       .joinRaw(
         `
-        LEFT JOIN (
-          SELECT
-            CONSTRAINT_NAME AS CONSTRAINT_NAME,
-            TABLE_NAME AS CONSTRAINT_TABLE_NAME,
-            COLUMN_NAME AS CONSTRAINT_COLUMN_NAME,
-            CONSTRAINT_CATALOG,
-            CONSTRAINT_SCHEMA,
-            PK_SET = CASE WHEN CONSTRAINT_NAME LIKE '%pk%'
-            THEN 'PRIMARY'
-            ELSE NULL
-            END
-          FROM ${dbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-        ) as pk
-          ON [c].[TABLE_NAME] = [pk].[CONSTRAINT_TABLE_NAME]
-          AND [c].[TABLE_CATALOG] = [pk].[CONSTRAINT_CATALOG]
-          AND [c].[COLUMN_NAME] = [pk].[CONSTRAINT_COLUMN_NAME]
-        `
+         LEFT JOIN (
+           SELECT
+             CONSTRAINT_NAME AS CONSTRAINT_NAME,
+             TABLE_NAME AS CONSTRAINT_TABLE_NAME,
+             COLUMN_NAME AS CONSTRAINT_COLUMN_NAME,
+             CONSTRAINT_CATALOG,
+             CONSTRAINT_SCHEMA,
+             PK_SET = CASE WHEN CONSTRAINT_NAME LIKE '%pk%'
+             THEN 'PRIMARY'
+             ELSE NULL
+             END
+           FROM ${dbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+         ) as pk
+           ON [c].[TABLE_NAME] = [pk].[CONSTRAINT_TABLE_NAME]
+           AND [c].[TABLE_CATALOG] = [pk].[CONSTRAINT_CATALOG]
+           AND [c].[COLUMN_NAME] = [pk].[CONSTRAINT_COLUMN_NAME]
+         `
       )
       .joinRaw(
         `
-        LEFT JOIN (
-          SELECT
-            CONSTRAINT_NAME,
-            CONSTRAINT_CATALOG,
-            CONSTRAINT_SCHEMA,
-            MATCH_OPTION,
-            DELETE_RULE,
-            UPDATE_RULE
-          FROM ${dbName}.INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-        ) AS rc
-        ON [pk].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME]
-        AND [pk].[CONSTRAINT_CATALOG] = [rc].[CONSTRAINT_CATALOG]
-        AND [pk].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA]
-      `
+         LEFT JOIN (
+           SELECT
+             CONSTRAINT_NAME,
+             CONSTRAINT_CATALOG,
+             CONSTRAINT_SCHEMA,
+             MATCH_OPTION,
+             DELETE_RULE,
+             UPDATE_RULE
+           FROM ${dbName}.INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+         ) AS rc
+         ON [pk].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME]
+         AND [pk].[CONSTRAINT_CATALOG] = [rc].[CONSTRAINT_CATALOG]
+         AND [pk].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA]
+       `
       )
       .joinRaw(
         `
-        LEFT JOIN (
-          SELECT
-            COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') AS EXTRA,
-            TABLE_NAME,
-            COLUMN_NAME,
-            TABLE_CATALOG
-          FROM
-            INFORMATION_SCHEMA.COLUMNS
-          WHERE
-            COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') = 1) AS ac
-            ON [c].[TABLE_NAME] = [ac].[TABLE_NAME]
-            AND [c].[TABLE_CATALOG] = [ac].[TABLE_CATALOG]
-            AND [c].[COLUMN_NAME] = [ac].[COLUMN_NAME]
-        `
+         LEFT JOIN (
+           SELECT
+             COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') AS EXTRA,
+             TABLE_NAME,
+             COLUMN_NAME,
+             TABLE_CATALOG
+           FROM
+             INFORMATION_SCHEMA.COLUMNS
+           WHERE
+             COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') = 1) AS ac
+             ON [c].[TABLE_NAME] = [ac].[TABLE_NAME]
+             AND [c].[TABLE_CATALOG] = [ac].[TABLE_CATALOG]
+             AND [c].[COLUMN_NAME] = [ac].[COLUMN_NAME]
+         `
       )
       .joinRaw(
         `
-        LEFT JOIN (
-          SELECT
-            Tab.*,
-            IS_UNIQUE = CASE
-            WHEN CONSTRAINT_TYPE = 'UNIQUE'
-            THEN 'YES'
-            ELSE NULL
-            END
-            FROM
-              INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab,
-              INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col
-            WHERE
-              Col.Constraint_Name = Tab.Constraint_Name
-              AND Col.Table_Name = Tab.Table_Name
-              AND Tab.CONSTRAINT_TYPE = 'UNIQUE'
-        ) AS cu
-        ON [c].[TABLE_NAME] = [cu].[Table_Name]
-        AND [c].[COLUMN_NAME] = [cu].[Constraint_Name]
-        AND [c].[TABLE_CATALOG] =[cu].[TABLE_CATALOG]
-        `
+         LEFT JOIN (
+           SELECT
+             Tab.*,
+             IS_UNIQUE = CASE
+             WHEN CONSTRAINT_TYPE = 'UNIQUE'
+             THEN 'YES'
+             ELSE NULL
+             END
+             FROM
+               INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab,
+               INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col
+             WHERE
+               Col.Constraint_Name = Tab.Constraint_Name
+               AND Col.Table_Name = Tab.Table_Name
+               AND Tab.CONSTRAINT_TYPE = 'UNIQUE'
+         ) AS cu
+         ON [c].[TABLE_NAME] = [cu].[Table_Name]
+         AND [c].[COLUMN_NAME] = [cu].[Constraint_Name]
+         AND [c].[TABLE_CATALOG] =[cu].[TABLE_CATALOG]
+         `
       )
       .where({
         'c.TABLE_CATALOG': this.knex.client.database(),
@@ -256,16 +259,15 @@ export default class MSSQL implements SchemaInspector {
       return {
         name: rawColumn.COLUMN_NAME,
         table: rawColumn.TABLE_NAME,
-        type: rawColumn.DATA_TYPE,
+        data_type: rawColumn.DATA_TYPE,
         default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-        precision: rawColumn.NUMERIC_PRECISION,
-        scale: rawColumn.NUMERIC_SCALE,
+        numeric_precision: rawColumn.NUMERIC_PRECISION,
+        numeric_scale: rawColumn.NUMERIC_SCALE,
         is_nullable: rawColumn.IS_NULLABLE === 'YES',
         is_unique: rawColumn.IS_UNIQUE === 'YES',
         is_primary_key: rawColumn.PK_SET === 'PRIMARY',
         has_auto_increment: rawColumn.PK_SET === 'PRIMARY',
-        // TODO: contraints column name and table name have some issues
         foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
         foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
       } as Column;
@@ -278,16 +280,15 @@ export default class MSSQL implements SchemaInspector {
         return {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
-          type: rawColumn.DATA_TYPE,
+          data_type: rawColumn.DATA_TYPE,
           default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          precision: rawColumn.NUMERIC_PRECISION,
-          scale: rawColumn.NUMERIC_SCALE,
+          numeric_precision: rawColumn.NUMERIC_PRECISION,
+          numeric_scale: rawColumn.NUMERIC_SCALE,
           is_nullable: rawColumn.IS_NULLABLE === 'YES',
           is_unique: rawColumn.IS_UNIQUE === 'YES',
           is_primary_key: rawColumn.PK_SET === 'PRIMARY',
           has_auto_increment: rawColumn.PK_SET === 'PRIMARY',
-          // TODO: contraints column name and table name have some issues
           foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
           foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
         };
@@ -323,15 +324,15 @@ export default class MSSQL implements SchemaInspector {
   async primary(table: string) {
     const results = await this.knex.raw(
       `SELECT
-        Col.Column_Name
-      FROM
-        INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab,
-        INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col
-      WHERE
-        Col.Constraint_Name = Tab.Constraint_Name
-        AND Col.Table_Name = Tab.Table_Name
-        AND Constraint_Type = 'PRIMARY KEY'
-        AND Col.Table_Name = '${table}'`
+         Col.Column_Name
+       FROM
+         INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab,
+         INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col
+       WHERE
+         Col.Constraint_Name = Tab.Constraint_Name
+         AND Col.Table_Name = Tab.Table_Name
+         AND Constraint_Type = 'PRIMARY KEY'
+         AND Col.Table_Name = '${table}'`
     );
     const columnName = results.length > 0 ? results[0]['Column_Name'] : null;
     return columnName as string;

@@ -65,7 +65,8 @@ export default class Postgres implements SchemaInspector {
    * Eg `'example'::character varying` => `example`
    */
   parseDefaultValue(type: string) {
-    if (type.startsWith('nextval(')) return null; // auto-increment
+    if (!type) return null;
+    if (type.startsWith('nextval(')) return null;
 
     const parts = type.split('::');
 
@@ -113,12 +114,12 @@ export default class Postgres implements SchemaInspector {
           .select(this.knex.raw('obj_description(oid)'))
           .from('pg_class')
           .where({ relkind: 'r' })
-          .andWhere({ relname: 'table_name ' })
+          .andWhere({ relname: 'table_name' })
           .as('table_comment')
       )
       .from('information_schema.tables')
       .whereIn('table_schema', this.explodedSchema)
-      .andWhere({ table_catalog: this.knex.client.database() })
+      .andWhereRaw(`"table_catalog" = current_database()`)
       .andWhere({ table_type: 'BASE TABLE' })
       .orderBy('table_name', 'asc');
 
@@ -219,7 +220,7 @@ export default class Postgres implements SchemaInspector {
               knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
             );
           })
-          .whereRaw('pg_index.indrelid = c.table_name::regclass')
+          .whereRaw('pg_index.indrelid = quote_ident(c.table_name)::regclass')
           .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
           .andWhere(knex.raw('pg_index.indisprimary'))
           .as('is_primary'),
@@ -251,7 +252,7 @@ export default class Postgres implements SchemaInspector {
           .as('column_comment'),
 
         knex.raw(
-          'pg_get_serial_sequence(c.table_name, c.column_name) as serial'
+          'pg_get_serial_sequence(quote_ident(c.table_name), c.column_name) as serial'
         ),
 
         'ffk.referenced_table_schema',
@@ -281,7 +282,8 @@ export default class Postgres implements SchemaInspector {
         AND ffk.column_name = c.column_name
       `
       )
-      .whereIn('c.table_schema', this.explodedSchema);
+      .whereIn('c.table_schema', this.explodedSchema)
+      .orderBy(['c.table_name', 'c.ordinal_position']);
 
     if (table) {
       query.andWhere({ 'c.table_name': table });
@@ -295,13 +297,13 @@ export default class Postgres implements SchemaInspector {
       return {
         name: rawColumn.column_name,
         table: rawColumn.table_name,
-        type: rawColumn.data_type,
+        data_type: rawColumn.data_type,
         default_value: rawColumn.column_default
           ? this.parseDefaultValue(rawColumn.column_default)
           : null,
         max_length: rawColumn.character_maximum_length,
-        precision: rawColumn.numeric_precision,
-        scale: rawColumn.numeric_scale,
+        numeric_precision: rawColumn.numeric_precision,
+        numeric_scale: rawColumn.numeric_scale,
         is_nullable: rawColumn.is_nullable === 'YES',
         is_unique: rawColumn.is_unique === 'YES',
         is_primary_key: rawColumn.is_primary === 'YES',
@@ -321,13 +323,13 @@ export default class Postgres implements SchemaInspector {
         return {
           name: rawColumn.column_name,
           table: rawColumn.table_name,
-          type: rawColumn.data_type,
+          data_type: rawColumn.data_type,
           default_value: rawColumn.column_default
             ? this.parseDefaultValue(rawColumn.column_default)
             : null,
           max_length: rawColumn.character_maximum_length,
-          precision: rawColumn.numeric_precision,
-          scale: rawColumn.numeric_scale,
+          numeric_precision: rawColumn.numeric_precision,
+          numeric_scale: rawColumn.numeric_scale,
           is_nullable: rawColumn.is_nullable === 'YES',
           is_unique: rawColumn.is_unique === 'YES',
           is_primary_key: rawColumn.is_primary === 'YES',
