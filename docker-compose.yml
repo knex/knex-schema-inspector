@@ -33,23 +33,18 @@ services:
     volumes:
       - mssql-volume:/var/opt/mssql/
       - ./test:/usr/src/app
-  # oracle: // Couldn't login
+
+  # Note: you need to be logged in to DockerHub, and accept the EULA for oracle/database-enterprise to work
+  #       ... no clue how to get around that in GH Actions for tests ...
+  # See https://github.com/oracle/docker-images/issues/1156 for more on this
+  # An alternative could be to use quillbuilduser/oracle-18-xe instead
+  # oracle:
   #   image: store/oracle/database-enterprise:12.2.0.1
   #   restart: always
   #   ports:
   #     - 1521:32769
   #     - 5500:32768
   #   tty: true
-  # oracle: // Couldn't login
-  #   image: truevoly/oracle-12c
-  #   restart: always
-  #   ports:
-  #     - 1521:32769
-  #     - 5500:32768
-  #     - 8080:8080
-  #   tty: true
-  #   volumes:
-  #     - ./oracle_data/:/u01/app/oracle
 
 volumes:
   mssql-volume:
