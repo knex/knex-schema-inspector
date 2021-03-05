@@ -23,7 +23,13 @@
     "sqlite3",
     "javascript"
   ],
-  "author": "",
+  "author": "Rijk van Zanten <rijkvanzanten@me.com> (https://github.com/rijkvanzanten)",
+  "contributors": [
+    "Tanya Byrne (https://github.com/kukulaka)",
+    "Martti Laine (https://github.com/codeclown)",
+    "Martin Benndorf (https://github.com/MiniDigger)",
+    "Igor Savin (https://github.com/kibertoad)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/knex/knex-schema-inspector/issues"
