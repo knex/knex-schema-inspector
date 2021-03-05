@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
@@ -8,7 +8,7 @@ describe('postgres-no-search-path', () => {
   let inspector: SchemaInspector;
 
   before(() => {
-    database = Knex({
+    database = knex({
       client: 'pg',
       connection: {
         host: '127.0.0.1',
@@ -545,7 +545,7 @@ describe('postgres-with-search-path', () => {
   let inspector: SchemaInspector;
 
   before(() => {
-    database = Knex({
+    database = knex({
       searchPath: ['public', 'test'],
       client: 'pg',
       connection: {

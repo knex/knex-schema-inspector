@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import { SchemaInspectorConstructor } from './types/schema-inspector';
 
 export default function SchemaInspector(knex: Knex) {

@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 import flatten from 'lodash.flatten';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';

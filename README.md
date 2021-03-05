@@ -21,7 +21,7 @@ yarn knex-schema-inspector
 The package is initialized by passing it an instance of Knex:
 
 ```ts
-import knex from 'knex';
+import Knex from 'knex';
 import schemaInspector from 'knex-schema-inspector';
 
 const database = knex({

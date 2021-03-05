@@ -1,4 +1,4 @@
-import Knex from 'knex';
+import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
@@ -8,7 +8,7 @@ describe('mysql', () => {
   let inspector: SchemaInspector;
 
   before(() => {
-    database = Knex({
+    database = knex({
       client: 'mysql',
       connection: {
         host: '127.0.0.1',
