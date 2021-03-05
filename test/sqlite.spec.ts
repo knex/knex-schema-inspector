@@ -3,20 +3,15 @@ import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
 
-describe('mysql', () => {
+describe('sqlite', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
   before(() => {
     database = Knex({
-      client: 'mysql',
+      client: 'sqlite3',
       connection: {
-        host: '127.0.0.1',
-        port: 5100,
-        user: 'root',
-        password: 'secret',
-        database: 'test_db',
-        charset: 'utf8',
+        filename: './test/db/sqlite.db',
       },
     });
     inspector = schemaInspector(database);
@@ -41,35 +36,56 @@ describe('mysql', () => {
       expect(await inspector.tableInfo()).to.deep.equal([
         {
           name: 'page_visits',
-          schema: 'test_db',
-          comment: '',
-          collation: 'latin1_swedish_ci',
-          engine: 'InnoDB',
+          sql:
+            'CREATE TABLE page_visits (\n' +
+            '  request_path varchar(100)\n' +
+            ',  user_agent varchar(200)\n' +
+            ',  created_at datetime\n' +
+            ')',
         },
         {
           name: 'teams',
-          schema: 'test_db',
-          comment: '',
-          collation: 'latin1_swedish_ci',
-          engine: 'InnoDB',
+          sql:
+            'CREATE TABLE "teams" (\n' +
+            '\t"id"\tINTEGER NOT NULL,\n' +
+            '\t"uuid"\tvarchar(36) NOT NULL UNIQUE,\n' +
+            '\t"name"\tvarchar(100),\n' +
+            '\t"description"\ttext,\n' +
+            '\t"credits"\tinteger,\n' +
+            '\t"created_at"\tdatetime,\n' +
+            '\t"activated_at"\tdate,\n' +
+            '\tPRIMARY KEY("id" AUTOINCREMENT)\n' +
+            ')',
         },
         {
           name: 'users',
-          schema: 'test_db',
-          comment: '',
-          collation: 'latin1_swedish_ci',
-          engine: 'InnoDB',
+          sql:
+            'CREATE TABLE "users" (\n' +
+            '\t"id"\tINTEGER NOT NULL,\n' +
+            '\t"team_id"\tinteger NOT NULL,\n' +
+            '\t"email"\tvarchar(100),\n' +
+            '\t"password"\tvarchar(60),\n' +
+            '\tPRIMARY KEY("id" AUTOINCREMENT),\n' +
+            '\tFOREIGN KEY("team_id") REFERENCES "teams"("id")\n' +
+            ')',
         },
       ]);
     });
 
     it('returns information for specific table', async () => {
       expect(await inspector.tableInfo('teams')).to.deep.equal({
-        collation: 'latin1_swedish_ci',
-        comment: '',
-        engine: 'InnoDB',
         name: 'teams',
-        schema: 'test_db',
+        sql:
+          'CREATE TABLE "teams" (\n' +
+          '\t"id"\tINTEGER NOT NULL,\n' +
+          '\t"uuid"\tvarchar(36) NOT NULL UNIQUE,\n' +
+          '\t"name"\tvarchar(100),\n' +
+          '\t"description"\ttext,\n' +
+          '\t"credits"\tinteger,\n' +
+          '\t"created_at"\tdatetime,\n' +
+          '\t"activated_at"\tdate,\n' +
+          '\tPRIMARY KEY("id" AUTOINCREMENT)\n' +
+          ')',
       });
     });
   });
@@ -118,70 +134,6 @@ describe('mysql', () => {
     it('returns information for all columns in all tables', async () => {
       expect(await inspector.columnInfo()).to.deep.equal([
         {
-          name: 'team_id',
-          table: 'users',
-          type: 'int',
-          default_value: null,
-          max_length: null,
-          precision: 10,
-          scale: 0,
-          is_nullable: false,
-          is_unique: false,
-          is_primary_key: false,
-          has_auto_increment: false,
-          foreign_key_column: 'id',
-          foreign_key_table: 'teams',
-          comment: '',
-        },
-        {
-          name: 'id',
-          table: 'teams',
-          type: 'int',
-          default_value: null,
-          max_length: null,
-          precision: 10,
-          scale: 0,
-          is_nullable: false,
-          is_unique: false,
-          is_primary_key: true,
-          has_auto_increment: true,
-          foreign_key_column: null,
-          foreign_key_table: null,
-          comment: '',
-        },
-        {
-          name: 'uuid',
-          table: 'teams',
-          type: 'char',
-          default_value: null,
-          max_length: 36,
-          precision: null,
-          scale: null,
-          is_nullable: false,
-          is_unique: true,
-          is_primary_key: false,
-          has_auto_increment: false,
-          foreign_key_column: null,
-          foreign_key_table: null,
-          comment: '',
-        },
-        {
-          name: 'id',
-          table: 'users',
-          type: 'int',
-          default_value: null,
-          max_length: null,
-          precision: 10,
-          scale: 0,
-          is_nullable: false,
-          is_unique: false,
-          is_primary_key: true,
-          has_auto_increment: true,
-          foreign_key_column: null,
-          foreign_key_table: null,
-          comment: '',
-        },
-        {
           name: 'request_path',
           table: 'page_visits',
           type: 'varchar',
@@ -195,7 +147,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'user_agent',
@@ -211,7 +162,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'created_at',
@@ -227,7 +177,36 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
+        },
+        {
+          name: 'id',
+          table: 'teams',
+          type: 'integer',
+          default_value: null,
+          max_length: null,
+          precision: null,
+          scale: null,
+          is_nullable: false,
+          is_unique: false,
+          is_primary_key: true,
+          has_auto_increment: true,
+          foreign_key_column: null,
+          foreign_key_table: null,
+        },
+        {
+          name: 'uuid',
+          table: 'teams',
+          type: 'varchar',
+          default_value: null,
+          max_length: 36,
+          precision: null,
+          scale: null,
+          is_nullable: false,
+          is_unique: true,
+          is_primary_key: false,
+          has_auto_increment: false,
+          foreign_key_column: null,
+          foreign_key_table: null,
         },
         {
           name: 'name',
@@ -243,14 +222,13 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'description',
           table: 'teams',
           type: 'text',
           default_value: null,
-          max_length: 65535,
+          max_length: null,
           precision: null,
           scale: null,
           is_nullable: true,
@@ -259,23 +237,21 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'credits',
           table: 'teams',
-          type: 'int',
+          type: 'integer',
           default_value: null,
           max_length: null,
-          precision: 10,
-          scale: 0,
+          precision: null,
+          scale: null,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: 'Remaining usage credits',
         },
         {
           name: 'created_at',
@@ -291,7 +267,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'activated_at',
@@ -307,7 +282,36 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
+        },
+        {
+          name: 'id',
+          table: 'users',
+          type: 'integer',
+          default_value: null,
+          max_length: null,
+          precision: null,
+          scale: null,
+          is_nullable: false,
+          is_unique: false,
+          is_primary_key: true,
+          has_auto_increment: true,
+          foreign_key_column: null,
+          foreign_key_table: null,
+        },
+        {
+          name: 'team_id',
+          table: 'users',
+          type: 'integer',
+          default_value: null,
+          max_length: null,
+          precision: null,
+          scale: null,
+          is_nullable: false,
+          is_unique: false,
+          is_primary_key: false,
+          has_auto_increment: false,
+          foreign_key_column: 'id',
+          foreign_key_table: 'teams',
         },
         {
           name: 'email',
@@ -323,7 +327,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'password',
@@ -339,7 +342,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
       ]);
     });
@@ -349,23 +351,22 @@ describe('mysql', () => {
         {
           name: 'id',
           table: 'teams',
-          type: 'int',
+          type: 'integer',
           default_value: null,
           max_length: null,
-          precision: 10,
-          scale: 0,
+          precision: null,
+          scale: null,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
           has_auto_increment: true,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'uuid',
           table: 'teams',
-          type: 'char',
+          type: 'varchar',
           default_value: null,
           max_length: 36,
           precision: null,
@@ -376,7 +377,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'name',
@@ -392,14 +392,13 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'description',
           table: 'teams',
           type: 'text',
           default_value: null,
-          max_length: 65535,
+          max_length: null,
           precision: null,
           scale: null,
           is_nullable: true,
@@ -408,23 +407,21 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'credits',
           table: 'teams',
-          type: 'int',
+          type: 'integer',
           default_value: null,
           max_length: null,
-          precision: 10,
-          scale: 0,
+          precision: null,
+          scale: null,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: 'Remaining usage credits',
         },
         {
           name: 'created_at',
@@ -440,7 +437,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
         {
           name: 'activated_at',
@@ -456,7 +452,6 @@ describe('mysql', () => {
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: '',
         },
       ]);
     });
@@ -465,7 +460,7 @@ describe('mysql', () => {
       expect(await inspector.columnInfo('teams', 'uuid')).to.deep.equal({
         name: 'uuid',
         table: 'teams',
-        type: 'char',
+        type: 'varchar',
         default_value: null,
         max_length: 36,
         precision: null,
@@ -476,7 +471,6 @@ describe('mysql', () => {
         has_auto_increment: false,
         foreign_key_column: null,
         foreign_key_table: null,
-        comment: '',
       });
     });
   });

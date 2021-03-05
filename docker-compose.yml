@@ -20,3 +20,38 @@ services:
       - 5101:5432
     volumes:
       - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
+  mssql:
+    image: microsoft/mssql-server-linux
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Test@123
+    working_dir: /usr/src/app
+    command: sh -c ' chmod +x ./scripts/mssql-entrypoint.sh; ./scripts/mssql-entrypoint.sh & /opt/mssql/bin/sqlservr;'
+    ports:
+      - 1433:1433
+    volumes:
+      - mssql-volume:/var/opt/mssql/
+      - ./test:/usr/src/app
+
+  # Note: you need to be logged in to DockerHub, and accept the EULA for oracle/database-enterprise to work
+  #       ... no clue how to get around that in GH Actions for tests ...
+  # See https://github.com/oracle/docker-images/issues/1156 for more on this
+  # oracle:
+  #   image: store/oracle/database-enterprise:12.2.0.1
+  #   restart: always
+  #   ports:
+  #     - 1521:32769
+  #     - 5500:32768
+  #   tty: true
+  # This is wat `knex` sues, but seems to crash with "ORA-01012: not logged on"
+  # oracledbxe:
+  #   image: quillbuilduser/oracle-18-xe
+  #   container_name: oracledbxe_container
+  #   ports:
+  #     - '21521:1521'
+  #   environment:
+  #     - ORACLE_ALLOW_REMOTE=true
+
+volumes:
+  mssql-volume:

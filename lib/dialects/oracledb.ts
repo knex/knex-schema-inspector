@@ -17,6 +17,7 @@ type RawColumn = {
   DATA_PRECISION: number | null;
   DATA_SCALE: number | null;
   NULLABLE: 'YES' | 'NO';
+  UNIQUE: 'YES' | 'NO';
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
@@ -24,7 +25,7 @@ type RawColumn = {
   DELETE_RULE: string | null;
 
   /** @TODO Extend with other possible values */
-  COLUMN_KEY: 'PRI' | null;
+  COLUMN_KEY: 'PRI' | 'UNI' | null;
   CONTRAINT_NAME: string | null;
   CONSTRAINT_TYPE: 'P' | null;
 };
@@ -206,6 +207,7 @@ export default class oracleDB implements SchemaInspector {
           precision: rawColumn.DATA_PRECISION,
           scale: rawColumn.DATA_SCALE,
           is_nullable: rawColumn.NULLABLE === 'YES',
+          is_unique: false,
           is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
           has_auto_increment: rawColumn.DATA_DEFAULT,
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,

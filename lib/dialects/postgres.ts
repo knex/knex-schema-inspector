@@ -17,6 +17,7 @@ type RawColumn = {
   column_default: any | null;
   character_maximum_length: number | null;
   is_nullable: 'YES' | 'NO';
+  is_unique: 'YES' | 'NO';
   is_primary: null | 'YES';
   numeric_precision: null | number;
   numeric_scale: null | number;
@@ -224,6 +225,19 @@ export default class Postgres implements SchemaInspector {
           .as('is_primary'),
 
         knex
+          .select(knex.raw(`'YES'`))
+          .from('pg_index')
+          .join('pg_attribute', function () {
+            this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
+              knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
+            );
+          })
+          .whereRaw('pg_index.indrelid = c.table_name::regclass')
+          .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
+          .andWhere(knex.raw('pg_index.indisunique'))
+          .as('is_unique'),
+
+        knex
           .select(
             knex.raw(
               'pg_catalog.col_description(pg_catalog.pg_class.oid, c.ordinal_position:: int)'
@@ -289,6 +303,7 @@ export default class Postgres implements SchemaInspector {
         precision: rawColumn.numeric_precision,
         scale: rawColumn.numeric_scale,
         is_nullable: rawColumn.is_nullable === 'YES',
+        is_unique: rawColumn.is_unique === 'YES',
         is_primary_key: rawColumn.is_primary === 'YES',
         has_auto_increment: rawColumn.serial !== null,
         foreign_key_column: rawColumn.referenced_column_name,
@@ -314,6 +329,7 @@ export default class Postgres implements SchemaInspector {
           precision: rawColumn.numeric_precision,
           scale: rawColumn.numeric_scale,
           is_nullable: rawColumn.is_nullable === 'YES',
+          is_unique: rawColumn.is_unique === 'YES',
           is_primary_key: rawColumn.is_primary === 'YES',
           has_auto_increment: rawColumn.serial !== null,
           foreign_key_column: rawColumn.referenced_column_name,

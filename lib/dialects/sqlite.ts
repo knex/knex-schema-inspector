@@ -4,12 +4,14 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import extractMaxLength from '../utils/extract-max-length';
+import extractType from '../utils/extract-type';
 
 type RawColumn = {
   cid: number;
   name: string;
   type: string;
   notnull: 0 | 1;
+  unique: 0 | 1;
   dflt_value: any;
   pk: 0 | 1;
 };
@@ -123,20 +125,26 @@ export default class SQLite implements SchemaInspector {
         { table: string; from: string; to: string }[]
       >(`PRAGMA foreign_key_list(??)`, table);
 
+      const indexList = await this.knex.raw<
+        { name: string; unique: boolean }[]
+      >(`PRAGMA index_list(??)`, table);
+
       return columns.map(
         (raw): Column => {
           const foreignKey = foreignKeys.find((fk) => fk.from === raw.name);
+          const index = indexList.find((fk) => fk.name === raw.name);
 
           return {
             name: raw.name,
             table: table,
-            type: raw.type,
+            type: extractType(raw.type),
             default_value: raw.dflt_value,
-            max_length: extractMaxLength(raw.dflt_value),
+            max_length: extractMaxLength(raw.type),
             /** @NOTE SQLite3 doesn't support precision/scale */
             precision: null,
             scale: null,
             is_nullable: raw.notnull === 0,
+            is_unique: !!index?.unique,
             is_primary_key: raw.pk === 1,
             has_auto_increment:
               raw.pk === 1 &&
@@ -182,12 +190,12 @@ export default class SQLite implements SchemaInspector {
   /**
    * Get the primary key column for the given table
    */
-  async primary(table: string): Promise<string> {
+  async primary(table: string) {
     const columns = await this.knex.raw<RawColumn[]>(
       `PRAGMA table_info(??)`,
       table
     );
     const pkColumn = columns.find((col) => col.pk !== 0);
-    return pkColumn!.name;
+    return pkColumn ? pkColumn.name : null;
   }
 }

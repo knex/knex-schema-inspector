@@ -1,16 +1,21 @@
+USE test_db;
+GO
+
 create table teams (
-  id int not null auto_increment primary key,
+  id int not null identity primary key,
   uuid char(36) not null,
   name varchar(100),
-  description text,
-  credits integer(11) comment "Remaining usage credits",
-  created_at datetime,
+  description varchar(max),
+  credits integer,
+  created_at datetime2(0),
   activated_at date,
-  unique key uuid (uuid)
+  constraint uuid unique (uuid)
 );
 
+GO
+
 create table users (
-  id int not null auto_increment primary key,
+  id int not null identity primary key,
   team_id int not null,
   email varchar(100),
   password varchar(60),
@@ -19,9 +24,12 @@ create table users (
     references teams (id)
 );
 
--- One table without a primary key
+GO
+
 create table page_visits (
   request_path varchar(100),
   user_agent varchar(200),
-  created_at datetime
+  created_at datetime2(0)
 );
+
+GO
