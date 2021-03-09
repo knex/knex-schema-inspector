@@ -66,7 +66,7 @@ export default class Postgres implements SchemaInspector {
    */
   parseDefaultValue(type: string) {
     if (!type) return null;
-    if (type.startsWith('nextval(')) return 'AUTO_INCREMENT';
+    if (type.startsWith('nextval(')) return type;
 
     const parts = type.split('::');
 

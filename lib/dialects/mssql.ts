@@ -295,10 +295,8 @@ export default class MSSQL implements SchemaInspector {
       }
     ) as Column[];
 
-    function parseDefault(value: string, isIdentity: boolean = false) {
-      if (!value && !isIdentity) return null;
-
-      if (isIdentity) return 'AUTO_INCREMENT';
+    function parseDefault(value: string) {
+      if (!value) return null;
 
       if (value.startsWith('(') && value.endsWith(')')) {
         value = value.slice(1, -1);
