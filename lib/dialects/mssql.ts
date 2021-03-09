@@ -295,10 +295,22 @@ export default class MSSQL implements SchemaInspector {
       }
     ) as Column[];
 
-    function parseDefault(value: any) {
-      // MariaDB returns string NULL for not-nullable varchar fields
-      if (value === 'NULL' || value === 'null') return null;
-      return value;
+    function parseDefault(value: string, isIdentity: boolean = false) {
+      if (!value && !isIdentity) return null;
+
+      if (isIdentity) return 'AUTO_INCREMENT';
+
+      if (value.startsWith('(') && value.endsWith(')')) {
+        value = value.slice(1, -1);
+      }
+
+      if (value.startsWith("'") && value.endsWith("'")) {
+        value = value.slice(1, -1);
+      }
+
+      if (Number.isNaN(Number(value))) return String(value);
+
+      return Number(value);
     }
   }
 
