@@ -38,6 +38,22 @@ export default class MSSQL implements SchemaInspector {
     this.knex = knex;
   }
 
+  parseDefaultValue(value: string) {
+    if (!value) return null;
+
+    if (value.startsWith('(') && value.endsWith(')')) {
+      value = value.slice(1, -1);
+    }
+
+    if (value.startsWith("'") && value.endsWith("'")) {
+      value = value.slice(1, -1);
+    }
+
+    if (Number.isNaN(Number(value))) return String(value);
+
+    return Number(value);
+  }
+
   // Tables
   // ===============================================================================================
 
@@ -260,7 +276,7 @@ export default class MSSQL implements SchemaInspector {
         name: rawColumn.COLUMN_NAME,
         table: rawColumn.TABLE_NAME,
         data_type: rawColumn.DATA_TYPE,
-        default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
+        default_value: this.parseDefaultValue(rawColumn.COLUMN_DEFAULT),
         max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
         numeric_precision: rawColumn.NUMERIC_PRECISION,
         numeric_scale: rawColumn.NUMERIC_SCALE,
@@ -281,7 +297,7 @@ export default class MSSQL implements SchemaInspector {
           name: rawColumn.COLUMN_NAME,
           table: rawColumn.TABLE_NAME,
           data_type: rawColumn.DATA_TYPE,
-          default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
+          default_value: this.parseDefaultValue(rawColumn.COLUMN_DEFAULT),
           max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
           numeric_precision: rawColumn.NUMERIC_PRECISION,
           numeric_scale: rawColumn.NUMERIC_SCALE,
@@ -294,22 +310,6 @@ export default class MSSQL implements SchemaInspector {
         };
       }
     ) as Column[];
-
-    function parseDefault(value: string) {
-      if (!value) return null;
-
-      if (value.startsWith('(') && value.endsWith(')')) {
-        value = value.slice(1, -1);
-      }
-
-      if (value.startsWith("'") && value.endsWith("'")) {
-        value = value.slice(1, -1);
-      }
-
-      if (Number.isNaN(Number(value))) return String(value);
-
-      return Number(value);
-    }
   }
 
   /**
