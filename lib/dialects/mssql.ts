@@ -27,9 +27,29 @@ type RawColumn = {
 
 export default class MSSQL implements SchemaInspector {
   knex: Knex;
+  _schema?: string;
 
   constructor(knex: Knex) {
     this.knex = knex;
+  }
+
+  // MS SQL specific
+  // ===============================================================================================
+
+  /**
+   * Set the schema to be used in other methods
+   */
+  withSchema(schema: string) {
+    this.schema = schema;
+    return this;
+  }
+
+  get schema() {
+    return this._schema || 'dbo';
+  }
+
+  set schema(value: string) {
+    this._schema = value;
   }
 
   parseDefaultValue(value: string | null) {
@@ -61,6 +81,7 @@ export default class MSSQL implements SchemaInspector {
       .where({
         TABLE_TYPE: 'BASE TABLE',
         TABLE_CATALOG: this.knex.client.database(),
+        TABLE_SCHEMA: this.schema,
       });
     return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
@@ -78,6 +99,7 @@ export default class MSSQL implements SchemaInspector {
       .where({
         TABLE_CATALOG: this.knex.client.database(),
         TABLE_TYPE: 'BASE TABLE',
+        TABLE_SCHEMA: this.schema,
       });
 
     if (table) {
@@ -115,6 +137,7 @@ export default class MSSQL implements SchemaInspector {
       .where({
         TABLE_CATALOG: this.knex.client.database(),
         table_name: table,
+        TABLE_SCHEMA: this.schema,
       })
       .first();
     return (result && result.count === 1) || false;
@@ -133,7 +156,10 @@ export default class MSSQL implements SchemaInspector {
         'COLUMN_NAME'
       )
       .from('INFORMATION_SCHEMA.COLUMNS')
-      .where({ TABLE_CATALOG: this.knex.client.database() });
+      .where({
+        TABLE_CATALOG: this.knex.client.database(),
+        TABLE_SCHEMA: this.schema,
+      });
 
     if (table) {
       query.andWhere({ TABLE_NAME: table });
@@ -207,7 +233,8 @@ export default class MSSQL implements SchemaInspector {
       )
       .joinRaw(
         `LEFT JOIN [sys].[foreign_key_columns] AS [fk] ON [fk].[parent_object_id] = [c].[object_id] AND [fk].[parent_column_id] = [c].[column_id]`
-      );
+      )
+      .where({ 's.name': this.schema });
 
     if (table) {
       query.andWhere({ 'o.name': table });
@@ -259,6 +286,7 @@ export default class MSSQL implements SchemaInspector {
         TABLE_CATALOG: this.knex.client.database(),
         TABLE_NAME: table,
         COLUMN_NAME: column,
+        TABLE_SCHEMA: this.schema,
       })
       .first();
     return !!count;
@@ -278,8 +306,11 @@ export default class MSSQL implements SchemaInspector {
          Col.Constraint_Name = Tab.Constraint_Name
          AND Col.Table_Name = Tab.Table_Name
          AND Constraint_Type = 'PRIMARY KEY'
-         AND Col.Table_Name = '${table}'`
+         AND Col.Table_Name = ?
+         AND Tab.CONSTRAINT_SCHEMA = ?`,
+      [table, this.schema]
     );
+
     const columnName = results.length > 0 ? results[0]['Column_Name'] : null;
     return columnName as string;
   }
