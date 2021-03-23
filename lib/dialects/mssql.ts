@@ -10,25 +10,19 @@ type RawTable = {
 };
 
 type RawColumn = {
-  TABLE_NAME: string;
-  COLUMN_NAME: string;
-  COLUMN_DEFAULT: any | null;
-  DATA_TYPE: string;
-  CHARACTER_MAXIMUM_LENGTH: number | null;
-  NUMERIC_PRECISION: number | null;
-  NUMERIC_SCALE: number | null;
-  IS_NULLABLE: 'YES' | 'NO';
-  IS_UNIQUE: 'YES' | 'NO';
-  COLLATION_NAME: string | null;
-  CONSTRAINT_TABLE_NAME: string | null;
-  CONSTRAINT_COLUMN_NAME: string | null;
-  EXTRA: number | null;
-  UPDATE_RULE: string | null;
-  DELETE_RULE: string | null;
-
-  /** @TODO Extend with other possible values */
-  COLUMN_KEY: 'PRI' | null;
-  PK_SET: 'PRIMARY' | null;
+  table: string;
+  name: string;
+  data_type: string;
+  max_length: number | null;
+  numeric_precision: number | null;
+  numeric_scale: number | null;
+  is_nullable: 'YES' | 'NO';
+  default_value: string | null;
+  is_unique: 'YES' | 'NO';
+  is_primary_key: 'YES' | 'NO';
+  has_auto_increment: 'YES' | 'NO';
+  foreign_key_table: string | null;
+  foreign_key_column: string | null;
 };
 
 export default class MSSQL implements SchemaInspector {
@@ -38,7 +32,7 @@ export default class MSSQL implements SchemaInspector {
     this.knex = knex;
   }
 
-  parseDefaultValue(value: string) {
+  parseDefaultValue(value: string | null) {
     if (!value) return null;
 
     if (value.startsWith('(') && value.endsWith(')')) {
@@ -161,131 +155,78 @@ export default class MSSQL implements SchemaInspector {
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
     const dbName = this.knex.client.database();
+
     const query = this.knex
       .select(
-        'c.TABLE_NAME',
-        'c.COLUMN_NAME',
-        'c.COLUMN_DEFAULT',
-        'c.DATA_TYPE',
-        'c.CHARACTER_MAXIMUM_LENGTH',
-        'c.NUMERIC_PRECISION',
-        'c.NUMERIC_SCALE',
-        'c.IS_NULLABLE',
-        'c.COLLATION_NAME',
-        'pk.CONSTRAINT_TABLE_NAME',
-        'pk.CONSTRAINT_COLUMN_NAME',
-        'pk.CONSTRAINT_NAME',
-        'pk.PK_SET',
-        'rc.UPDATE_RULE',
-        'rc.DELETE_RULE',
-        'rc.MATCH_OPTION',
-        'cu.IS_UNIQUE'
+        this.knex.raw(`
+        [o].[name] AS [table],
+        [c].[name] AS [name],
+        [t].[name] AS [data_type],
+        [c].[max_length] AS [max_length],
+        [c].[precision] AS [numeric_precision],
+        [c].[scale] AS [numeric_scale],
+        CASE WHEN [c].[is_nullable] = 0 THEN
+          'NO'
+        ELSE
+          'YES'
+        END AS [is_nullable],
+        object_definition ([c].[default_object_id]) AS default_value,
+        CASE [i].[is_unique]
+        WHEN 1 THEN
+          'YES'
+        ELSE
+          'NO'
+        END AS [is_unique],
+        CASE [i].[is_primary_key]
+        WHEN 1 THEN
+          'YES'
+        ELSE
+          'NO'
+        END AS [is_primary_key],
+        CASE [c].[is_identity]
+        WHEN 1 THEN
+          'YES'
+        ELSE
+          'NO'
+        END AS [has_auto_increment],
+        OBJECT_NAME ([fk].[referenced_object_id]) AS [foreign_key_table],
+        COL_NAME ([fk].[referenced_object_id],
+          [fk].[referenced_column_id]) AS [foreign_key_column]`)
       )
-      .from(dbName + '.INFORMATION_SCHEMA.COLUMNS AS c')
+      .from(this.knex.raw(`??.[sys].[columns] [c]`, [dbName]))
       .joinRaw(
-        `
-         LEFT JOIN (
-           SELECT
-             CONSTRAINT_NAME AS CONSTRAINT_NAME,
-             TABLE_NAME AS CONSTRAINT_TABLE_NAME,
-             COLUMN_NAME AS CONSTRAINT_COLUMN_NAME,
-             CONSTRAINT_CATALOG,
-             CONSTRAINT_SCHEMA,
-             PK_SET = CASE WHEN CONSTRAINT_NAME LIKE '%pk%'
-             THEN 'PRIMARY'
-             ELSE NULL
-             END
-           FROM ${dbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-         ) as pk
-           ON [c].[TABLE_NAME] = [pk].[CONSTRAINT_TABLE_NAME]
-           AND [c].[TABLE_CATALOG] = [pk].[CONSTRAINT_CATALOG]
-           AND [c].[COLUMN_NAME] = [pk].[CONSTRAINT_COLUMN_NAME]
-         `
+        `JOIN [sys].[types] [t] ON [c].[user_type_id] = [t].[user_type_id]`
       )
+      .joinRaw(`JOIN [sys].[tables] [o] ON [o].[object_id] = [c].[object_id]`)
+      .joinRaw(`JOIN [sys].[schemas] [s] ON [s].[schema_id] = [o].[schema_id]`)
       .joinRaw(
-        `
-         LEFT JOIN (
-           SELECT
-             CONSTRAINT_NAME,
-             CONSTRAINT_CATALOG,
-             CONSTRAINT_SCHEMA,
-             MATCH_OPTION,
-             DELETE_RULE,
-             UPDATE_RULE
-           FROM ${dbName}.INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-         ) AS rc
-         ON [pk].[CONSTRAINT_NAME] = [rc].[CONSTRAINT_NAME]
-         AND [pk].[CONSTRAINT_CATALOG] = [rc].[CONSTRAINT_CATALOG]
-         AND [pk].[CONSTRAINT_SCHEMA] = [rc].[CONSTRAINT_SCHEMA]
-       `
+        `LEFT JOIN [sys].[index_columns] [ic] ON [ic].[object_id] = [c].[object_id] AND [ic].[column_id] = [c].[column_id]`
       )
       .joinRaw(
-        `
-         LEFT JOIN (
-           SELECT
-             COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') AS EXTRA,
-             TABLE_NAME,
-             COLUMN_NAME,
-             TABLE_CATALOG
-           FROM
-             INFORMATION_SCHEMA.COLUMNS
-           WHERE
-             COLUMNPROPERTY(object_id(TABLE_NAME), COLUMN_NAME, 'IsIdentity') = 1) AS ac
-             ON [c].[TABLE_NAME] = [ac].[TABLE_NAME]
-             AND [c].[TABLE_CATALOG] = [ac].[TABLE_CATALOG]
-             AND [c].[COLUMN_NAME] = [ac].[COLUMN_NAME]
-         `
+        `LEFT JOIN [sys].[indexes] AS [i] ON [i].[object_id] = [c].[object_id] AND [i].[index_id] = [ic].[index_id]`
       )
       .joinRaw(
-        `
-         LEFT JOIN (
-           SELECT
-             Tab.*,
-             IS_UNIQUE = CASE
-             WHEN CONSTRAINT_TYPE = 'UNIQUE'
-             THEN 'YES'
-             ELSE NULL
-             END
-             FROM
-               INFORMATION_SCHEMA.TABLE_CONSTRAINTS Tab,
-               INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE Col
-             WHERE
-               Col.Constraint_Name = Tab.Constraint_Name
-               AND Col.Table_Name = Tab.Table_Name
-               AND Tab.CONSTRAINT_TYPE = 'UNIQUE'
-         ) AS cu
-         ON [c].[TABLE_NAME] = [cu].[Table_Name]
-         AND [c].[COLUMN_NAME] = [cu].[Constraint_Name]
-         AND [c].[TABLE_CATALOG] =[cu].[TABLE_CATALOG]
-         `
-      )
-      .where({
-        'c.TABLE_CATALOG': this.knex.client.database(),
-      });
+        `LEFT JOIN [sys].[foreign_key_columns] AS [fk] ON [fk].[parent_object_id] = [c].[object_id] AND [fk].[parent_column_id] = [c].[column_id]`
+      );
 
     if (table) {
-      query.andWhere({ 'c.TABLE_NAME': table });
+      query.andWhere({ 'o.name': table });
     }
 
     if (column) {
       const rawColumn: RawColumn = await query
-        .andWhere({ 'c.column_name': column })
+        .andWhere({ 'c.name': column })
         .first();
 
       return {
-        name: rawColumn.COLUMN_NAME,
-        table: rawColumn.TABLE_NAME,
-        data_type: rawColumn.DATA_TYPE,
-        default_value: this.parseDefaultValue(rawColumn.COLUMN_DEFAULT),
-        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-        numeric_precision: rawColumn.NUMERIC_PRECISION,
-        numeric_scale: rawColumn.NUMERIC_SCALE,
-        is_nullable: rawColumn.IS_NULLABLE === 'YES',
-        is_unique: rawColumn.IS_UNIQUE === 'YES',
-        is_primary_key: rawColumn.PK_SET === 'PRIMARY',
-        has_auto_increment: rawColumn.PK_SET === 'PRIMARY',
-        foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
-        foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
+        ...rawColumn,
+        default_value: this.parseDefaultValue(rawColumn.default_value),
+        is_unique: rawColumn.is_unique === 'YES',
+        is_primary_key: rawColumn.is_primary_key === 'YES',
+        is_nullable: rawColumn.is_nullable === 'YES',
+        has_auto_increment: rawColumn.has_auto_increment === 'YES',
+        numeric_precision: rawColumn.numeric_precision || null,
+        numeric_scale: rawColumn.numeric_precision || null,
       } as Column;
     }
 
@@ -294,20 +235,15 @@ export default class MSSQL implements SchemaInspector {
     return records.map(
       (rawColumn): Column => {
         return {
-          name: rawColumn.COLUMN_NAME,
-          table: rawColumn.TABLE_NAME,
-          data_type: rawColumn.DATA_TYPE,
-          default_value: this.parseDefaultValue(rawColumn.COLUMN_DEFAULT),
-          max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          numeric_precision: rawColumn.NUMERIC_PRECISION,
-          numeric_scale: rawColumn.NUMERIC_SCALE,
-          is_nullable: rawColumn.IS_NULLABLE === 'YES',
-          is_unique: rawColumn.IS_UNIQUE === 'YES',
-          is_primary_key: rawColumn.PK_SET === 'PRIMARY',
-          has_auto_increment: rawColumn.PK_SET === 'PRIMARY',
-          foreign_key_column: rawColumn.CONSTRAINT_COLUMN_NAME,
-          foreign_key_table: rawColumn.CONSTRAINT_TABLE_NAME,
-        };
+          ...rawColumn,
+          default_value: this.parseDefaultValue(rawColumn.default_value),
+          is_unique: rawColumn.is_unique === 'YES',
+          is_primary_key: rawColumn.is_primary_key === 'YES',
+          is_nullable: rawColumn.is_nullable === 'YES',
+          has_auto_increment: rawColumn.has_auto_increment === 'YES',
+          numeric_precision: rawColumn.numeric_precision || null,
+          numeric_scale: rawColumn.numeric_precision || null,
+        } as Column;
       }
     ) as Column[];
   }
