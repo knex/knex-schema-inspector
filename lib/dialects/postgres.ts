@@ -226,14 +226,14 @@ export default class Postgres implements SchemaInspector {
           .as('is_primary'),
 
         knex
-          .select(knex.raw(`'YES'`))
+          .select(knex.raw(`case when count(1) >0 then 'YES' else null end`))
           .from('pg_index')
           .join('pg_attribute', function () {
             this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
               knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
             );
           })
-          .whereRaw('pg_index.indrelid = c.table_name::regclass')
+          .whereRaw('pg_index.indrelid = quote_ident(c.table_name)::regclass')
           .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
           .andWhere(knex.raw('pg_index.indisunique'))
           .as('is_unique'),
@@ -246,7 +246,7 @@ export default class Postgres implements SchemaInspector {
           )
           .from('pg_catalog.pg_class')
           .whereRaw(
-            `pg_catalog.pg_class.oid = (select('"' || c.table_name || '"'):: regclass:: oid)`
+            `pg_catalog.pg_class.oid = (select quote_ident(c.table_name):: regclass:: oid)`
           )
           .andWhere({ 'pg_catalog.pg_class.relname': 'c.table_name' })
           .as('column_comment'),
