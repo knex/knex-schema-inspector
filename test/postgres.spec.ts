@@ -31,8 +31,8 @@ describe('postgres-no-search-path', () => {
       expect(await inspector.tables()).to.deep.equal([
         'teams',
         'users',
-        'page_visits',
         'camelCase',
+        'page_visits',
       ]);
     });
   });
@@ -68,17 +68,17 @@ describe('postgres-no-search-path', () => {
       database.transaction(async (trx) => {
         expect(await schemaInspector(trx).columns()).to.deep.equal([
           { table: 'users', column: 'id' },
+          { table: 'page_visits', column: 'request_path' },
           { table: 'users', column: 'password' },
+          { table: 'camelCase', column: 'primaryKey' },
           { table: 'users', column: 'email' },
           { table: 'teams', column: 'uuid' },
           { table: 'page_visits', column: 'created_at' },
           { table: 'teams', column: 'credits' },
-          { table: 'page_visits', column: 'request_path' },
-          { table: 'page_visits', column: 'user_agent' },
           { table: 'teams', column: 'created_at' },
-          { table: 'camelCase', column: 'primaryKey' },
           { table: 'teams', column: 'description' },
           { table: 'teams', column: 'id' },
+          { table: 'page_visits', column: 'user_agent' },
           { table: 'users', column: 'team_id' },
           { table: 'teams', column: 'name' },
           { table: 'teams', column: 'activated_at' },
@@ -87,17 +87,17 @@ describe('postgres-no-search-path', () => {
 
       expect(await inspector.columns()).to.deep.equal([
         { table: 'users', column: 'id' },
+        { table: 'page_visits', column: 'request_path' },
         { table: 'users', column: 'password' },
+        { table: 'camelCase', column: 'primaryKey' },
         { table: 'users', column: 'email' },
         { table: 'teams', column: 'uuid' },
         { table: 'page_visits', column: 'created_at' },
         { table: 'teams', column: 'credits' },
-        { table: 'page_visits', column: 'request_path' },
-        { table: 'page_visits', column: 'user_agent' },
         { table: 'teams', column: 'created_at' },
-        { table: 'camelCase', column: 'primaryKey' },
         { table: 'teams', column: 'description' },
         { table: 'teams', column: 'id' },
+        { table: 'page_visits', column: 'user_agent' },
         { table: 'users', column: 'team_id' },
         { table: 'teams', column: 'name' },
         { table: 'teams', column: 'activated_at' },
@@ -124,7 +124,7 @@ describe('postgres-no-search-path', () => {
           name: 'primaryKey',
           table: 'camelCase',
           data_type: 'integer',
-          default_value: 'nextval(\'"camelCase_id_seq"\'::regclass)',
+          default_value: 'nextval(\'"camelCase_primaryKey_seq"\'::regclass)',
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
