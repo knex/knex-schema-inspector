@@ -20,6 +20,11 @@ create table users (
     references teams (id)
 );
 
+-- One table with camelCase naming
+create table camelCase (
+  primaryKey serial primary key
+)
+
 -- One table without a primary key
 create table page_visits (
   request_path varchar(100),
