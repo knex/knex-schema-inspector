@@ -15,6 +15,9 @@ create table teams (
 -- Generate ID using sequence and trigger
 create sequence teams_seq start with 1 increment by 1;
 
+-- Add column comment
+comment on column teams.credits is 'Remaining usage credits';
+
 create or replace trigger teams_seq_tr
  before insert on teams for each row
  when (new.id is null)
