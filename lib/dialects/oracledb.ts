@@ -5,7 +5,6 @@ import { Column } from '../types/column';
 
 type RawTable = {
   TABLE_NAME: string;
-  SCHEMA_NAME: string;
 };
 
 type RawColumn = {
@@ -16,14 +15,10 @@ type RawColumn = {
   DATA_LENGTH: number | null;
   DATA_PRECISION: number | null;
   DATA_SCALE: number | null;
-  NULLABLE: 'YES' | 'NO';
+  NULLABLE: 'Y' | 'N';
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
-  UPDATE_RULE: string | null;
-  DELETE_RULE: string | null;
-  COLUMN_KEY: 'PRI' | 'UNI' | null;
-  CONTRAINT_NAME: string | null;
   CONSTRAINT_TYPE: 'P' | 'U' | null;
 };
 
@@ -43,7 +38,7 @@ export default class oracleDB implements SchemaInspector {
   async tables() {
     const records = await this.knex
       .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
-      .from('DBA_TABLES');
+      .from('USER_TABLES');
     return records.map(({ TABLE_NAME }) => TABLE_NAME);
   }
 
@@ -54,7 +49,7 @@ export default class oracleDB implements SchemaInspector {
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
-    const query = this.knex.select('TABLE_NAME', 'OWNER').from('DBA_TABLES');
+    const query = this.knex.select('TABLE_NAME').from('USER_TABLES');
 
     if (table) {
       const rawTable: RawTable = await query
@@ -63,7 +58,6 @@ export default class oracleDB implements SchemaInspector {
 
       return {
         name: rawTable.TABLE_NAME,
-        schema: rawTable.SCHEMA_NAME,
       } as T extends string ? Table : Table[];
     }
 
@@ -73,7 +67,6 @@ export default class oracleDB implements SchemaInspector {
       (rawTable): Table => {
         return {
           name: rawTable.TABLE_NAME,
-          schema: rawTable.SCHEMA_NAME,
         };
       }
     ) as T extends string ? Table : Table[];
@@ -85,7 +78,7 @@ export default class oracleDB implements SchemaInspector {
   async hasTable(table: string): Promise<boolean> {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('DBA_TABLES')
+      .from('USER_TABLES')
       .where({ TABLE_NAME: table })
       .first();
     return (result && result.count === 1) || false;
@@ -103,10 +96,10 @@ export default class oracleDB implements SchemaInspector {
         'TABLE_NAME',
         'COLUMN_NAME'
       )
-      .from('DBA_TAB_COLUMNS');
+      .from('USER_TAB_COLUMNS');
 
     if (table) {
-      query.andWhere({ TABLE_NAME: table });
+      query.where({ TABLE_NAME: table });
     }
 
     const records = await query;
@@ -134,45 +127,67 @@ export default class oracleDB implements SchemaInspector {
         'c.DATA_PRECISION',
         'c.DATA_SCALE',
         'c.NULLABLE',
-        'pk.CONSTRAINT_NAME',
+        'cm.COMMENTS as COLUMN_COMMENT',
         'pk.CONSTRAINT_TYPE',
-        'cm.COMMENTS AS COLUMN_COMMENT',
-        'fk.TABLE_NAME as REFERENCE_TABLE_NAME',
-        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME',
-        'rc.DELETE_RULE',
-        'rc.SEARCH_CONDITION'
+        'fk.REFERENCED_TABLE_NAME',
+        'fk.REFERENCED_COLUMN_NAME'
       )
-      .from('DBA_TAB_COLUMNS as c')
-      .leftJoin('DBA_COL_COMMENTS as cm', function () {
-        this.on('c.TABLE_NAME', '=', 'cm.TABLE_NAME')
-          .andOn('cm.COLUMN_NAME', '=', 'c.COLUMN_NAME')
-          .andOn('cm.OWNER', '=', 'c.OWNER');
+      .from('USER_TAB_COLUMNS as c')
+      .leftJoin('USER_COL_COMMENTS as cm', {
+        'c.TABLE_NAME': 'cm.TABLE_NAME',
+        'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
-      .leftJoin('all_constraints  as pk', function () {
-        this.on('c.TABLE_NAME', '=', 'pk.TABLE_NAME')
-          .andOn('c.CONSTRAINT_NAME', '=', 'pk.CONSTRAINT_NAME')
-          .andOn('c.OWNER', '=', 'pk.OWNER');
-      })
-      .where({ 'pk.CONSTRAINT_TYPE': 'P' })
-      .leftJoin('all_constraints  as fk', function () {
-        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
-          .andOn('c.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
-          .andOn('c.OWNER', '=', 'fk.OWNER');
-      })
-      .where({ 'fk.CONSTRAINT_TYPE': 'R' })
-      .leftJoin('all_constraints  as rc', function () {
-        this.on('c.TABLE_NAME', '=', 'rc.TABLE_NAME')
-          .andOn('c.CONSTRAINT_NAME', '=', 'rc.CONSTRAINT_NAME')
-          .andOn('c.OWNER', '=', 'rc.OWNER');
-      });
+      .leftJoin(
+        this.knex
+          .select('uc.CONSTRAINT_TYPE', 'uc.TABLE_NAME', 'cc.COLUMN_NAME')
+          .from('USER_CONSTRAINTS as uc')
+          .join(
+            'USER_CONS_COLUMNS as cc',
+            'uc.CONSTRAINT_NAME',
+            'cc.CONSTRAINT_NAME'
+          )
+          .where('uc.CONSTRAINT_TYPE', 'in', ['P', 'U'])
+          .as('pk'),
+        {
+          'c.TABLE_NAME': 'pk.TABLE_NAME',
+          'c.COLUMN_NAME': 'pk.COLUMN_NAME',
+        }
+      )
+      .leftJoin(
+        this.knex
+          .select(
+            'uc.TABLE_NAME',
+            'cc.COLUMN_NAME',
+            'rc.TABLE_NAME as REFERENCED_TABLE_NAME',
+            'rc.COLUMN_NAME as REFERENCED_COLUMN_NAME'
+          )
+          .from('USER_CONSTRAINTS as uc')
+          .as('uc')
+          .join(
+            'USER_CONS_COLUMNS as cc',
+            'uc.CONSTRAINT_NAME',
+            'cc.CONSTRAINT_NAME'
+          )
+          .join(
+            'USER_CONS_COLUMNS as rc',
+            'uc.R_CONSTRAINT_NAME',
+            'rc.CONSTRAINT_NAME'
+          )
+          .where('uc.CONSTRAINT_TYPE', 'R')
+          .as('fk'),
+        {
+          'c.TABLE_NAME': 'fk.TABLE_NAME',
+          'c.COLUMN_NAME': 'fk.COLUMN_NAME',
+        }
+      );
 
     if (table) {
-      query.andWhere({ 'c.TABLE_NAME': table });
+      query.where({ 'c.TABLE_NAME': table });
     }
 
     if (column) {
       const rawColumn: RawColumn = await query
-        .andWhere({ 'c.column_name': column })
+        .andWhere({ 'c.COLUMN_NAME': column })
         .first();
 
       return {
@@ -183,7 +198,7 @@ export default class oracleDB implements SchemaInspector {
         max_length: rawColumn.DATA_LENGTH,
         numeric_precision: rawColumn.DATA_PRECISION,
         numeric_scale: rawColumn.DATA_SCALE,
-        is_nullable: rawColumn.NULLABLE === 'YES',
+        is_nullable: rawColumn.NULLABLE === 'Y',
         is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
         is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
         foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
@@ -201,13 +216,12 @@ export default class oracleDB implements SchemaInspector {
           table: rawColumn.TABLE_NAME,
           data_type: rawColumn.DATA_TYPE,
           default_value: rawColumn.DATA_DEFAULT,
-          max_length: rawColumn.DATA_DEFAULT,
+          max_length: rawColumn.DATA_LENGTH,
           numeric_precision: rawColumn.DATA_PRECISION,
           numeric_scale: rawColumn.DATA_SCALE,
-          is_nullable: rawColumn.NULLABLE === 'YES',
+          is_nullable: rawColumn.NULLABLE === 'Y',
           is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
           is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
-          has_auto_increment: rawColumn.DATA_DEFAULT,
           foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
           foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
           comment: rawColumn.COLUMN_COMMENT,
@@ -222,11 +236,10 @@ export default class oracleDB implements SchemaInspector {
   async hasColumn(table: string, column: string): Promise<boolean> {
     const { count } = this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('DBA_TAB_COLUMNS')
+      .from('USER_TAB_COLUMNS')
       .where({
-        table_schema: this.knex.client.database(),
-        table_name: table,
-        column_name: column,
+        TABLE_NAME: table,
+        COLUMN_NAME: column,
       })
       .first();
     return !!count;
@@ -237,16 +250,19 @@ export default class oracleDB implements SchemaInspector {
    */
 
   async primary(table: string): Promise<string> {
-    const { column_name } = await this.knex
-      .select('all_constraints.column_name')
-      .from('all_constraints')
-
+    const result = await this.knex
+      .select('cc.COLUMN_NAME')
+      .from('USER_CONSTRAINTS as uc')
+      .leftJoin(
+        'USER_CONS_COLUMNS as cc',
+        'uc.CONSTRAINT_NAME',
+        'cc.CONSTRAINT_NAME'
+      )
       .where({
-        'all_constraints.CONSTRAINT_TYPE': 'P',
-        'all_constraints.TABLE_NAME': table,
+        'uc.CONSTRAINT_TYPE': 'P',
+        'uc.TABLE_NAME': table,
       })
       .first();
-
-    return column_name;
+    return result ? result.COLUMN_NAME : null;
   }
 }
