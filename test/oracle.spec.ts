@@ -46,7 +46,6 @@ describe.skip('oracledb', () => {
     });
 
     it('returns information for specific table', async () => {
-      // prettier-ignore
       expect(await inspector.tableInfo('TEAMS'.toUpperCase())).to.deep.equal({
         name: 'TEAMS',
       });
@@ -55,9 +54,7 @@ describe.skip('oracledb', () => {
 
   describe('.hasTable', () => {
     it('returns if table exists or not', async () => {
-      // prettier-ignore
       expect(await inspector.hasTable('TEAMS')).to.equal(true);
-      // prettier-ignore
       expect(await inspector.hasTable('FOOBAR')).to.equal(false);
     });
   });
@@ -312,7 +309,6 @@ describe.skip('oracledb', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      // prettier-ignore
       expect(await inspector.columnInfo('TEAMS')).to.deep.equal([
         {
           name: 'CREDITS',
@@ -423,7 +419,6 @@ describe.skip('oracledb', () => {
     });
 
     it('returns information for a specific column in a specific table', async () => {
-      // prettier-ignore
       expect(await inspector.columnInfo('TEAMS', 'UUID')).to.deep.equal({
         name: 'UUID',
         table: 'TEAMS',
@@ -444,9 +439,7 @@ describe.skip('oracledb', () => {
 
   describe('.primary', () => {
     it('returns primary key for a table', async () => {
-      // prettier-ignore
       expect(await inspector.primary('TEAMS')).to.equal('ID');
-      // prettier-ignore
       expect(await inspector.primary('PAGE_VISITS')).to.equal(null);
     });
   });
