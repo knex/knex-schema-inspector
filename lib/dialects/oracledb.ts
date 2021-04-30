@@ -146,7 +146,7 @@ export default class oracleDB implements SchemaInspector {
             'uc.CONSTRAINT_NAME',
             'cc.CONSTRAINT_NAME'
           )
-          .where('uc.CONSTRAINT_TYPE', 'in', ['P', 'U'])
+          .whereIn('uc.CONSTRAINT_TYPE', ['P', 'U'])
           .as('pk'),
         {
           'c.TABLE_NAME': 'pk.TABLE_NAME',
