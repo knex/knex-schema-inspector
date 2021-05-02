@@ -54,7 +54,7 @@ services:
       - ORACLE_ALLOW_REMOTE=true
     shm_size: '1gb'
     working_dir: /tmp/test
-    command: sh -c './scripts/oracle-entrypoint.sh;'
+    command: sh -c './scripts/oracle-entrypoint.sh'
     volumes:
       - ./test:/tmp/test
 
