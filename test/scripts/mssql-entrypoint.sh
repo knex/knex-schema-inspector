@@ -1,4 +1,5 @@
 #!/bin/bash
+
 password=Test@123
 
 # bring up the server
@@ -7,4 +8,4 @@ password=Test@123
 # run the init script to create the DB and the tables in /table
 echo importing data...
 
-/opt/mssql-tools/bin/sqlcmd -S 0.0.0.0 -U SA -P $password -i ./seed/init-mssql.sql
+/opt/mssql-tools/bin/sqlcmd -S 127.0.0.1 -U SA -P $password -i ./seed/mssql.sql

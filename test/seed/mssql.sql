@@ -1,3 +1,6 @@
+create database test_db;
+GO
+
 USE test_db;
 GO
 
