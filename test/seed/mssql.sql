@@ -1,7 +1,8 @@
+drop database test_db;
 create database test_db;
 GO
 
-USE test_db;
+use test_db;
 GO
 
 create table teams (
