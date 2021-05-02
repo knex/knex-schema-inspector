@@ -27,7 +27,7 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=Test@123
     working_dir: /tmp/test
-    command: sh -c './scripts/mssql-entrypoint.sh'
+    command: sh -c './scripts/mssql-entrypoint.sh & /opt/mssql/bin/sqlservr'
     ports:
       - 1433:1433
     volumes:

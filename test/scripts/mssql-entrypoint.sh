@@ -3,9 +3,6 @@
 wait_time=15s
 password=Test@123
 
-# bring up the server
-/opt/mssql/bin/sqlservr &
-
 # wait for SQL Server to come up
 echo importing data will start in $wait_time...
 sleep $wait_time
