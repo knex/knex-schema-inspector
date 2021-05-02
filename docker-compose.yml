@@ -26,13 +26,13 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=Test@123
-    working_dir: /usr/src/app
-    command: sh -c ' chmod +x ./scripts/mssql-entrypoint.sh; ./scripts/mssql-entrypoint.sh & /opt/mssql/bin/sqlservr;'
+    working_dir: /tmp/test
+    command: sh -c './scripts/mssql-entrypoint.sh & /opt/mssql/bin/sqlservr'
     ports:
       - 1433:1433
     volumes:
       - mssql-volume:/var/opt/mssql/
-      - ./test:/usr/src/app
+      - ./test:/tmp/test
 
   # Note: you need to be logged in to DockerHub, and accept the EULA for oracle/database-enterprise to work
   #       ... no clue how to get around that in GH Actions for tests ...
@@ -44,14 +44,19 @@ services:
   #     - 1521:32769
   #     - 5500:32768
   #   tty: true
-  # This is wat `knex` sues, but seems to crash with "ORA-01012: not logged on"
-  # oracledbxe:
-  #   image: quillbuilduser/oracle-18-xe
-  #   container_name: oracledbxe_container
-  #   ports:
-  #     - '21521:1521'
-  #   environment:
-  #     - ORACLE_ALLOW_REMOTE=true
+
+  oracle:
+    image: quillbuilduser/oracle-18-xe-micro-sq
+    ports:
+      - 5104:1521
+    environment:
+      - OPATCH_JRE_MEMORY_OPTIONS=-Xms128m -Xmx256m -XX:PermSize=16m -XX:MaxPermSize=32m -Xss1m
+      - ORACLE_ALLOW_REMOTE=true
+    shm_size: '1gb'
+    working_dir: /tmp/test
+    command: sh -c './scripts/oracle-entrypoint.sh'
+    volumes:
+      - ./test:/tmp/test
 
 volumes:
   mssql-volume:

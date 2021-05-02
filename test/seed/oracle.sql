@@ -1,6 +1,3 @@
-create user db_test identified by db_test;
-alter session set current_schema = db_test;
-
 create table teams (
   id number(10) not null primary key,
   uuid char(36) not null,

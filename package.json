@@ -8,7 +8,7 @@
     "build": "tsc --build",
     "prepare": "npm run build",
     "lint": "prettier --check .",
-    "test": "npm run lint && ts-mocha test/**/*.spec.ts"
+    "test": "npm run lint && ts-mocha test/**/*.spec.ts --timeout 10000"
   },
   "repository": {
     "type": "git",
