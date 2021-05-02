@@ -14,8 +14,19 @@ jobs:
       matrix:
         node-version: [14.x]
 
+    env:
+      LD_LIBRARY_PATH: /opt/oracle/instantclient_21_1
+
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install Oracle client
+        run: |
+          apt install unzip
+          wget -q https://download.oracle.com/otn_software/linux/instantclient/211000/instantclient-basiclite-linux.x64-21.1.0.0.0.zip
+          mkdir -p /opt/oracle
+          unzip -qo instantclient-basiclite-linux.x64-21.1.0.0.0.zip -d /opt/oracle
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
