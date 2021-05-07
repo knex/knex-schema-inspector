@@ -599,4 +599,25 @@ describe('postgres-with-search-path', () => {
       });
     });
   });
+
+  describe('.foreignKeys', () => {
+    it('returns foreign keys for all tables', async () => {
+      expect(await inspector.foreignKeys()).to.deep.equal([
+        {
+          table: 'users',
+          column: 'team_id',
+          foreign_key_schema: 'public',
+          foreign_key_table: 'teams',
+          foreign_key_column: 'id',
+          constraint_name: 'fk_team_id',
+          on_delete: 'CASCADE',
+          on_update: 'CASCADE',
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
+    });
+  });
 });

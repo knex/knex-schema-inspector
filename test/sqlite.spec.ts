@@ -61,12 +61,14 @@ describe('sqlite', () => {
           name: 'users',
           sql:
             'CREATE TABLE "users" (\n' +
-            '\t"id"\tINTEGER NOT NULL,\n' +
-            '\t"team_id"\tinteger NOT NULL,\n' +
-            '\t"email"\tvarchar(100),\n' +
-            '\t"password"\tvarchar(60),\n' +
+            '\t"id" INTEGER NOT NULL,\n' +
+            '\t"team_id" integer NOT NULL,\n' +
+            '\t"email" varchar(100),\n' +
+            '\t"password" varchar(60),\n' +
             '\tPRIMARY KEY("id" AUTOINCREMENT),\n' +
             '\tFOREIGN KEY("team_id") REFERENCES "teams"("id")\n' +
+            '\tON UPDATE CASCADE\n' +
+            '\tON DELETE CASCADE\n' +
             ')',
         },
       ]);
@@ -479,6 +481,26 @@ describe('sqlite', () => {
     it('returns primary key for a table', async () => {
       expect(await inspector.primary('teams')).to.equal('id');
       expect(await inspector.primary('page_visits')).to.equal(null);
+    });
+  });
+
+  describe('.foreignKeys', () => {
+    it('returns foreign keys for all tables', async () => {
+      expect(await inspector.foreignKeys()).to.deep.equal([
+        {
+          table: 'users',
+          column: 'team_id',
+          foreign_key_table: 'teams',
+          foreign_key_column: 'id',
+          constraint_name: null,
+          on_delete: 'CASCADE',
+          on_update: 'CASCADE',
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
     });
   });
 });
