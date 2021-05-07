@@ -458,4 +458,24 @@ describe('oracledb', () => {
       expect(await inspector.primary('PAGE_VISITS')).to.equal(null);
     });
   });
+
+  describe('.foreignKeys', () => {
+    it('returns foreign keys for all tables', async () => {
+      expect(await inspector.foreignKeys()).to.deep.equal([
+        {
+          table: 'USERS',
+          column: 'TEAM_ID',
+          foreign_key_table: 'TEAMS',
+          foreign_key_column: 'ID',
+          constraint_name: 'FK_TEAM_ID',
+          on_delete: 'CASCADE',
+          on_update: null,
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
+    });
+  });
 });

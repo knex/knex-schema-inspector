@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
+import { ForeignKey } from '../types/foreign-key';
 
 type RawTable = {
   table_name: string;
@@ -386,5 +387,99 @@ export default class Postgres implements SchemaInspector {
       .first();
 
     return result ? result.column_name : null;
+  }
+
+  // Foreign Keys
+  // ===============================================================================================
+
+  async foreignKeys(table?: string) {
+    const result = await this.knex.raw<{ rows: ForeignKey[] }>(`
+      SELECT
+        c.conrelid::regclass::text AS "table",
+        (
+          SELECT
+            STRING_AGG(QUOTE_IDENT(a.attname), ','
+            ORDER BY
+              t.seq)
+          FROM (
+            SELECT
+              ROW_NUMBER() OVER (ROWS UNBOUNDED PRECEDING) AS seq,
+              attnum
+            FROM
+              UNNEST(c.conkey) AS t (attnum)) AS t
+          INNER JOIN pg_attribute AS a ON a.attrelid = c.conrelid
+            AND a.attnum = t.attnum) AS "column",
+        tt.name AS foreign_key_table,
+        (
+          SELECT
+            STRING_AGG(QUOTE_IDENT(a.attname), ','
+            ORDER BY
+              t.seq)
+          FROM (
+            SELECT
+              ROW_NUMBER() OVER (ROWS UNBOUNDED PRECEDING) AS seq,
+              attnum
+            FROM
+              UNNEST(c.confkey) AS t (attnum)) AS t
+        INNER JOIN pg_attribute AS a ON a.attrelid = c.confrelid
+          AND a.attnum = t.attnum) AS foreign_key_column,
+        tt.schema AS foreign_key_schema,
+        c.conname AS constraint_name,
+        CASE confupdtype
+        WHEN 'r' THEN
+          'RESTRICT'
+        WHEN 'c' THEN
+          'CASCADE'
+        WHEN 'n' THEN
+          'SET NULL'
+        WHEN 'd' THEN
+          'SET DEFAULT'
+        WHEN 'a' THEN
+          'NO ACTION'
+        ELSE
+          NULL
+        END AS on_update,
+        CASE confdeltype
+        WHEN 'r' THEN
+          'RESTRICT'
+        WHEN 'c' THEN
+          'CASCADE'
+        WHEN 'n' THEN
+          'SET NULL'
+        WHEN 'd' THEN
+          'SET DEFAULT'
+        WHEN 'a' THEN
+          'NO ACTION'
+        ELSE
+          NULL
+        END AS
+        on_delete
+      FROM
+        pg_catalog.pg_constraint AS c
+        INNER JOIN (
+          SELECT
+            pg_class.oid,
+            QUOTE_IDENT(pg_namespace.nspname) AS SCHEMA,
+            QUOTE_IDENT(pg_class.relname) AS name
+          FROM
+            pg_class
+            INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid) AS tf ON tf.oid = c.conrelid
+        INNER JOIN (
+          SELECT
+            pg_class.oid,
+            QUOTE_IDENT(pg_namespace.nspname) AS SCHEMA,
+            QUOTE_IDENT(pg_class.relname) AS name
+          FROM
+            pg_class
+            INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid) AS tt ON tt.oid = c.confrelid
+      WHERE
+        c.contype = 'f';
+    `);
+
+    if (table) {
+      return result.rows?.filter((row) => row.table === table);
+    }
+
+    return result.rows;
   }
 }

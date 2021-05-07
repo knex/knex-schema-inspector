@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
+import { ForeignKey } from '../types/foreign-key';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -288,5 +289,40 @@ export default class MySQL implements SchemaInspector {
     }
 
     return null;
+  }
+
+  // Foreign Keys
+  // ===============================================================================================
+
+  async foreignKeys(table?: string) {
+    const result = await this.knex.raw<[ForeignKey[]]>(
+      `
+      SELECT
+        rc.TABLE_NAME AS 'table',
+        kcu.COLUMN_NAME AS 'column',
+        rc.REFERENCED_TABLE_NAME AS 'foreign_key_table',
+        kcu.REFERENCED_COLUMN_NAME AS 'foreign_key_column',
+        rc.CONSTRAINT_NAME AS 'constraint_name',
+        rc.UPDATE_RULE AS on_update,
+        rc.DELETE_RULE AS on_delete
+      FROM
+        information_schema.referential_constraints AS rc
+      JOIN information_schema.key_column_usage AS kcu ON
+        rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+      WHERE
+        rc.CONSTRAINT_SCHEMA = ?;
+    `,
+      [this.knex.client.database()]
+    );
+
+    // Mapping casts "RowDataPacket" object from mysql to plain JS object
+
+    if (table) {
+      return result?.[0]
+        ?.filter((row) => row.table === table)
+        .map((row) => ({ ...row }));
+    }
+
+    return result?.[0].map((row) => ({ ...row }));
   }
 }
