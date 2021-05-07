@@ -463,11 +463,11 @@ describe('oracledb', () => {
     it('returns foreign keys for all tables', async () => {
       expect(await inspector.foreignKeys()).to.deep.equal([
         {
-          table: 'users',
-          column: 'team_id',
-          foreign_key_table: 'teams',
-          foreign_key_column: 'id',
-          constraint_name: 'fk_team_id',
+          table: 'USERS',
+          column: 'TEAM_ID',
+          foreign_key_table: 'TEAMS',
+          foreign_key_column: 'ID',
+          constraint_name: 'FK_TEAM_ID',
           on_delete: 'CASCADE',
           on_update: null,
         },
