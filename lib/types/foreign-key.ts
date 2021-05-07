@@ -5,6 +5,18 @@ export type ForeignKey = {
   foreign_key_column: string;
   foreign_key_schema?: string;
   constraint_name: string;
-  on_update: null | 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
-  on_delete: null | 'RESTRICT' | 'CASCADE' | 'SET NULL' | 'SET DEFAULT';
+  on_update:
+    | null
+    | 'NO ACTION'
+    | 'RESTRICT'
+    | 'CASCADE'
+    | 'SET NULL'
+    | 'SET DEFAULT';
+  on_delete:
+    | null
+    | 'NO ACTION'
+    | 'RESTRICT'
+    | 'CASCADE'
+    | 'SET NULL'
+    | 'SET DEFAULT';
 };

@@ -434,6 +434,8 @@ export default class Postgres implements SchemaInspector {
           'SET NULL'
         WHEN 'd' THEN
           'SET DEFAULT'
+        WHEN 'a' THEN
+          'NO ACTION'
         ELSE
           NULL
         END AS on_update,
@@ -446,6 +448,8 @@ export default class Postgres implements SchemaInspector {
           'SET NULL'
         WHEN 'd' THEN
           'SET DEFAULT'
+        WHEN 'a' THEN
+          'NO ACTION'
         ELSE
           NULL
         END AS

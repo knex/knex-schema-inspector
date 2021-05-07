@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
+import { ForeignKey } from '../types/foreign-key';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -313,5 +314,36 @@ export default class MSSQL implements SchemaInspector {
 
     const columnName = results.length > 0 ? results[0]['Column_Name'] : null;
     return columnName as string;
+  }
+
+  // Foreign Keys
+  // ===============================================================================================
+
+  async foreignKeys(table?: string) {
+    const result = await this.knex.raw<ForeignKey[]>(
+      `
+      SELECT
+        OBJECT_NAME (fc.parent_object_id) AS "table",
+          COL_NAME (fc.parent_object_id, fc.parent_column_id) AS "column",
+          OBJECT_SCHEMA_NAME (f.referenced_object_id) AS foreign_key_schema,
+          OBJECT_NAME (f.referenced_object_id) AS foreign_key_table,
+          COL_NAME (fc.referenced_object_id, fc.referenced_column_id) AS foreign_key_column,
+          f.name AS constraint_name,
+          f.update_referential_action_desc AS on_update,
+          f.delete_referential_action_desc AS on_delete
+      FROM
+        sys.foreign_keys AS f
+        INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id
+      WHERE
+        OBJECT_SCHEMA_NAME (f.parent_object_id) = ?;
+    `,
+      [this.schema]
+    );
+
+    if (table) {
+      return result?.filter((row) => row.table === table);
+    }
+
+    return result;
   }
 }
