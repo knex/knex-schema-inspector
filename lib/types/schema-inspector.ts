@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import { Table } from './table';
 import { Column } from './column';
+import { ForeignKey } from './foreign-key';
 
 export interface SchemaInspector {
   knex: Knex;
@@ -20,6 +21,8 @@ export interface SchemaInspector {
 
   hasColumn(table: string, column: string): Promise<boolean>;
   primary(table: string): Promise<string | null>;
+
+  foreignKeys(table?: string): Promise<ForeignKey[]>;
 
   // Not in MySQL
   withSchema?(schema: string): void;

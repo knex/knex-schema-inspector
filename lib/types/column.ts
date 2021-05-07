@@ -12,8 +12,8 @@ export interface Column {
   is_primary_key: boolean;
   // Hard to discern in Oracle due to triggers
   has_auto_increment?: boolean;
-  foreign_key_column: string | null;
   foreign_key_table: string | null;
+  foreign_key_column: string | null;
 
   // Not supported in SQLite or MSSQL
   comment?: string | null;
