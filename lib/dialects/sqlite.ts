@@ -5,6 +5,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import extractMaxLength from '../utils/extract-max-length';
 import extractType from '../utils/extract-type';
+import { ForeignKey } from '../types/foreign-key';
 
 type RawColumn = {
   cid: number;
@@ -14,6 +15,17 @@ type RawColumn = {
   unique: 0 | 1;
   dflt_value: any;
   pk: 0 | 1;
+};
+
+type RawForeignKey = {
+  id: number;
+  seq: number;
+  table: string;
+  from: string;
+  to: string;
+  on_update: ForeignKey['on_update'];
+  on_delete: ForeignKey['on_delete'];
+  match: string;
 };
 
 export default class SQLite implements SchemaInspector {
@@ -200,5 +212,34 @@ export default class SQLite implements SchemaInspector {
     );
     const pkColumn = columns.find((col) => col.pk !== 0);
     return pkColumn?.name || null;
+  }
+
+  // Foreign Keys
+  // ===============================================================================================
+
+  async foreignKeys(table?: string): Promise<ForeignKey[]> {
+    if (table) {
+      const keys = await this.knex.raw(`PRAGMA foreign_key_list(??)`, table);
+
+      return keys.map(
+        (key: RawForeignKey): ForeignKey => ({
+          table,
+          column: key.from,
+          foreign_key_table: key.table,
+          foreign_key_column: key.to,
+          on_update: key.on_update,
+          on_delete: key.on_delete,
+          constraint_name: null,
+        })
+      );
+    }
+
+    const tables = await this.tables();
+
+    const keysPerTable = await Promise.all(
+      tables.map(async (table) => await this.foreignKeys(table))
+    );
+
+    return flatten(keysPerTable);
   }
 }

@@ -4,7 +4,7 @@ export type ForeignKey = {
   foreign_key_table: string;
   foreign_key_column: string;
   foreign_key_schema?: string;
-  constraint_name: string;
+  constraint_name: null | string;
   on_update:
     | null
     | 'NO ACTION'
