@@ -194,6 +194,34 @@ await inspector.primary('articles');
 // => "id"
 ```
 
+### Foreign Keys
+
+Retrieve all configured foreign key constraints.
+
+```ts
+await inspector.foreignKeys();
+// => [
+//   {
+//     table: 'directus_files',
+//     column: 'folder',
+//     foreign_key_table: 'directus_folders',
+//     foreign_key_column: 'id',
+//     constraint_name: 'directus_files_folder_foreign',
+//     on_update: 'CASCADE',
+//     on_delete: 'SET NULL'
+//   },
+//   {
+//     table: 'directus_files',
+//     column: 'modified_by',
+//     foreign_key_table: 'directus_users',
+//     foreign_key_column: 'id',
+//     constraint_name: 'directus_files_modified_by_foreign',
+//     on_update: 'CASCADE',
+//     on_delete: 'SET NULL'
+//   }
+// ]
+```
+
 ### Misc.
 
 #### `withSchema(schema: string): void`
