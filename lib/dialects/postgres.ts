@@ -398,7 +398,7 @@ export default class Postgres implements SchemaInspector {
         c.conrelid::regclass::text AS "table",
         (
           SELECT
-            STRING_AGG(QUOTE_IDENT(a.attname), ','
+            STRING_AGG(a.attname, ','
             ORDER BY
               t.seq)
           FROM (
