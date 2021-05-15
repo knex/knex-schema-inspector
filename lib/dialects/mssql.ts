@@ -17,6 +17,7 @@ type RawColumn = {
   max_length: number | null;
   numeric_precision: number | null;
   numeric_scale: number | null;
+  is_computed: boolean | null;
   is_nullable: 'YES' | 'NO';
   default_value: string | null;
   is_unique: 'YES' | 'NO';
@@ -24,6 +25,7 @@ type RawColumn = {
   has_auto_increment: 'YES' | 'NO';
   foreign_key_table: string | null;
   foreign_key_column: string | null;
+  generation_expression: string | null;
 };
 
 export default class MSSQL implements SchemaInspector {
@@ -67,6 +69,25 @@ export default class MSSQL implements SchemaInspector {
     if (Number.isNaN(Number(value))) return String(value);
 
     return Number(value);
+  }
+
+  /**
+   * Converts RawColumn to Column
+   */
+  rawColumnToColumn(rawColumn: RawColumn): Column {
+    return {
+      ...rawColumn,
+      default_value:
+        this.parseDefaultValue(rawColumn.default_value) ||
+        this.parseDefaultValue(rawColumn.generation_expression),
+      is_generated: !!rawColumn.is_computed,
+      is_unique: rawColumn.is_unique === 'YES',
+      is_primary_key: rawColumn.is_primary_key === 'YES',
+      is_nullable: rawColumn.is_nullable === 'YES',
+      has_auto_increment: rawColumn.has_auto_increment === 'YES',
+      numeric_precision: rawColumn.numeric_precision || null,
+      numeric_scale: rawColumn.numeric_precision || null,
+    };
   }
 
   // Tables
@@ -218,7 +239,9 @@ export default class MSSQL implements SchemaInspector {
         END AS [has_auto_increment],
         OBJECT_NAME ([fk].[referenced_object_id]) AS [foreign_key_table],
         COL_NAME ([fk].[referenced_object_id],
-          [fk].[referenced_column_id]) AS [foreign_key_column]`)
+          [fk].[referenced_column_id]) AS [foreign_key_column],
+        [cc].[definition] as [generation_expression],
+        [cc].[is_computed]`)
       )
       .from(this.knex.raw(`??.[sys].[columns] [c]`, [dbName]))
       .joinRaw(
@@ -226,6 +249,9 @@ export default class MSSQL implements SchemaInspector {
       )
       .joinRaw(`JOIN [sys].[tables] [o] ON [o].[object_id] = [c].[object_id]`)
       .joinRaw(`JOIN [sys].[schemas] [s] ON [s].[schema_id] = [o].[schema_id]`)
+      .joinRaw(
+        `LEFT JOIN [sys].[computed_columns] AS [cc] ON [cc].[object_id] = [c].[object_id] AND [cc].[column_id] = [c].[column_id]`
+      )
       .joinRaw(
         `LEFT JOIN [sys].[index_columns] [ic] ON [ic].[object_id] = [c].[object_id] AND [ic].[column_id] = [c].[column_id]`
       )
@@ -246,34 +272,12 @@ export default class MSSQL implements SchemaInspector {
         .andWhere({ 'c.name': column })
         .first();
 
-      return {
-        ...rawColumn,
-        default_value: this.parseDefaultValue(rawColumn.default_value),
-        is_unique: rawColumn.is_unique === 'YES',
-        is_primary_key: rawColumn.is_primary_key === 'YES',
-        is_nullable: rawColumn.is_nullable === 'YES',
-        has_auto_increment: rawColumn.has_auto_increment === 'YES',
-        numeric_precision: rawColumn.numeric_precision || null,
-        numeric_scale: rawColumn.numeric_precision || null,
-      } as Column;
+      return this.rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(
-      (rawColumn): Column => {
-        return {
-          ...rawColumn,
-          default_value: this.parseDefaultValue(rawColumn.default_value),
-          is_unique: rawColumn.is_unique === 'YES',
-          is_primary_key: rawColumn.is_primary_key === 'YES',
-          is_nullable: rawColumn.is_nullable === 'YES',
-          has_auto_increment: rawColumn.has_auto_increment === 'YES',
-          numeric_precision: rawColumn.numeric_precision || null,
-          numeric_scale: rawColumn.numeric_precision || null,
-        } as Column;
-      }
-    ) as Column[];
+    return records.map(this.rawColumnToColumn.bind(this));
   }
 
   /**

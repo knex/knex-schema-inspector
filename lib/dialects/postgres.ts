@@ -17,9 +17,12 @@ type RawColumn = {
   data_type: string;
   column_default: any | null;
   character_maximum_length: number | null;
+  is_generated: 'YES' | 'NO';
   is_nullable: 'YES' | 'NO';
   is_unique: 'YES' | 'NO';
   is_primary: null | 'YES';
+  is_identity: 'YES' | 'NO';
+  generation_expression: null | string;
   numeric_precision: null | number;
   numeric_scale: null | number;
   serial: null | string;
@@ -84,6 +87,34 @@ export default class Postgres implements SchemaInspector {
     if (Number.isNaN(Number(value))) return value;
 
     return Number(value);
+  }
+
+  /**
+   * Converts RawColumn to Column
+   */
+  rawColumnToColumn(rawColumn: RawColumn): Column {
+    return {
+      name: rawColumn.column_name,
+      table: rawColumn.table_name,
+      data_type: rawColumn.data_type,
+      default_value: this.parseDefaultValue(
+        rawColumn.column_default || rawColumn.generation_expression
+      ),
+      max_length: rawColumn.character_maximum_length,
+      numeric_precision: rawColumn.numeric_precision,
+      numeric_scale: rawColumn.numeric_scale,
+      is_generated: rawColumn.is_generated === 'YES',
+      is_nullable: rawColumn.is_nullable === 'YES',
+      is_unique: rawColumn.is_unique === 'YES',
+      is_primary_key: rawColumn.is_primary === 'YES',
+      has_auto_increment:
+        rawColumn.serial !== null || rawColumn.is_identity === 'YES',
+      foreign_key_column: rawColumn.referenced_column_name,
+      foreign_key_table: rawColumn.referenced_table_name,
+      comment: rawColumn.column_comment,
+      schema: rawColumn.table_schema,
+      foreign_key_schema: rawColumn.referenced_table_schema,
+    };
   }
 
   // Tables
@@ -208,10 +239,13 @@ export default class Postgres implements SchemaInspector {
         'c.data_type',
         'c.column_default',
         'c.character_maximum_length',
+        'c.is_generated',
         'c.is_nullable',
         'c.numeric_precision',
         'c.numeric_scale',
         'c.table_schema',
+        'c.is_identity',
+        'c.generation_expression',
 
         knex
           .select(knex.raw(`'YES'`))
@@ -295,55 +329,12 @@ export default class Postgres implements SchemaInspector {
         .andWhere({ 'c.column_name': column })
         .first();
 
-      return {
-        name: rawColumn.column_name,
-        table: rawColumn.table_name,
-        data_type: rawColumn.data_type,
-        default_value: rawColumn.column_default
-          ? this.parseDefaultValue(rawColumn.column_default)
-          : null,
-        max_length: rawColumn.character_maximum_length,
-        numeric_precision: rawColumn.numeric_precision,
-        numeric_scale: rawColumn.numeric_scale,
-        is_nullable: rawColumn.is_nullable === 'YES',
-        is_unique: rawColumn.is_unique === 'YES',
-        is_primary_key: rawColumn.is_primary === 'YES',
-        has_auto_increment: rawColumn.serial !== null,
-        foreign_key_column: rawColumn.referenced_column_name,
-        foreign_key_table: rawColumn.referenced_table_name,
-        comment: rawColumn.column_comment,
-        schema: rawColumn.table_schema,
-        foreign_key_schema: rawColumn.referenced_table_schema,
-      } as T extends string ? Column : Column[];
+      return this.rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(
-      (rawColumn): Column => {
-        return {
-          name: rawColumn.column_name,
-          table: rawColumn.table_name,
-          data_type: rawColumn.data_type,
-          default_value: rawColumn.column_default
-            ? this.parseDefaultValue(rawColumn.column_default)
-            : null,
-          max_length: rawColumn.character_maximum_length,
-          numeric_precision: rawColumn.numeric_precision,
-          numeric_scale: rawColumn.numeric_scale,
-          is_nullable: rawColumn.is_nullable === 'YES',
-          is_unique: rawColumn.is_unique === 'YES',
-          is_primary_key: rawColumn.is_primary === 'YES',
-          has_auto_increment: rawColumn.serial !== null,
-          foreign_key_column: rawColumn.referenced_column_name,
-          foreign_key_table: rawColumn.referenced_table_name,
-
-          comment: rawColumn.column_comment,
-          schema: rawColumn.table_schema,
-          foreign_key_schema: rawColumn.referenced_table_schema,
-        };
-      }
-    ) as T extends string ? Column : Column[];
+    return records.map(this.rawColumnToColumn.bind(this));
   }
 
   /**

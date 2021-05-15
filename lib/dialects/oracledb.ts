@@ -21,6 +21,8 @@ type RawColumn = {
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
   CONSTRAINT_TYPE: 'P' | 'U' | null;
+  VIRTUAL_COLUMN: 'YES' | 'NO';
+  IDENTITY_COLUMN: 'YES' | 'NO';
 };
 
 export default class oracleDB implements SchemaInspector {
@@ -112,6 +114,29 @@ export default class oracleDB implements SchemaInspector {
   }
 
   /**
+   * Converts RawColumn to Column
+   */
+  rawColumnToColumn(rawColumn: RawColumn): Column {
+    return {
+      name: rawColumn.COLUMN_NAME,
+      table: rawColumn.TABLE_NAME,
+      data_type: rawColumn.DATA_TYPE,
+      default_value: rawColumn.DATA_DEFAULT,
+      max_length: rawColumn.DATA_LENGTH,
+      numeric_precision: rawColumn.DATA_PRECISION,
+      numeric_scale: rawColumn.DATA_SCALE,
+      is_generated: rawColumn.VIRTUAL_COLUMN === 'YES',
+      is_nullable: rawColumn.NULLABLE === 'Y',
+      is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
+      is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
+      has_auto_increment: rawColumn.IDENTITY_COLUMN === 'YES',
+      foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+      foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+      comment: rawColumn.COLUMN_COMMENT,
+    };
+  }
+
+  /**
    * Get the column info for all columns, columns in a given table, or a specific column.
    */
   columnInfo(): Promise<Column[]>;
@@ -128,6 +153,8 @@ export default class oracleDB implements SchemaInspector {
         'c.DATA_PRECISION',
         'c.DATA_SCALE',
         'c.NULLABLE',
+        'c.IDENTITY_COLUMN',
+        'c.VIRTUAL_COLUMN',
         'cm.COMMENTS as COLUMN_COMMENT',
         'pk.CONSTRAINT_TYPE',
         'fk.REFERENCED_TABLE_NAME',
@@ -191,44 +218,12 @@ export default class oracleDB implements SchemaInspector {
         .andWhere({ 'c.COLUMN_NAME': column })
         .first();
 
-      return {
-        name: rawColumn.COLUMN_NAME,
-        table: rawColumn.TABLE_NAME,
-        data_type: rawColumn.DATA_TYPE,
-        default_value: rawColumn.DATA_DEFAULT,
-        max_length: rawColumn.DATA_LENGTH,
-        numeric_precision: rawColumn.DATA_PRECISION,
-        numeric_scale: rawColumn.DATA_SCALE,
-        is_nullable: rawColumn.NULLABLE === 'Y',
-        is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
-        is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
-        foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-        foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-        comment: rawColumn.COLUMN_COMMENT,
-      } as Column;
+      return this.rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(
-      (rawColumn): Column => {
-        return {
-          name: rawColumn.COLUMN_NAME,
-          table: rawColumn.TABLE_NAME,
-          data_type: rawColumn.DATA_TYPE,
-          default_value: rawColumn.DATA_DEFAULT,
-          max_length: rawColumn.DATA_LENGTH,
-          numeric_precision: rawColumn.DATA_PRECISION,
-          numeric_scale: rawColumn.DATA_SCALE,
-          is_nullable: rawColumn.NULLABLE === 'Y',
-          is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
-          is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
-          foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-          foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-          comment: rawColumn.COLUMN_COMMENT,
-        };
-      }
-    ) as Column[];
+    return records.map(this.rawColumnToColumn.bind(this));
   }
 
   /**

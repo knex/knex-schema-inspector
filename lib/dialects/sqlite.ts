@@ -15,6 +15,7 @@ type RawColumn = {
   unique: 0 | 1;
   dflt_value: any;
   pk: 0 | 1;
+  hidden: number;
 };
 
 type RawForeignKey = {
@@ -100,7 +101,7 @@ export default class SQLite implements SchemaInspector {
   async columns(table?: string): Promise<{ table: string; column: string }[]> {
     if (table) {
       const columns = await this.knex.raw<RawColumn[]>(
-        `PRAGMA table_info(??)`,
+        `PRAGMA table_xinfo(??)`,
         table
       );
       return columns.map((column) => ({
@@ -132,7 +133,7 @@ export default class SQLite implements SchemaInspector {
       ).map(({ name }) => name);
 
       const columns: RawColumn[] = await this.knex.raw(
-        `PRAGMA table_info(??)`,
+        `PRAGMA table_xxinfo(??)`,
         table
       );
 
@@ -158,6 +159,7 @@ export default class SQLite implements SchemaInspector {
             /** @NOTE SQLite3 doesn't support precision/scale */
             numeric_precision: null,
             numeric_scale: null,
+            is_generated: raw.hidden !== 0,
             is_nullable: raw.notnull === 0,
             is_unique: !!index?.unique,
             is_primary_key: raw.pk === 1,
@@ -193,7 +195,7 @@ export default class SQLite implements SchemaInspector {
   async hasColumn(table: string, column: string): Promise<boolean> {
     let isColumn = false;
     const results = await this.knex.raw(
-      `SELECT COUNT(*) AS ct FROM pragma_table_info('${table}') WHERE name='${column}'`
+      `SELECT COUNT(*) AS ct FROM pragma_table_xinfo('${table}') WHERE name='${column}'`
     );
     const resultsVal = results[0]['ct'];
     if (resultsVal !== 0) {
@@ -207,7 +209,7 @@ export default class SQLite implements SchemaInspector {
    */
   async primary(table: string) {
     const columns = await this.knex.raw<RawColumn[]>(
-      `PRAGMA table_info(??)`,
+      `PRAGMA table_xinfo(??)`,
       table
     );
     const pkColumn = columns.find((col) => col.pk !== 0);
