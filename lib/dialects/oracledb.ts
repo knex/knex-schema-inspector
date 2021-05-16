@@ -25,6 +25,26 @@ type RawColumn = {
   IDENTITY_COLUMN: 'YES' | 'NO';
 };
 
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    name: rawColumn.COLUMN_NAME,
+    table: rawColumn.TABLE_NAME,
+    data_type: rawColumn.DATA_TYPE,
+    default_value: rawColumn.DATA_DEFAULT,
+    max_length: rawColumn.DATA_LENGTH,
+    numeric_precision: rawColumn.DATA_PRECISION,
+    numeric_scale: rawColumn.DATA_SCALE,
+    is_generated: rawColumn.VIRTUAL_COLUMN === 'YES',
+    is_nullable: rawColumn.NULLABLE === 'Y',
+    is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
+    is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
+    has_auto_increment: rawColumn.IDENTITY_COLUMN === 'YES',
+    foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+    foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+    comment: rawColumn.COLUMN_COMMENT,
+  };
+}
+
 export default class oracleDB implements SchemaInspector {
   knex: Knex;
 
@@ -99,7 +119,7 @@ export default class oracleDB implements SchemaInspector {
         'TABLE_NAME',
         'COLUMN_NAME'
       )
-      .from('USER_TAB_COLUMNS');
+      .from('USER_TAB_COLS');
 
     if (table) {
       query.where({ TABLE_NAME: table });
@@ -111,29 +131,6 @@ export default class oracleDB implements SchemaInspector {
       table: TABLE_NAME,
       column: COLUMN_NAME,
     }));
-  }
-
-  /**
-   * Converts RawColumn to Column
-   */
-  rawColumnToColumn(rawColumn: RawColumn): Column {
-    return {
-      name: rawColumn.COLUMN_NAME,
-      table: rawColumn.TABLE_NAME,
-      data_type: rawColumn.DATA_TYPE,
-      default_value: rawColumn.DATA_DEFAULT,
-      max_length: rawColumn.DATA_LENGTH,
-      numeric_precision: rawColumn.DATA_PRECISION,
-      numeric_scale: rawColumn.DATA_SCALE,
-      is_generated: rawColumn.VIRTUAL_COLUMN === 'YES',
-      is_nullable: rawColumn.NULLABLE === 'Y',
-      is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
-      is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',
-      has_auto_increment: rawColumn.IDENTITY_COLUMN === 'YES',
-      foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-      foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-      comment: rawColumn.COLUMN_COMMENT,
-    };
   }
 
   /**
@@ -160,7 +157,7 @@ export default class oracleDB implements SchemaInspector {
         'fk.REFERENCED_TABLE_NAME',
         'fk.REFERENCED_COLUMN_NAME'
       )
-      .from('USER_TAB_COLUMNS as c')
+      .from('USER_TAB_COLS as c')
       .leftJoin('USER_COL_COMMENTS as cm', {
         'c.TABLE_NAME': 'cm.TABLE_NAME',
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
@@ -218,12 +215,12 @@ export default class oracleDB implements SchemaInspector {
         .andWhere({ 'c.COLUMN_NAME': column })
         .first();
 
-      return this.rawColumnToColumn(rawColumn);
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(this.rawColumnToColumn.bind(this));
+    return records.map(rawColumnToColumn);
   }
 
   /**
@@ -232,7 +229,7 @@ export default class oracleDB implements SchemaInspector {
   async hasColumn(table: string, column: string): Promise<boolean> {
     const { count } = this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('USER_TAB_COLUMNS')
+      .from('USER_TAB_COLS')
       .where({
         TABLE_NAME: table,
         COLUMN_NAME: column,

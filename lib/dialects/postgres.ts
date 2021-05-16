@@ -32,6 +32,49 @@ type RawColumn = {
   referenced_column_name: null | string;
 };
 
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    name: rawColumn.column_name,
+    table: rawColumn.table_name,
+    data_type: rawColumn.data_type,
+    default_value:
+      parseDefaultValue(rawColumn.column_default) ||
+      parseDefaultValue(rawColumn.generation_expression),
+    max_length: rawColumn.character_maximum_length,
+    numeric_precision: rawColumn.numeric_precision,
+    numeric_scale: rawColumn.numeric_scale,
+    is_generated: rawColumn.is_generated === 'YES',
+    is_nullable: rawColumn.is_nullable === 'YES',
+    is_unique: rawColumn.is_unique === 'YES',
+    is_primary_key: rawColumn.is_primary === 'YES',
+    has_auto_increment:
+      rawColumn.serial !== null || rawColumn.is_identity === 'YES',
+    foreign_key_column: rawColumn.referenced_column_name,
+    foreign_key_table: rawColumn.referenced_table_name,
+    comment: rawColumn.column_comment,
+    schema: rawColumn.table_schema,
+    foreign_key_schema: rawColumn.referenced_table_schema,
+  };
+}
+
+/**
+ * Converts Postgres default value to JS
+ * Eg `'example'::character varying` => `example`
+ */
+function parseDefaultValue(type: string | null) {
+  if (!type) return null;
+  if (type.startsWith('nextval(')) return type;
+
+  let [value, cast] = type.split('::');
+
+  value = value.replace(/^\'(.*)\'$/, '$1');
+
+  if (/json/.test(cast)) return JSON.parse(value);
+  if (/.*(char|text).*/.test(cast)) return String(value);
+
+  return isNaN(value as any) ? value : Number(value);
+}
+
 export default class Postgres implements SchemaInspector {
   knex: Knex;
   schema: string;
@@ -62,59 +105,6 @@ export default class Postgres implements SchemaInspector {
     this.schema = schema;
     this.explodedSchema = [this.schema];
     return this;
-  }
-
-  /**
-   * Converts Postgres default value to JS
-   * Eg `'example'::character varying` => `example`
-   */
-  parseDefaultValue(type: string) {
-    if (!type) return null;
-    if (type.startsWith('nextval(')) return type;
-
-    const parts = type.split('::');
-
-    let value = parts[0];
-
-    if (value.startsWith("'") && value.endsWith("'")) {
-      value = value.slice(1, -1);
-    }
-
-    if (parts[1] && parts[1].includes('json')) return JSON.parse(value);
-    if (parts[1] && (parts[1].includes('char') || parts[1].includes('text')))
-      return String(value);
-
-    if (Number.isNaN(Number(value))) return value;
-
-    return Number(value);
-  }
-
-  /**
-   * Converts RawColumn to Column
-   */
-  rawColumnToColumn(rawColumn: RawColumn): Column {
-    return {
-      name: rawColumn.column_name,
-      table: rawColumn.table_name,
-      data_type: rawColumn.data_type,
-      default_value: this.parseDefaultValue(
-        rawColumn.column_default || rawColumn.generation_expression
-      ),
-      max_length: rawColumn.character_maximum_length,
-      numeric_precision: rawColumn.numeric_precision,
-      numeric_scale: rawColumn.numeric_scale,
-      is_generated: rawColumn.is_generated === 'YES',
-      is_nullable: rawColumn.is_nullable === 'YES',
-      is_unique: rawColumn.is_unique === 'YES',
-      is_primary_key: rawColumn.is_primary === 'YES',
-      has_auto_increment:
-        rawColumn.serial !== null || rawColumn.is_identity === 'YES',
-      foreign_key_column: rawColumn.referenced_column_name,
-      foreign_key_table: rawColumn.referenced_table_name,
-      comment: rawColumn.column_comment,
-      schema: rawColumn.table_schema,
-      foreign_key_schema: rawColumn.referenced_table_schema,
-    };
   }
 
   // Tables
@@ -329,12 +319,12 @@ export default class Postgres implements SchemaInspector {
         .andWhere({ 'c.column_name': column })
         .first();
 
-      return this.rawColumnToColumn(rawColumn);
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(this.rawColumnToColumn.bind(this));
+    return records.map(rawColumnToColumn);
   }
 
   /**

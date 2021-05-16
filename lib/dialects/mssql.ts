@@ -28,6 +28,31 @@ type RawColumn = {
   generation_expression: string | null;
 };
 
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    ...rawColumn,
+    default_value:
+      parseDefaultValue(rawColumn.default_value) ||
+      parseDefaultValue(rawColumn.generation_expression),
+    is_generated: !!rawColumn.is_computed,
+    is_unique: rawColumn.is_unique === 'YES',
+    is_primary_key: rawColumn.is_primary_key === 'YES',
+    is_nullable: rawColumn.is_nullable === 'YES',
+    has_auto_increment: rawColumn.has_auto_increment === 'YES',
+    numeric_precision: rawColumn.numeric_precision || null,
+    numeric_scale: rawColumn.numeric_precision || null,
+  };
+}
+
+function parseDefaultValue(value: string | null) {
+  if (!value) return null;
+
+  value = value.replace(/^\((.*)\)$/, '$1');
+  value = value.replace(/^\'(.*)\'$/, '$1');
+
+  return isNaN(value as any) ? String(value) : Number(value);
+}
+
 export default class MSSQL implements SchemaInspector {
   knex: Knex;
   _schema?: string;
@@ -53,41 +78,6 @@ export default class MSSQL implements SchemaInspector {
 
   set schema(value: string) {
     this._schema = value;
-  }
-
-  parseDefaultValue(value: string | null) {
-    if (!value) return null;
-
-    if (value.startsWith('(') && value.endsWith(')')) {
-      value = value.slice(1, -1);
-    }
-
-    if (value.startsWith("'") && value.endsWith("'")) {
-      value = value.slice(1, -1);
-    }
-
-    if (Number.isNaN(Number(value))) return String(value);
-
-    return Number(value);
-  }
-
-  /**
-   * Converts RawColumn to Column
-   */
-  rawColumnToColumn(rawColumn: RawColumn): Column {
-    return {
-      ...rawColumn,
-      default_value:
-        this.parseDefaultValue(rawColumn.default_value) ||
-        this.parseDefaultValue(rawColumn.generation_expression),
-      is_generated: !!rawColumn.is_computed,
-      is_unique: rawColumn.is_unique === 'YES',
-      is_primary_key: rawColumn.is_primary_key === 'YES',
-      is_nullable: rawColumn.is_nullable === 'YES',
-      has_auto_increment: rawColumn.has_auto_increment === 'YES',
-      numeric_precision: rawColumn.numeric_precision || null,
-      numeric_scale: rawColumn.numeric_precision || null,
-    };
   }
 
   // Tables
@@ -272,12 +262,12 @@ export default class MSSQL implements SchemaInspector {
         .andWhere({ 'c.name': column })
         .first();
 
-      return this.rawColumnToColumn(rawColumn);
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(this.rawColumnToColumn.bind(this));
+    return records.map(rawColumnToColumn);
   }
 
   /**

@@ -133,7 +133,7 @@ export default class SQLite implements SchemaInspector {
       ).map(({ name }) => name);
 
       const columns: RawColumn[] = await this.knex.raw(
-        `PRAGMA table_xxinfo(??)`,
+        `PRAGMA table_xinfo(??)`,
         table
       );
 

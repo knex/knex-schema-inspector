@@ -33,6 +33,37 @@ type RawColumn = {
   GENERATION_EXPRESSION: string | null;
 };
 
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    name: rawColumn.COLUMN_NAME,
+    table: rawColumn.TABLE_NAME,
+    data_type: rawColumn.DATA_TYPE,
+    default_value:
+      parseDefaultValue(rawColumn.COLUMN_DEFAULT) ||
+      parseDefaultValue(rawColumn.GENERATION_EXPRESSION),
+    max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+    numeric_precision: rawColumn.NUMERIC_PRECISION,
+    numeric_scale: rawColumn.NUMERIC_SCALE,
+    is_generated: !!rawColumn.EXTRA?.endsWith('GENERATED'),
+    is_nullable: rawColumn.IS_NULLABLE === 'YES',
+    is_unique: rawColumn.COLUMN_KEY === 'UNI',
+    is_primary_key:
+      rawColumn.CONSTRAINT_NAME === 'PRIMARY' || rawColumn.COLUMN_KEY === 'PRI',
+    has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+    foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+    foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+    comment: rawColumn.COLUMN_COMMENT,
+    // onDelete: rawColumn.DELETE_RULE,
+    // onUpdate: rawColumn.UPDATE_RULE,
+  };
+}
+
+function parseDefaultValue(value: any) {
+  // MariaDB returns string NULL for not-nullable varchar fields
+  if (value === 'NULL' || value === 'null') return null;
+  return value;
+}
+
 export default class MySQL implements SchemaInspector {
   knex: Knex;
 
@@ -149,41 +180,6 @@ export default class MySQL implements SchemaInspector {
     }));
   }
 
-  parseDefaultValue(value: any) {
-    // MariaDB returns string NULL for not-nullable varchar fields
-    if (value === 'NULL' || value === 'null') return null;
-    return value;
-  }
-
-  /**
-   * Converts RawColumn to Column
-   */
-  rawColumnToColumn(rawColumn: RawColumn): Column {
-    return {
-      name: rawColumn.COLUMN_NAME,
-      table: rawColumn.TABLE_NAME,
-      data_type: rawColumn.DATA_TYPE,
-      default_value:
-        this.parseDefaultValue(rawColumn.COLUMN_DEFAULT) ||
-        this.parseDefaultValue(rawColumn.GENERATION_EXPRESSION),
-      max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-      numeric_precision: rawColumn.NUMERIC_PRECISION,
-      numeric_scale: rawColumn.NUMERIC_SCALE,
-      is_generated: !!rawColumn.EXTRA?.endsWith('GENERATED'),
-      is_nullable: rawColumn.IS_NULLABLE === 'YES',
-      is_unique: rawColumn.COLUMN_KEY === 'UNI',
-      is_primary_key:
-        rawColumn.CONSTRAINT_NAME === 'PRIMARY' ||
-        rawColumn.COLUMN_KEY === 'PRI',
-      has_auto_increment: rawColumn.EXTRA === 'auto_increment',
-      foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-      foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-      comment: rawColumn.COLUMN_COMMENT,
-      // onDelete: rawColumn.DELETE_RULE,
-      // onUpdate: rawColumn.UPDATE_RULE,
-    };
-  }
-
   /**
    * Get the column info for all columns, columns in a given table, or a specific column.
    */
@@ -240,12 +236,12 @@ export default class MySQL implements SchemaInspector {
         .andWhere({ 'c.column_name': column })
         .first();
 
-      return this.rawColumnToColumn(rawColumn);
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(this.rawColumnToColumn.bind(this));
+    return records.map(rawColumnToColumn);
   }
 
   /**
