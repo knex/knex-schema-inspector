@@ -69,7 +69,7 @@ function parseDefaultValue(type: string | null) {
 
   value = value.replace(/^\'(.*)\'$/, '$1');
 
-  if (/json/.test(cast)) return JSON.parse(value);
+  if (/.*json.*/.test(cast)) return JSON.parse(value);
   if (/.*(char|text).*/.test(cast)) return String(value);
 
   return isNaN(value as any) ? value : Number(value);
