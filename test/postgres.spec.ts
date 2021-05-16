@@ -2,7 +2,6 @@ import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
-import deepSort from '../lib/utils/deep-sort';
 
 describe('postgres-no-search-path', () => {
   let database: Knex;
@@ -29,15 +28,18 @@ describe('postgres-no-search-path', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect((await inspector.tables()).sort(deepSort)).to.deep.equal(
-        ['teams', 'users', 'camelCase', 'page_visits'].sort(deepSort)
-      );
+      expect(await inspector.tables()).to.deep.include.all.members([
+        'teams',
+        'users',
+        'camelCase',
+        'page_visits',
+      ]);
     });
   });
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.equal([
+      expect(await inspector.tableInfo()).to.deep.include.all.members([
         { name: 'camelCase', schema: 'public', comment: null },
         { name: 'page_visits', schema: 'public', comment: null },
         { name: 'teams', schema: 'public', comment: null },
@@ -65,30 +67,8 @@ describe('postgres-no-search-path', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
         expect(
-          (await schemaInspector(trx).columns()).sort(deepSort)
-        ).to.deep.equal(
-          [
-            { table: 'users', column: 'id' },
-            { table: 'page_visits', column: 'request_path' },
-            { table: 'users', column: 'password' },
-            { table: 'camelCase', column: 'primaryKey' },
-            { table: 'users', column: 'email' },
-            { table: 'teams', column: 'uuid' },
-            { table: 'page_visits', column: 'created_at' },
-            { table: 'teams', column: 'credits' },
-            { table: 'teams', column: 'created_at' },
-            { table: 'teams', column: 'description' },
-            { table: 'teams', column: 'id' },
-            { table: 'page_visits', column: 'user_agent' },
-            { table: 'users', column: 'team_id' },
-            { table: 'teams', column: 'name' },
-            { table: 'teams', column: 'activated_at' },
-          ].sort(deepSort)
-        );
-      });
-
-      expect((await inspector.columns()).sort(deepSort)).to.deep.equal(
-        [
+          await schemaInspector(trx).columns()
+        ).to.deep.include.all.members([
           { table: 'users', column: 'id' },
           { table: 'page_visits', column: 'request_path' },
           { table: 'users', column: 'password' },
@@ -104,28 +84,44 @@ describe('postgres-no-search-path', () => {
           { table: 'users', column: 'team_id' },
           { table: 'teams', column: 'name' },
           { table: 'teams', column: 'activated_at' },
-        ].sort(deepSort)
-      );
+        ]);
+      });
+
+      expect(await inspector.columns()).to.deep.include.all.members([
+        { table: 'users', column: 'id' },
+        { table: 'page_visits', column: 'request_path' },
+        { table: 'users', column: 'password' },
+        { table: 'camelCase', column: 'primaryKey' },
+        { table: 'users', column: 'email' },
+        { table: 'teams', column: 'uuid' },
+        { table: 'page_visits', column: 'created_at' },
+        { table: 'teams', column: 'credits' },
+        { table: 'teams', column: 'created_at' },
+        { table: 'teams', column: 'description' },
+        { table: 'teams', column: 'id' },
+        { table: 'page_visits', column: 'user_agent' },
+        { table: 'users', column: 'team_id' },
+        { table: 'teams', column: 'name' },
+        { table: 'teams', column: 'activated_at' },
+      ]);
     });
 
     it('returns information for specific table', async () => {
-      expect((await inspector.columns('teams')).sort(deepSort)).to.deep.equal(
-        [
-          { table: 'teams', column: 'id' },
-          { table: 'teams', column: 'uuid' },
-          { table: 'teams', column: 'name' },
-          { table: 'teams', column: 'description' },
-          { table: 'teams', column: 'credits' },
-          { table: 'teams', column: 'created_at' },
-          { table: 'teams', column: 'activated_at' },
-        ].sort(deepSort)
-      );
+      expect(await inspector.columns('teams')).to.deep.include.all.members([
+        { table: 'teams', column: 'id' },
+        { table: 'teams', column: 'uuid' },
+        { table: 'teams', column: 'name' },
+        { table: 'teams', column: 'description' },
+        { table: 'teams', column: 'credits' },
+        { table: 'teams', column: 'created_at' },
+        { table: 'teams', column: 'activated_at' },
+      ]);
     });
   });
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.equal([
+      expect(await inspector.columnInfo()).to.deep.include.all.members([
         {
           name: 'primaryKey',
           table: 'camelCase',
@@ -415,7 +411,7 @@ describe('postgres-no-search-path', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.equal([
+      expect(await inspector.columnInfo('teams')).to.deep.include.all.members([
         {
           name: 'id',
           table: 'teams',
