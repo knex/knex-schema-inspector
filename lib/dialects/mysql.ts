@@ -30,7 +30,7 @@ type RawColumn = {
   COLUMN_KEY: 'PRI' | 'UNI' | null;
   EXTRA: 'auto_increment' | 'STORED GENERATED' | 'VIRTUAL GENERATED' | null;
   CONSTRAINT_NAME: 'PRIMARY' | null;
-  GENERATION_EXPRESSION: string | null;
+  GENERATION_EXPRESSION: string;
 };
 
 function rawColumnToColumn(rawColumn: RawColumn): Column {
@@ -39,8 +39,8 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
     table: rawColumn.TABLE_NAME,
     data_type: rawColumn.DATA_TYPE,
     default_value:
-      parseDefaultValue(rawColumn.COLUMN_DEFAULT) ||
-      parseDefaultValue(rawColumn.GENERATION_EXPRESSION),
+      parseDefaultValue(rawColumn.COLUMN_DEFAULT) ??
+      parseDefaultValue(rawColumn.GENERATION_EXPRESSION || null),
     max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
     numeric_precision: rawColumn.NUMERIC_PRECISION,
     numeric_scale: rawColumn.NUMERIC_SCALE,
@@ -60,8 +60,7 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
 
 function parseDefaultValue(value: any) {
   // MariaDB returns string NULL for not-nullable varchar fields
-  if (value === 'NULL' || value === 'null') return null;
-  return value;
+  return /null|NULL/.test(value) ? null : value;
 }
 
 export default class MySQL implements SchemaInspector {

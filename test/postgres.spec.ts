@@ -2,6 +2,7 @@ import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
+import deepSort from '../lib/utils/deep-sort';
 
 describe('postgres-no-search-path', () => {
   let database: Knex;
@@ -28,12 +29,9 @@ describe('postgres-no-search-path', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.equal([
-        'teams',
-        'users',
-        'camelCase',
-        'page_visits',
-      ]);
+      expect((await inspector.tables()).sort(deepSort)).to.deep.equal(
+        ['teams', 'users', 'camelCase', 'page_visits'].sort(deepSort)
+      );
     });
   });
 
@@ -66,7 +64,31 @@ describe('postgres-no-search-path', () => {
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
-        expect(await schemaInspector(trx).columns()).to.deep.equal([
+        expect(
+          (await schemaInspector(trx).columns()).sort(deepSort)
+        ).to.deep.equal(
+          [
+            { table: 'users', column: 'id' },
+            { table: 'page_visits', column: 'request_path' },
+            { table: 'users', column: 'password' },
+            { table: 'camelCase', column: 'primaryKey' },
+            { table: 'users', column: 'email' },
+            { table: 'teams', column: 'uuid' },
+            { table: 'page_visits', column: 'created_at' },
+            { table: 'teams', column: 'credits' },
+            { table: 'teams', column: 'created_at' },
+            { table: 'teams', column: 'description' },
+            { table: 'teams', column: 'id' },
+            { table: 'page_visits', column: 'user_agent' },
+            { table: 'users', column: 'team_id' },
+            { table: 'teams', column: 'name' },
+            { table: 'teams', column: 'activated_at' },
+          ].sort(deepSort)
+        );
+      });
+
+      expect((await inspector.columns()).sort(deepSort)).to.deep.equal(
+        [
           { table: 'users', column: 'id' },
           { table: 'page_visits', column: 'request_path' },
           { table: 'users', column: 'password' },
@@ -82,38 +104,22 @@ describe('postgres-no-search-path', () => {
           { table: 'users', column: 'team_id' },
           { table: 'teams', column: 'name' },
           { table: 'teams', column: 'activated_at' },
-        ]);
-      });
-
-      expect(await inspector.columns()).to.deep.equal([
-        { table: 'users', column: 'id' },
-        { table: 'page_visits', column: 'request_path' },
-        { table: 'users', column: 'password' },
-        { table: 'camelCase', column: 'primaryKey' },
-        { table: 'users', column: 'email' },
-        { table: 'teams', column: 'uuid' },
-        { table: 'page_visits', column: 'created_at' },
-        { table: 'teams', column: 'credits' },
-        { table: 'teams', column: 'created_at' },
-        { table: 'teams', column: 'description' },
-        { table: 'teams', column: 'id' },
-        { table: 'page_visits', column: 'user_agent' },
-        { table: 'users', column: 'team_id' },
-        { table: 'teams', column: 'name' },
-        { table: 'teams', column: 'activated_at' },
-      ]);
+        ].sort(deepSort)
+      );
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.equal([
-        { table: 'teams', column: 'id' },
-        { table: 'teams', column: 'uuid' },
-        { table: 'teams', column: 'name' },
-        { table: 'teams', column: 'description' },
-        { table: 'teams', column: 'credits' },
-        { table: 'teams', column: 'created_at' },
-        { table: 'teams', column: 'activated_at' },
-      ]);
+      expect((await inspector.columns('teams')).sort(deepSort)).to.deep.equal(
+        [
+          { table: 'teams', column: 'id' },
+          { table: 'teams', column: 'uuid' },
+          { table: 'teams', column: 'name' },
+          { table: 'teams', column: 'description' },
+          { table: 'teams', column: 'credits' },
+          { table: 'teams', column: 'created_at' },
+          { table: 'teams', column: 'activated_at' },
+        ].sort(deepSort)
+      );
     });
   });
 
@@ -128,6 +134,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -146,6 +153,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -164,6 +172,7 @@ describe('postgres-no-search-path', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -182,6 +191,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -200,6 +210,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -218,6 +229,7 @@ describe('postgres-no-search-path', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -236,6 +248,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -254,6 +267,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -272,6 +286,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -290,6 +305,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -308,6 +324,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -326,6 +343,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -344,6 +362,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
@@ -362,6 +381,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -380,6 +400,7 @@ describe('postgres-no-search-path', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -403,6 +424,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -421,6 +443,7 @@ describe('postgres-no-search-path', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -439,6 +462,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -457,6 +481,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -475,6 +500,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -493,6 +519,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -511,6 +538,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -534,6 +562,7 @@ describe('postgres-no-search-path', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,
