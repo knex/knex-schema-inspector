@@ -101,7 +101,7 @@ describe('sqlite', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.include.all.members([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'page_visits', column: 'request_path' },
         { table: 'page_visits', column: 'user_agent' },
         { table: 'page_visits', column: 'created_at' },
@@ -120,7 +120,7 @@ describe('sqlite', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.include.all.members([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },
@@ -134,7 +134,7 @@ describe('sqlite', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.include.all.members([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'request_path',
           table: 'page_visits',
@@ -363,7 +363,7 @@ describe('sqlite', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.include.all.members([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',

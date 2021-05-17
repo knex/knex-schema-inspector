@@ -61,7 +61,7 @@ describe('oracledb', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.include.all.members([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'TEAMS', column: 'ID' },
         { table: 'TEAMS', column: 'UUID' },
         { table: 'TEAMS', column: 'NAME' },
@@ -80,7 +80,7 @@ describe('oracledb', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('TEAMS')).to.deep.include.all.members([
+      expect(await inspector.columns('TEAMS')).to.have.deep.members([
         { column: 'ID', table: 'TEAMS' },
         { column: 'UUID', table: 'TEAMS' },
         { column: 'NAME', table: 'TEAMS' },
@@ -94,7 +94,7 @@ describe('oracledb', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.include.all.members([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'ACTIVATED_AT',
           table: 'TEAMS',
@@ -337,7 +337,7 @@ describe('oracledb', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('TEAMS')).to.deep.include.all.members([
+      expect(await inspector.columnInfo('TEAMS')).to.have.deep.members([
         {
           name: 'ACTIVATED_AT',
           table: 'TEAMS',

@@ -38,7 +38,7 @@ describe('mysql', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.include.all.members([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         {
           name: 'page_visits',
           schema: 'test_db',
@@ -83,7 +83,7 @@ describe('mysql', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.include.all.members([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'page_visits', column: 'request_path' },
         { table: 'page_visits', column: 'user_agent' },
         { table: 'page_visits', column: 'created_at' },
@@ -102,7 +102,7 @@ describe('mysql', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.include.all.members([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },

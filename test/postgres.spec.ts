@@ -28,7 +28,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.include.all.members([
+      expect(await inspector.tables()).to.have.deep.members([
         'teams',
         'users',
         'camelCase',
@@ -39,7 +39,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.include.all.members([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         { name: 'camelCase', schema: 'public', comment: null },
         { name: 'page_visits', schema: 'public', comment: null },
         { name: 'teams', schema: 'public', comment: null },
@@ -66,9 +66,7 @@ describe('postgres-no-search-path', () => {
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
-        expect(
-          await schemaInspector(trx).columns()
-        ).to.deep.include.all.members([
+        expect(await schemaInspector(trx).columns()).to.have.deep.members([
           { table: 'users', column: 'id' },
           { table: 'page_visits', column: 'request_path' },
           { table: 'users', column: 'password' },
@@ -87,7 +85,7 @@ describe('postgres-no-search-path', () => {
         ]);
       });
 
-      expect(await inspector.columns()).to.deep.include.all.members([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'users', column: 'id' },
         { table: 'page_visits', column: 'request_path' },
         { table: 'users', column: 'password' },
@@ -107,7 +105,7 @@ describe('postgres-no-search-path', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.include.all.members([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { table: 'teams', column: 'id' },
         { table: 'teams', column: 'uuid' },
         { table: 'teams', column: 'name' },
@@ -121,7 +119,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.include.all.members([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'primaryKey',
           table: 'camelCase',
@@ -411,7 +409,7 @@ describe('postgres-no-search-path', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.include.all.members([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',

@@ -28,7 +28,7 @@ describe('mssql', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.include.all.members([
+      expect(await inspector.tables()).to.have.deep.members([
         'teams',
         'users',
         'page_visits',
@@ -38,7 +38,7 @@ describe('mssql', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.include.all.members([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         {
           name: 'teams',
           schema: 'dbo',
@@ -75,7 +75,7 @@ describe('mssql', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.include.all.members([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'teams', column: 'activated_at' },
         { table: 'teams', column: 'created_at' },
         { table: 'teams', column: 'credits' },
@@ -94,7 +94,7 @@ describe('mssql', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.include.all.members([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },
@@ -108,7 +108,7 @@ describe('mssql', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.include.all.members([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
@@ -336,7 +336,7 @@ describe('mssql', () => {
       ]);
     });
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.include.all.members([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
