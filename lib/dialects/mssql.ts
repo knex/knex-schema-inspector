@@ -17,7 +17,7 @@ type RawColumn = {
   max_length: number | null;
   numeric_precision: number | null;
   numeric_scale: number | null;
-  is_computed: boolean | null;
+  is_generated: boolean | null;
   is_nullable: 'YES' | 'NO';
   default_value: string | null;
   is_unique: 'YES' | 'NO';
@@ -34,7 +34,7 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
     default_value:
       parseDefaultValue(rawColumn.default_value) ||
       parseDefaultValue(rawColumn.generation_expression),
-    is_generated: !!rawColumn.is_computed,
+    is_generated: !!rawColumn.is_generated,
     is_unique: rawColumn.is_unique === 'YES',
     is_primary_key: rawColumn.is_primary_key === 'YES',
     is_nullable: rawColumn.is_nullable === 'YES',
@@ -208,7 +208,10 @@ export default class MSSQL implements SchemaInspector {
         ELSE
           'YES'
         END AS [is_nullable],
-        object_definition ([c].[default_object_id]) AS default_value,
+        COALESCE(
+          object_definition ([c].[default_object_id]),
+          [cc].[definition]
+        ) AS [default_value],
         CASE [i].[is_unique]
         WHEN 1 THEN
           'YES'
@@ -230,8 +233,7 @@ export default class MSSQL implements SchemaInspector {
         OBJECT_NAME ([fk].[referenced_object_id]) AS [foreign_key_table],
         COL_NAME ([fk].[referenced_object_id],
           [fk].[referenced_column_id]) AS [foreign_key_column],
-        [cc].[definition] as [generation_expression],
-        [cc].[is_computed]`)
+        [cc].[is_computed] as [is_generated]`)
       )
       .from(this.knex.raw(`??.[sys].[columns] [c]`, [dbName]))
       .joinRaw(
