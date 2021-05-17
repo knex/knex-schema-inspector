@@ -325,8 +325,8 @@ export default class MSSQL implements SchemaInspector {
           OBJECT_NAME (f.referenced_object_id) AS foreign_key_table,
           COL_NAME (fc.referenced_object_id, fc.referenced_column_id) AS foreign_key_column,
           f.name AS constraint_name,
-          f.update_referential_action_desc AS on_update,
-          f.delete_referential_action_desc AS on_delete
+          REPLACE(f.update_referential_action_desc, '_', ' ') AS on_update,
+          REPLACE(f.delete_referential_action_desc, '_', ' ') AS on_delete
       FROM
         sys.foreign_keys AS f
         INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id
