@@ -101,7 +101,7 @@ describe('sqlite', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.equal([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'page_visits', column: 'request_path' },
         { table: 'page_visits', column: 'user_agent' },
         { table: 'page_visits', column: 'created_at' },
@@ -120,7 +120,7 @@ describe('sqlite', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.equal([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },
@@ -134,7 +134,7 @@ describe('sqlite', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.equal([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'request_path',
           table: 'page_visits',
@@ -143,6 +143,7 @@ describe('sqlite', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -158,6 +159,7 @@ describe('sqlite', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -173,6 +175,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -188,6 +191,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -203,6 +207,7 @@ describe('sqlite', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -218,6 +223,7 @@ describe('sqlite', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -233,6 +239,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -248,6 +255,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -263,6 +271,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -278,6 +287,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -293,6 +303,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -308,6 +319,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
@@ -323,6 +335,7 @@ describe('sqlite', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -338,6 +351,7 @@ describe('sqlite', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -349,7 +363,7 @@ describe('sqlite', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.equal([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
@@ -358,6 +372,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -373,6 +388,7 @@ describe('sqlite', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -388,6 +404,7 @@ describe('sqlite', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -403,6 +420,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -418,6 +436,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -433,6 +452,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -448,6 +468,7 @@ describe('sqlite', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -467,6 +488,7 @@ describe('sqlite', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,

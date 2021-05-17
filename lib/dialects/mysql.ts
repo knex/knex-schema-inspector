@@ -28,9 +28,40 @@ type RawColumn = {
   UPDATE_RULE: string | null;
   DELETE_RULE: string | null;
   COLUMN_KEY: 'PRI' | 'UNI' | null;
-  EXTRA: 'auto_increment' | null;
+  EXTRA: 'auto_increment' | 'STORED GENERATED' | 'VIRTUAL GENERATED' | null;
   CONSTRAINT_NAME: 'PRIMARY' | null;
+  GENERATION_EXPRESSION: string;
 };
+
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    name: rawColumn.COLUMN_NAME,
+    table: rawColumn.TABLE_NAME,
+    data_type: rawColumn.DATA_TYPE,
+    default_value:
+      parseDefaultValue(rawColumn.COLUMN_DEFAULT) ??
+      parseDefaultValue(rawColumn.GENERATION_EXPRESSION || null),
+    max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
+    numeric_precision: rawColumn.NUMERIC_PRECISION,
+    numeric_scale: rawColumn.NUMERIC_SCALE,
+    is_generated: !!rawColumn.EXTRA?.endsWith('GENERATED'),
+    is_nullable: rawColumn.IS_NULLABLE === 'YES',
+    is_unique: rawColumn.COLUMN_KEY === 'UNI',
+    is_primary_key:
+      rawColumn.CONSTRAINT_NAME === 'PRIMARY' || rawColumn.COLUMN_KEY === 'PRI',
+    has_auto_increment: rawColumn.EXTRA === 'auto_increment',
+    foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
+    foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
+    comment: rawColumn.COLUMN_COMMENT,
+    // onDelete: rawColumn.DELETE_RULE,
+    // onUpdate: rawColumn.UPDATE_RULE,
+  };
+}
+
+function parseDefaultValue(value: any) {
+  // MariaDB returns string NULL for not-nullable varchar fields
+  return /null|NULL/.test(value) ? null : value;
+}
 
 export default class MySQL implements SchemaInspector {
   knex: Knex;
@@ -169,6 +200,7 @@ export default class MySQL implements SchemaInspector {
         'c.COLUMN_COMMENT',
         'c.NUMERIC_PRECISION',
         'c.NUMERIC_SCALE',
+        'c.GENERATION_EXPRESSION',
         'fk.REFERENCED_TABLE_NAME',
         'fk.REFERENCED_COLUMN_NAME',
         'fk.CONSTRAINT_NAME',
@@ -203,60 +235,12 @@ export default class MySQL implements SchemaInspector {
         .andWhere({ 'c.column_name': column })
         .first();
 
-      return {
-        name: rawColumn.COLUMN_NAME,
-        table: rawColumn.TABLE_NAME,
-        data_type: rawColumn.DATA_TYPE,
-        default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
-        max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-        numeric_precision: rawColumn.NUMERIC_PRECISION,
-        numeric_scale: rawColumn.NUMERIC_SCALE,
-        is_nullable: rawColumn.IS_NULLABLE === 'YES',
-        is_unique: rawColumn.COLUMN_KEY === 'UNI',
-        is_primary_key:
-          rawColumn.CONSTRAINT_NAME === 'PRIMARY' ||
-          rawColumn.COLUMN_KEY === 'PRI',
-        has_auto_increment: rawColumn.EXTRA === 'auto_increment',
-        foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-        foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-        comment: rawColumn.COLUMN_COMMENT,
-        // onDelete: rawColumn.DELETE_RULE,
-        // onUpdate: rawColumn.UPDATE_RULE,
-      } as Column;
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(
-      (rawColumn): Column => {
-        return {
-          name: rawColumn.COLUMN_NAME,
-          table: rawColumn.TABLE_NAME,
-          data_type: rawColumn.DATA_TYPE,
-          default_value: parseDefault(rawColumn.COLUMN_DEFAULT),
-          max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
-          numeric_precision: rawColumn.NUMERIC_PRECISION,
-          numeric_scale: rawColumn.NUMERIC_SCALE,
-          is_nullable: rawColumn.IS_NULLABLE === 'YES',
-          is_unique: rawColumn.COLUMN_KEY === 'UNI',
-          is_primary_key:
-            rawColumn.CONSTRAINT_NAME === 'PRIMARY' ||
-            rawColumn.COLUMN_KEY === 'PRI',
-          has_auto_increment: rawColumn.EXTRA === 'auto_increment',
-          foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
-          foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
-          comment: rawColumn.COLUMN_COMMENT,
-          // onDelete: rawColumn.DELETE_RULE,
-          // onUpdate: rawColumn.UPDATE_RULE,
-        };
-      }
-    ) as Column[];
-
-    function parseDefault(value: any) {
-      // MariaDB returns string NULL for not-nullable varchar fields
-      if (value === 'NULL' || value === 'null') return null;
-      return value;
-    }
+    return records.map(rawColumnToColumn);
   }
 
   /**

@@ -61,7 +61,7 @@ describe('oracledb', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.equal([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'TEAMS', column: 'ID' },
         { table: 'TEAMS', column: 'UUID' },
         { table: 'TEAMS', column: 'NAME' },
@@ -80,7 +80,7 @@ describe('oracledb', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('TEAMS')).to.deep.equal([
+      expect(await inspector.columns('TEAMS')).to.have.deep.members([
         { column: 'ID', table: 'TEAMS' },
         { column: 'UUID', table: 'TEAMS' },
         { column: 'NAME', table: 'TEAMS' },
@@ -94,18 +94,7 @@ describe('oracledb', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      const columnInfo = await inspector.columnInfo();
-      const teamInfo = columnInfo
-        .filter((column) => column.table == 'TEAMS')
-        .sort((a, b) => a.name.localeCompare(b.name));
-      const usersInfo = columnInfo
-        .filter((column) => column.table == 'USERS')
-        .sort((a, b) => a.name.localeCompare(b.name));
-      const pageVisitsInfo = columnInfo
-        .filter((column) => column.table == 'PAGE_VISITS')
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      expect([...teamInfo, ...usersInfo, ...pageVisitsInfo]).to.deep.equal([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'ACTIVATED_AT',
           table: 'TEAMS',
@@ -114,9 +103,11 @@ describe('oracledb', () => {
           max_length: 7,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -129,9 +120,11 @@ describe('oracledb', () => {
           max_length: 7,
           numeric_precision: null,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -144,9 +137,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
@@ -159,9 +154,11 @@ describe('oracledb', () => {
           max_length: 4000,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -174,9 +171,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -189,9 +188,11 @@ describe('oracledb', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -204,9 +205,11 @@ describe('oracledb', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -219,9 +222,11 @@ describe('oracledb', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -234,9 +239,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -249,9 +256,11 @@ describe('oracledb', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -264,9 +273,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: 'ID',
           foreign_key_table: 'TEAMS',
           comment: null,
@@ -279,9 +290,11 @@ describe('oracledb', () => {
           max_length: 7,
           numeric_precision: null,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -294,9 +307,11 @@ describe('oracledb', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -309,9 +324,11 @@ describe('oracledb', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -320,11 +337,7 @@ describe('oracledb', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      const columnInfo = await inspector.columnInfo('TEAMS');
-
-      expect(
-        columnInfo.sort((a, b) => a.name.localeCompare(b.name))
-      ).to.deep.equal([
+      expect(await inspector.columnInfo('TEAMS')).to.have.deep.members([
         {
           name: 'ACTIVATED_AT',
           table: 'TEAMS',
@@ -333,9 +346,11 @@ describe('oracledb', () => {
           max_length: 7,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -348,9 +363,11 @@ describe('oracledb', () => {
           max_length: 7,
           numeric_precision: null,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -363,9 +380,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
@@ -378,9 +397,11 @@ describe('oracledb', () => {
           max_length: 4000,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -393,9 +414,11 @@ describe('oracledb', () => {
           max_length: 22,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -408,9 +431,11 @@ describe('oracledb', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -423,9 +448,11 @@ describe('oracledb', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
+          has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
           comment: null,
@@ -442,9 +469,11 @@ describe('oracledb', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,
+        has_auto_increment: false,
         foreign_key_column: null,
         foreign_key_table: null,
         comment: null,

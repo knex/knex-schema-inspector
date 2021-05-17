@@ -10,8 +10,8 @@ export interface Column {
   is_nullable: boolean;
   is_unique: boolean;
   is_primary_key: boolean;
-  // Hard to discern in Oracle due to triggers
-  has_auto_increment?: boolean;
+  is_generated: boolean;
+  has_auto_increment: boolean;
   foreign_key_table: string | null;
   foreign_key_column: string | null;
 

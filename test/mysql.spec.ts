@@ -38,7 +38,7 @@ describe('mysql', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.equal([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         {
           name: 'page_visits',
           schema: 'test_db',
@@ -83,7 +83,7 @@ describe('mysql', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.equal([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'page_visits', column: 'request_path' },
         { table: 'page_visits', column: 'user_agent' },
         { table: 'page_visits', column: 'created_at' },
@@ -102,7 +102,7 @@ describe('mysql', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.equal([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },
@@ -116,7 +116,7 @@ describe('mysql', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.equal([
+      expect(await inspector.columnInfo()).to.deep.include.members([
         {
           name: 'team_id',
           table: 'users',
@@ -125,6 +125,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
@@ -141,6 +142,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -157,6 +159,7 @@ describe('mysql', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -173,6 +176,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -189,6 +193,7 @@ describe('mysql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -205,6 +210,7 @@ describe('mysql', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -221,6 +227,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -237,6 +244,7 @@ describe('mysql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -253,6 +261,7 @@ describe('mysql', () => {
           max_length: 65535,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -269,6 +278,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -285,6 +295,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -301,6 +312,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -317,6 +329,7 @@ describe('mysql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -333,6 +346,7 @@ describe('mysql', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -345,7 +359,7 @@ describe('mysql', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.equal([
+      expect(await inspector.columnInfo('teams')).to.deep.include.members([
         {
           name: 'id',
           table: 'teams',
@@ -354,6 +368,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: true,
@@ -370,6 +385,7 @@ describe('mysql', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -386,6 +402,7 @@ describe('mysql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -402,6 +419,7 @@ describe('mysql', () => {
           max_length: 65535,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -418,6 +436,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: 10,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -434,6 +453,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -450,6 +470,7 @@ describe('mysql', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -470,6 +491,7 @@ describe('mysql', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,

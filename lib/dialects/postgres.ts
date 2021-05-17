@@ -17,17 +17,63 @@ type RawColumn = {
   data_type: string;
   column_default: any | null;
   character_maximum_length: number | null;
+  is_generated: 'YES' | 'NO';
   is_nullable: 'YES' | 'NO';
-  is_unique: 'YES' | 'NO';
-  is_primary: null | 'YES';
+  is_unique: boolean;
+  is_primary: boolean;
+  is_identity: 'YES' | 'NO';
+  generation_expression: null | string;
   numeric_precision: null | number;
   numeric_scale: null | number;
   serial: null | string;
   column_comment: string | null;
-  referenced_table_schema: null | string;
-  referenced_table_name: null | string;
-  referenced_column_name: null | string;
+  foreign_key_schema: null | string;
+  foreign_key_table: null | string;
+  foreign_key_column: null | string;
 };
+
+function rawColumnToColumn(rawColumn: RawColumn): Column {
+  return {
+    name: rawColumn.column_name,
+    table: rawColumn.table_name,
+    data_type: rawColumn.data_type,
+    default_value:
+      parseDefaultValue(rawColumn.column_default) ||
+      parseDefaultValue(rawColumn.generation_expression),
+    max_length: rawColumn.character_maximum_length,
+    numeric_precision: rawColumn.numeric_precision,
+    numeric_scale: rawColumn.numeric_scale,
+    is_generated: rawColumn.is_generated === 'YES',
+    is_nullable: rawColumn.is_nullable === 'YES',
+    is_unique: rawColumn.is_unique,
+    is_primary_key: rawColumn.is_primary,
+    has_auto_increment:
+      rawColumn.serial !== null || rawColumn.is_identity === 'YES',
+    comment: rawColumn.column_comment,
+    schema: rawColumn.table_schema,
+    foreign_key_schema: rawColumn.foreign_key_schema,
+    foreign_key_table: rawColumn.foreign_key_table,
+    foreign_key_column: rawColumn.foreign_key_column,
+  };
+}
+
+/**
+ * Converts Postgres default value to JS
+ * Eg `'example'::character varying` => `example`
+ */
+function parseDefaultValue(type: string | null) {
+  if (!type) return null;
+  if (type.startsWith('nextval(')) return type;
+
+  let [value, cast] = type.split('::');
+
+  value = value.replace(/^\'(.*)\'$/, '$1');
+
+  if (/.*json.*/.test(cast)) return JSON.parse(value);
+  if (/.*(char|text).*/.test(cast)) return String(value);
+
+  return isNaN(value as any) ? value : Number(value);
+}
 
 export default class Postgres implements SchemaInspector {
   knex: Knex;
@@ -59,31 +105,6 @@ export default class Postgres implements SchemaInspector {
     this.schema = schema;
     this.explodedSchema = [this.schema];
     return this;
-  }
-
-  /**
-   * Converts Postgres default value to JS
-   * Eg `'example'::character varying` => `example`
-   */
-  parseDefaultValue(type: string) {
-    if (!type) return null;
-    if (type.startsWith('nextval(')) return type;
-
-    const parts = type.split('::');
-
-    let value = parts[0];
-
-    if (value.startsWith("'") && value.endsWith("'")) {
-      value = value.slice(1, -1);
-    }
-
-    if (parts[1] && parts[1].includes('json')) return JSON.parse(value);
-    if (parts[1] && (parts[1].includes('char') || parts[1].includes('text')))
-      return String(value);
-
-    if (Number.isNaN(Number(value))) return value;
-
-    return Number(value);
   }
 
   // Tables
@@ -208,79 +229,72 @@ export default class Postgres implements SchemaInspector {
         'c.data_type',
         'c.column_default',
         'c.character_maximum_length',
+        'c.is_generated',
         'c.is_nullable',
         'c.numeric_precision',
         'c.numeric_scale',
         'c.table_schema',
-
-        knex
-          .select(knex.raw(`'YES'`))
-          .from('pg_index')
-          .join('pg_attribute', function () {
-            this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
-              knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
-            );
-          })
-          .whereRaw('pg_index.indrelid = quote_ident(c.table_name)::regclass')
-          .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
-          .andWhere(knex.raw('pg_index.indisprimary'))
-          .as('is_primary'),
-
-        knex
-          .select(knex.raw(`case when count(1) >0 then 'YES' else null end`))
-          .from('pg_index')
-          .join('pg_attribute', function () {
-            this.on('pg_attribute.attrelid', '=', 'pg_index.indrelid').andOn(
-              knex.raw('pg_attribute.attnum = any(pg_index.indkey)')
-            );
-          })
-          .whereRaw('pg_index.indrelid = quote_ident(c.table_name)::regclass')
-          .andWhere(knex.raw('pg_attribute.attname = c.column_name'))
-          .andWhere(knex.raw('pg_index.indisunique'))
-          .as('is_unique'),
-
-        knex
-          .select(
-            knex.raw(
-              'pg_catalog.col_description(pg_catalog.pg_class.oid, c.ordinal_position:: int)'
-            )
-          )
-          .from('pg_catalog.pg_class')
-          .whereRaw(
-            `pg_catalog.pg_class.oid = (select quote_ident(c.table_name):: regclass:: oid)`
-          )
-          .andWhere({ 'pg_catalog.pg_class.relname': 'c.table_name' })
-          .as('column_comment'),
+        'c.is_identity',
+        'c.generation_expression',
 
         knex.raw(
           'pg_get_serial_sequence(quote_ident(c.table_name), c.column_name) as serial'
         ),
 
-        'ffk.referenced_table_schema',
-        'ffk.referenced_table_name',
-        'ffk.referenced_column_name'
+        knex.raw(
+          'pg_catalog.col_description(pg_class.oid, c.ordinal_position:: int) as column_comment'
+        ),
+
+        knex.raw(`COALESCE(pg.indisunique, false) as is_unique`),
+        knex.raw(`COALESCE(pg.indisprimary, false) as is_primary`),
+
+        'ffk.foreign_key_schema',
+        'ffk.foreign_key_table',
+        'ffk.foreign_key_column'
       )
       .from(knex.raw('information_schema.columns c'))
       .joinRaw(
         `
-        LEFT JOIN (
+        LEFT JOIN pg_catalog.pg_class
+          ON pg_catalog.pg_class.oid = quote_ident(c.table_name):: regclass:: oid
+          AND pg_catalog.pg_class.relname = c.table_name
+      `
+      )
+      .joinRaw(
+        `
+        LEFT JOIN LATERAL (
           SELECT
-            k1.table_schema,
-            k1.table_name,
-            k1.column_name,
-            k2.table_schema AS referenced_table_schema,
-            k2.table_name AS referenced_table_name,
-            k2.column_name AS referenced_column_name
+            pg_index.indisprimary,
+            pg_index.indisunique
+          FROM pg_index
+          JOIN pg_attribute
+            ON pg_attribute.attrelid = pg_index.indrelid
+            AND pg_attribute.attnum = any(pg_index.indkey)
+          WHERE pg_index.indrelid = quote_ident(c.table_name)::regclass
+          AND pg_attribute.attname = c.column_name
+          LIMIT 1
+        ) pg ON true
+      `
+      )
+      .joinRaw(
+        `
+        LEFT JOIN LATERAL (
+          SELECT
+            k2.table_schema AS foreign_key_schema,
+            k2.table_name AS foreign_key_table,
+            k2.column_name AS foreign_key_column
           FROM
             information_schema.key_column_usage k1
             JOIN information_schema.referential_constraints fk using (
               constraint_schema, constraint_name
             )
-            JOIN information_schema.key_column_usage k2 ON k2.constraint_schema = fk.unique_constraint_schema
-            AND k2.constraint_name = fk.unique_constraint_name
-            AND k2.ordinal_position = k1.position_in_unique_constraint
-        ) ffk ON ffk.table_name = c.table_name
-        AND ffk.column_name = c.column_name
+            JOIN information_schema.key_column_usage k2
+              ON k2.constraint_schema = fk.unique_constraint_schema
+              AND k2.constraint_name = fk.unique_constraint_name
+              AND k2.ordinal_position = k1.position_in_unique_constraint
+            WHERE k1.table_name = c.table_name
+            AND k1.column_name = c.column_name
+        ) ffk ON TRUE
       `
       )
       .whereIn('c.table_schema', this.explodedSchema)
@@ -295,55 +309,12 @@ export default class Postgres implements SchemaInspector {
         .andWhere({ 'c.column_name': column })
         .first();
 
-      return {
-        name: rawColumn.column_name,
-        table: rawColumn.table_name,
-        data_type: rawColumn.data_type,
-        default_value: rawColumn.column_default
-          ? this.parseDefaultValue(rawColumn.column_default)
-          : null,
-        max_length: rawColumn.character_maximum_length,
-        numeric_precision: rawColumn.numeric_precision,
-        numeric_scale: rawColumn.numeric_scale,
-        is_nullable: rawColumn.is_nullable === 'YES',
-        is_unique: rawColumn.is_unique === 'YES',
-        is_primary_key: rawColumn.is_primary === 'YES',
-        has_auto_increment: rawColumn.serial !== null,
-        foreign_key_column: rawColumn.referenced_column_name,
-        foreign_key_table: rawColumn.referenced_table_name,
-        comment: rawColumn.column_comment,
-        schema: rawColumn.table_schema,
-        foreign_key_schema: rawColumn.referenced_table_schema,
-      } as T extends string ? Column : Column[];
+      return rawColumnToColumn(rawColumn);
     }
 
     const records: RawColumn[] = await query;
 
-    return records.map(
-      (rawColumn): Column => {
-        return {
-          name: rawColumn.column_name,
-          table: rawColumn.table_name,
-          data_type: rawColumn.data_type,
-          default_value: rawColumn.column_default
-            ? this.parseDefaultValue(rawColumn.column_default)
-            : null,
-          max_length: rawColumn.character_maximum_length,
-          numeric_precision: rawColumn.numeric_precision,
-          numeric_scale: rawColumn.numeric_scale,
-          is_nullable: rawColumn.is_nullable === 'YES',
-          is_unique: rawColumn.is_unique === 'YES',
-          is_primary_key: rawColumn.is_primary === 'YES',
-          has_auto_increment: rawColumn.serial !== null,
-          foreign_key_column: rawColumn.referenced_column_name,
-          foreign_key_table: rawColumn.referenced_table_name,
-
-          comment: rawColumn.column_comment,
-          schema: rawColumn.table_schema,
-          foreign_key_schema: rawColumn.referenced_table_schema,
-        };
-      }
-    ) as T extends string ? Column : Column[];
+    return records.map(rawColumnToColumn);
   }
 
   /**

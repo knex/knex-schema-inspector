@@ -28,7 +28,7 @@ describe('mssql', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.equal([
+      expect(await inspector.tables()).to.have.deep.members([
         'teams',
         'users',
         'page_visits',
@@ -38,7 +38,7 @@ describe('mssql', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.equal([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         {
           name: 'teams',
           schema: 'dbo',
@@ -75,7 +75,7 @@ describe('mssql', () => {
 
   describe('.columns', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.columns()).to.deep.equal([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'teams', column: 'activated_at' },
         { table: 'teams', column: 'created_at' },
         { table: 'teams', column: 'credits' },
@@ -94,7 +94,7 @@ describe('mssql', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.equal([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { column: 'id', table: 'teams' },
         { column: 'uuid', table: 'teams' },
         { column: 'name', table: 'teams' },
@@ -108,7 +108,7 @@ describe('mssql', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.equal([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
@@ -117,6 +117,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -132,6 +133,7 @@ describe('mssql', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -147,6 +149,7 @@ describe('mssql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -162,6 +165,7 @@ describe('mssql', () => {
           max_length: -1,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -177,6 +181,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -192,6 +197,7 @@ describe('mssql', () => {
           max_length: 6,
           numeric_precision: 19,
           numeric_scale: 19,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -207,6 +213,7 @@ describe('mssql', () => {
           max_length: 3,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -222,6 +229,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -237,6 +245,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
@@ -252,6 +261,7 @@ describe('mssql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -267,6 +277,7 @@ describe('mssql', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -282,6 +293,7 @@ describe('mssql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -297,6 +309,7 @@ describe('mssql', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -312,6 +325,7 @@ describe('mssql', () => {
           max_length: 6,
           numeric_precision: 19,
           numeric_scale: 19,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -322,7 +336,7 @@ describe('mssql', () => {
       ]);
     });
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.equal([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
@@ -331,6 +345,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -346,6 +361,7 @@ describe('mssql', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -361,6 +377,7 @@ describe('mssql', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -376,6 +393,7 @@ describe('mssql', () => {
           max_length: -1,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -391,6 +409,7 @@ describe('mssql', () => {
           max_length: 4,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -406,6 +425,7 @@ describe('mssql', () => {
           max_length: 6,
           numeric_precision: 19,
           numeric_scale: 19,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -421,6 +441,7 @@ describe('mssql', () => {
           max_length: 3,
           numeric_precision: 10,
           numeric_scale: 10,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -439,6 +460,7 @@ describe('mssql', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,

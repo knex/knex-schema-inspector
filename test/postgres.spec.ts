@@ -28,7 +28,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.equal([
+      expect(await inspector.tables()).to.have.deep.members([
         'teams',
         'users',
         'camelCase',
@@ -39,7 +39,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.equal([
+      expect(await inspector.tableInfo()).to.have.deep.members([
         { name: 'camelCase', schema: 'public', comment: null },
         { name: 'page_visits', schema: 'public', comment: null },
         { name: 'teams', schema: 'public', comment: null },
@@ -66,7 +66,7 @@ describe('postgres-no-search-path', () => {
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       database.transaction(async (trx) => {
-        expect(await schemaInspector(trx).columns()).to.deep.equal([
+        expect(await schemaInspector(trx).columns()).to.have.deep.members([
           { table: 'users', column: 'id' },
           { table: 'page_visits', column: 'request_path' },
           { table: 'users', column: 'password' },
@@ -85,7 +85,7 @@ describe('postgres-no-search-path', () => {
         ]);
       });
 
-      expect(await inspector.columns()).to.deep.equal([
+      expect(await inspector.columns()).to.have.deep.members([
         { table: 'users', column: 'id' },
         { table: 'page_visits', column: 'request_path' },
         { table: 'users', column: 'password' },
@@ -105,7 +105,7 @@ describe('postgres-no-search-path', () => {
     });
 
     it('returns information for specific table', async () => {
-      expect(await inspector.columns('teams')).to.deep.equal([
+      expect(await inspector.columns('teams')).to.have.deep.members([
         { table: 'teams', column: 'id' },
         { table: 'teams', column: 'uuid' },
         { table: 'teams', column: 'name' },
@@ -119,7 +119,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.equal([
+      expect(await inspector.columnInfo()).to.have.deep.members([
         {
           name: 'primaryKey',
           table: 'camelCase',
@@ -128,6 +128,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -146,6 +147,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -164,6 +166,7 @@ describe('postgres-no-search-path', () => {
           max_length: 200,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -182,6 +185,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -200,6 +204,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -218,6 +223,7 @@ describe('postgres-no-search-path', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -236,6 +242,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -254,6 +261,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -272,13 +280,14 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: null,
+          comment: 'Remaining usage credits',
           schema: 'public',
           foreign_key_schema: null,
         },
@@ -290,6 +299,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -308,6 +318,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -326,6 +337,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -344,6 +356,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: false,
           is_primary_key: false,
@@ -362,6 +375,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -380,6 +394,7 @@ describe('postgres-no-search-path', () => {
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -394,7 +409,7 @@ describe('postgres-no-search-path', () => {
     });
 
     it('returns information for all columns in specific table', async () => {
-      expect(await inspector.columnInfo('teams')).to.deep.equal([
+      expect(await inspector.columnInfo('teams')).to.have.deep.members([
         {
           name: 'id',
           table: 'teams',
@@ -403,6 +418,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: true,
@@ -421,6 +437,7 @@ describe('postgres-no-search-path', () => {
           max_length: 36,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: false,
           is_unique: true,
           is_primary_key: false,
@@ -439,6 +456,7 @@ describe('postgres-no-search-path', () => {
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -457,6 +475,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -475,13 +494,14 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: 32,
           numeric_scale: 0,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
           has_auto_increment: false,
           foreign_key_column: null,
           foreign_key_table: null,
-          comment: null,
+          comment: 'Remaining usage credits',
           schema: 'public',
           foreign_key_schema: null,
         },
@@ -493,6 +513,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -511,6 +532,7 @@ describe('postgres-no-search-path', () => {
           max_length: null,
           numeric_precision: null,
           numeric_scale: null,
+          is_generated: false,
           is_nullable: true,
           is_unique: false,
           is_primary_key: false,
@@ -534,6 +556,7 @@ describe('postgres-no-search-path', () => {
         max_length: 36,
         numeric_precision: null,
         numeric_scale: null,
+        is_generated: false,
         is_nullable: false,
         is_unique: true,
         is_primary_key: false,
