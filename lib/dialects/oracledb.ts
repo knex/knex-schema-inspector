@@ -25,7 +25,7 @@ type RawColumn = {
   IDENTITY_COLUMN: 'YES' | 'NO';
 };
 
-function rawColumnToColumn(rawColumn: RawColumn): Column {
+export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,

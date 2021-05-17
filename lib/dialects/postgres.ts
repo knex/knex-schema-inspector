@@ -32,7 +32,7 @@ type RawColumn = {
   foreign_key_column: null | string;
 };
 
-function rawColumnToColumn(rawColumn: RawColumn): Column {
+export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     name: rawColumn.column_name,
     table: rawColumn.table_name,
@@ -61,7 +61,7 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Converts Postgres default value to JS
  * Eg `'example'::character varying` => `example`
  */
-function parseDefaultValue(type: string | null) {
+export function parseDefaultValue(type: string | null) {
   if (!type) return null;
   if (type.startsWith('nextval(')) return type;
 

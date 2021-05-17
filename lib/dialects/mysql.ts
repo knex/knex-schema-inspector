@@ -33,7 +33,7 @@ type RawColumn = {
   GENERATION_EXPRESSION: string;
 };
 
-function rawColumnToColumn(rawColumn: RawColumn): Column {
+export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
@@ -58,7 +58,7 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
-function parseDefaultValue(value: any) {
+export function parseDefaultValue(value: any) {
   // MariaDB returns string NULL for not-nullable varchar fields
   return /null|NULL/.test(value) ? null : value;
 }

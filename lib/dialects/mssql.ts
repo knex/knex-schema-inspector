@@ -28,7 +28,7 @@ type RawColumn = {
   generation_expression: string | null;
 };
 
-function rawColumnToColumn(rawColumn: RawColumn): Column {
+export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     ...rawColumn,
     default_value:
@@ -44,7 +44,7 @@ function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
-function parseDefaultValue(value: string | null) {
+export function parseDefaultValue(value: string | null) {
   if (!value) return null;
 
   value = value.replace(/^\((.*)\)$/, '$1');
