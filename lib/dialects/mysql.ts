@@ -16,7 +16,7 @@ type RawColumn = {
   TABLE_NAME: string;
   COLUMN_NAME: string;
   COLUMN_DEFAULT: any | null;
-  DATA_TYPE: string;
+  COLUMN_TYPE: string;
   CHARACTER_MAXIMUM_LENGTH: number | null;
   NUMERIC_PRECISION: number | null;
   NUMERIC_SCALE: number | null;
@@ -37,7 +37,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
-    data_type: rawColumn.DATA_TYPE,
+    data_type: rawColumn.COLUMN_TYPE.split('(')[0],
     default_value:
       parseDefaultValue(rawColumn.COLUMN_DEFAULT) ??
       parseDefaultValue(rawColumn.GENERATION_EXPRESSION || null),
@@ -191,7 +191,7 @@ export default class MySQL implements SchemaInspector {
         'c.TABLE_NAME',
         'c.COLUMN_NAME',
         'c.COLUMN_DEFAULT',
-        'c.DATA_TYPE',
+        'c.COLUMN_TYPE',
         'c.CHARACTER_MAXIMUM_LENGTH',
         'c.IS_NULLABLE',
         'c.COLUMN_KEY',
