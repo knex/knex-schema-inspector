@@ -40,7 +40,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     is_nullable: rawColumn.is_nullable === 'YES',
     has_auto_increment: rawColumn.has_auto_increment === 'YES',
     numeric_precision: rawColumn.numeric_precision || null,
-    numeric_scale: rawColumn.numeric_precision || null,
+    numeric_scale: rawColumn.numeric_scale || null,
   };
 }
 
