@@ -53,8 +53,6 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
     foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
     comment: rawColumn.COLUMN_COMMENT,
-    // onDelete: rawColumn.DELETE_RULE,
-    // onUpdate: rawColumn.UPDATE_RULE,
   };
 }
 
