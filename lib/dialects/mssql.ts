@@ -20,8 +20,8 @@ type RawColumn = {
   is_generated: boolean | null;
   is_nullable: 'YES' | 'NO';
   default_value: string | null;
-  is_unique: 'YES' | 'NO';
-  is_primary_key: 'YES' | 'NO';
+  is_unique: true | null;
+  is_primary_key: true | null;
   has_auto_increment: 'YES' | 'NO';
   foreign_key_table: string | null;
   foreign_key_column: string | null;
@@ -35,8 +35,8 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
       parseDefaultValue(rawColumn.default_value) ||
       parseDefaultValue(rawColumn.generation_expression),
     is_generated: !!rawColumn.is_generated,
-    is_unique: rawColumn.is_unique === 'YES',
-    is_primary_key: rawColumn.is_primary_key === 'YES',
+    is_unique: rawColumn.is_unique === true,
+    is_primary_key: rawColumn.is_primary_key === true,
     is_nullable: rawColumn.is_nullable === 'YES',
     has_auto_increment: rawColumn.has_auto_increment === 'YES',
     numeric_precision: rawColumn.numeric_precision || null,
@@ -212,18 +212,8 @@ export default class MSSQL implements SchemaInspector {
           object_definition ([c].[default_object_id]),
           [cc].[definition]
         ) AS [default_value],
-        CASE [i].[is_unique]
-        WHEN 1 THEN
-          'YES'
-        ELSE
-          'NO'
-        END AS [is_unique],
-        CASE [i].[is_primary_key]
-        WHEN 1 THEN
-          'YES'
-        ELSE
-          'NO'
-        END AS [is_primary_key],
+        [i].[is_primary_key],
+        [i].[is_unique],
         CASE [c].[is_identity]
         WHEN 1 THEN
           'YES'
@@ -263,7 +253,7 @@ export default class MSSQL implements SchemaInspector {
             [sys].[index_columns] [ic]
           JOIN [sys].[indexes] AS [ix] ON [ix].[object_id] = [ic].[object_id]
             AND [ix].[index_id] = [ic].[index_id]
-        ) AS [i] ON [i].[object_id] = [c].[object_id]`
+        ) AS [i] ON [i].[object_id] = [c].[object_id] AND [i].[column_id] = [c].[column_id]`
       )
       .where({ 's.name': this.schema })
       .andWhereRaw(`ISNULL([i].index_priority, 1) = 1`);
@@ -281,6 +271,8 @@ export default class MSSQL implements SchemaInspector {
     }
 
     const records: RawColumn[] = await query;
+
+    console.log(records);
 
     return records.map(rawColumnToColumn);
   }
