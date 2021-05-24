@@ -245,15 +245,28 @@ export default class MSSQL implements SchemaInspector {
         `LEFT JOIN [sys].[computed_columns] AS [cc] ON [cc].[object_id] = [c].[object_id] AND [cc].[column_id] = [c].[column_id]`
       )
       .joinRaw(
-        `LEFT JOIN [sys].[index_columns] [ic] ON [ic].[object_id] = [c].[object_id] AND [ic].[column_id] = [c].[column_id]`
-      )
-      .joinRaw(
-        `LEFT JOIN [sys].[indexes] AS [i] ON [i].[object_id] = [c].[object_id] AND [i].[index_id] = [ic].[index_id]`
-      )
-      .joinRaw(
         `LEFT JOIN [sys].[foreign_key_columns] AS [fk] ON [fk].[parent_object_id] = [c].[object_id] AND [fk].[parent_column_id] = [c].[column_id]`
       )
-      .where({ 's.name': this.schema });
+      .joinRaw(
+        `LEFT JOIN (
+          SELECT
+            [ic].[object_id],
+            [ic].[column_id],
+            [ix].[is_unique],
+            [ix].[is_primary_key],
+            ROW_NUMBER() OVER (
+              PARTITION BY [ic].[object_id],
+                [ic].[column_id] ORDER BY [ix].[is_primary_key] DESC,
+                [ix].[is_unique] DESC
+              ) AS index_priority
+          FROM
+            [sys].[index_columns] [ic]
+          JOIN [sys].[indexes] AS [ix] ON [ix].[object_id] = [ic].[object_id]
+            AND [ix].[index_id] = [ic].[index_id]
+        ) AS [i] ON [i].[object_id] = [c].[object_id]`
+      )
+      .where({ 's.name': this.schema })
+      .andWhereRaw(`ISNULL([i].index_priority, 1) = 1`);
 
     if (table) {
       query.andWhere({ 'o.name': table });
