@@ -34,10 +34,24 @@ type RawColumn = {
 };
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
+  let dataType = rawColumn.COLUMN_TYPE.split('(')[0];
+
+  /**
+   * Smooth out a difference between MySQL and MariaDB. MySQL reports the column type as `int
+   * unsigned`, while MariaDB reports it as `int(11) unsigned`. This would cause the `unsigned` part
+   * of the type to be dropped in the columnInfo retrieval for MariaDB powered databases.
+   */
+  if (
+    rawColumn.COLUMN_TYPE.includes('unsigned') &&
+    dataType.includes('unsigned') === false
+  ) {
+    dataType += ' unsigned';
+  }
+
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
-    data_type: rawColumn.COLUMN_TYPE.split('(')[0],
+    data_type: dataType,
     default_value:
       parseDefaultValue(rawColumn.COLUMN_DEFAULT) ??
       parseDefaultValue(rawColumn.GENERATION_EXPRESSION || null),
