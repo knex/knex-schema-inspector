@@ -272,8 +272,6 @@ export default class MSSQL implements SchemaInspector {
 
     const records: RawColumn[] = await query;
 
-    console.log(records);
-
     return records.map(rawColumnToColumn);
   }
 
