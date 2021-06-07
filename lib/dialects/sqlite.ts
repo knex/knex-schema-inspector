@@ -145,29 +145,32 @@ export default class SQLite implements SchemaInspector {
         { name: string; unique: boolean }[]
       >(`PRAGMA index_list(??)`, table);
 
-      return columns.map((raw): Column => {
-        const foreignKey = foreignKeys.find((fk) => fk.from === raw.name);
-        const index = indexList.find((fk) => fk.name === raw.name);
+      return columns.map(
+        (raw): Column => {
+          const foreignKey = foreignKeys.find((fk) => fk.from === raw.name);
+          const index = indexList.find((fk) => fk.name === raw.name);
 
-        return {
-          name: raw.name,
-          table: table,
-          data_type: extractType(raw.type),
-          default_value: raw.dflt_value,
-          max_length: extractMaxLength(raw.type),
-          /** @NOTE SQLite3 doesn't support precision/scale */
-          numeric_precision: null,
-          numeric_scale: null,
-          is_generated: raw.hidden !== 0,
-          is_nullable: raw.notnull === 0,
-          is_unique: !!index?.unique,
-          is_primary_key: raw.pk === 1,
-          has_auto_increment:
-            raw.pk === 1 && tablesWithAutoIncrementPrimaryKeys.includes(table),
-          foreign_key_column: foreignKey?.to || null,
-          foreign_key_table: foreignKey?.table || null,
-        };
-      });
+          return {
+            name: raw.name,
+            table: table,
+            data_type: extractType(raw.type),
+            default_value: raw.dflt_value,
+            max_length: extractMaxLength(raw.type),
+            /** @NOTE SQLite3 doesn't support precision/scale */
+            numeric_precision: null,
+            numeric_scale: null,
+            is_generated: raw.hidden !== 0,
+            is_nullable: raw.notnull === 0,
+            is_unique: !!index?.unique,
+            is_primary_key: raw.pk === 1,
+            has_auto_increment:
+              raw.pk === 1 &&
+              tablesWithAutoIncrementPrimaryKeys.includes(table),
+            foreign_key_column: foreignKey?.to || null,
+            foreign_key_table: foreignKey?.table || null,
+          };
+        }
+      );
     };
 
     if (!table) {

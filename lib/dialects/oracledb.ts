@@ -86,11 +86,13 @@ export default class oracleDB implements SchemaInspector {
 
     const records: RawTable[] = await query;
 
-    return records.map((rawTable): Table => {
-      return {
-        name: rawTable.TABLE_NAME,
-      };
-    }) as T extends string ? Table : Table[];
+    return records.map(
+      (rawTable): Table => {
+        return {
+          name: rawTable.TABLE_NAME,
+        };
+      }
+    ) as T extends string ? Table : Table[];
   }
 
   /**

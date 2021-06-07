@@ -128,13 +128,15 @@ export default class MSSQL implements SchemaInspector {
 
     const records: RawTable[] = await query;
 
-    return records.map((rawTable): Table => {
-      return {
-        name: rawTable.TABLE_NAME,
-        schema: rawTable.TABLE_SCHEMA,
-        catalog: rawTable.TABLE_CATALOG,
-      };
-    }) as T extends string ? Table : Table[];
+    return records.map(
+      (rawTable): Table => {
+        return {
+          name: rawTable.TABLE_NAME,
+          schema: rawTable.TABLE_SCHEMA,
+          catalog: rawTable.TABLE_CATALOG,
+        };
+      }
+    ) as T extends string ? Table : Table[];
   }
 
   /**
