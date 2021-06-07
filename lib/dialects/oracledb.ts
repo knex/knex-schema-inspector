@@ -141,6 +141,18 @@ export default class oracleDB implements SchemaInspector {
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
     const query = this.knex
+      .with(
+        'uc',
+        this.knex.raw(
+          'SELECT "TABLE_NAME", "CONSTRAINT_NAME", "R_CONSTRAINT_NAME", "CONSTRAINT_TYPE", "DELETE_RULE", "SEARCH_CONDITION" FROM "USER_CONSTRAINTS"'
+        )
+      )
+      .with(
+        'ucc',
+        this.knex.raw(
+          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
+        )
+      )
       .select(
         'c.TABLE_NAME',
         'c.COLUMN_NAME',
@@ -163,47 +175,36 @@ export default class oracleDB implements SchemaInspector {
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
       .leftJoin(
-        this.knex
-          .select('uc.CONSTRAINT_TYPE', 'uc.TABLE_NAME', 'cc.COLUMN_NAME')
-          .from('USER_CONSTRAINTS as uc')
-          .join(
-            'USER_CONS_COLUMNS as cc',
-            'uc.CONSTRAINT_NAME',
-            'cc.CONSTRAINT_NAME'
-          )
-          .whereIn('uc.CONSTRAINT_TYPE', ['P', 'U'])
-          .as('pk'),
-        {
-          'c.TABLE_NAME': 'pk.TABLE_NAME',
-          'c.COLUMN_NAME': 'pk.COLUMN_NAME',
-        }
+        this.knex.raw(`
+        (
+          SELECT
+            "uc"."CONSTRAINT_TYPE",
+            "uc"."TABLE_NAME",
+            "cc"."COLUMN_NAME"
+          FROM
+            "uc"
+            INNER JOIN "ucc" "cc" ON "uc"."CONSTRAINT_NAME" = "cc"."CONSTRAINT_NAME"
+          WHERE
+            "uc"."CONSTRAINT_TYPE" IN ('P', 'U')
+        ) "pk" ON "c"."TABLE_NAME" = "pk"."TABLE_NAME" AND "c"."COLUMN_NAME" = "pk"."COLUMN_NAME"
+      `)
       )
       .leftJoin(
-        this.knex
-          .select(
-            'uc.TABLE_NAME',
-            'cc.COLUMN_NAME',
-            'rc.TABLE_NAME as REFERENCED_TABLE_NAME',
-            'rc.COLUMN_NAME as REFERENCED_COLUMN_NAME'
-          )
-          .from('USER_CONSTRAINTS as uc')
-          .as('uc')
-          .join(
-            'USER_CONS_COLUMNS as cc',
-            'uc.CONSTRAINT_NAME',
-            'cc.CONSTRAINT_NAME'
-          )
-          .join(
-            'USER_CONS_COLUMNS as rc',
-            'uc.R_CONSTRAINT_NAME',
-            'rc.CONSTRAINT_NAME'
-          )
-          .where('uc.CONSTRAINT_TYPE', 'R')
-          .as('fk'),
-        {
-          'c.TABLE_NAME': 'fk.TABLE_NAME',
-          'c.COLUMN_NAME': 'fk.COLUMN_NAME',
-        }
+        this.knex.raw(`
+        (
+          SELECT
+            "uc"."TABLE_NAME",
+            "cc"."COLUMN_NAME",
+            "rc"."TABLE_NAME" AS "REFERENCED_TABLE_NAME",
+            "rc"."COLUMN_NAME" AS "REFERENCED_COLUMN_NAME"
+          FROM
+            "uc"
+            INNER JOIN "ucc" "cc" ON "uc"."CONSTRAINT_NAME" = "cc"."CONSTRAINT_NAME"
+            INNER JOIN "ucc" "rc" ON "uc"."R_CONSTRAINT_NAME" = "rc"."CONSTRAINT_NAME"
+          WHERE
+            "uc"."CONSTRAINT_TYPE" = 'R'
+        ) "fk" ON "c"."TABLE_NAME" = "fk"."TABLE_NAME" AND "c"."COLUMN_NAME" = "fk"."COLUMN_NAME"
+      `)
       );
 
     if (table) {
@@ -263,27 +264,31 @@ export default class oracleDB implements SchemaInspector {
   // ===============================================================================================
 
   async foreignKeys(table?: string) {
-    const result = await this.knex.raw<ForeignKey[]>(`
-      SELECT
-        ucc. "TABLE_NAME" AS "table",
-        ucc. "COLUMN_NAME" AS "column",
-        rucc. "TABLE_NAME" AS "foreign_key_table",
-        rucc. "COLUMN_NAME" AS "foreign_key_column",
-        uc. "CONSTRAINT_NAME" AS "constraint_name",
-        NULL AS "on_update",
-        uc. "DELETE_RULE" AS "on_delete"
-      FROM
-        USER_CONSTRAINTS uc
-        LEFT JOIN USER_CONS_COLUMNS ucc ON uc. "CONSTRAINT_NAME" = ucc. "CONSTRAINT_NAME"
-        LEFT JOIN USER_CONS_COLUMNS rucc ON uc. "R_CONSTRAINT_NAME" = rucc. "CONSTRAINT_NAME"
-      WHERE
-        uc. "CONSTRAINT_TYPE" = 'R'
-    `);
+    const query = this.knex
+      .with(
+        'ucc',
+        this.knex.raw(
+          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
+        )
+      )
+      .select<ForeignKey[]>(
+        'uc.TABLE_NAME as table',
+        'cc.COLUMN_NAME as column',
+        'rcc.TABLE_NAME as foreign_key_table',
+        'rcc.COLUMN_NAME as foreign_key_column',
+        'uc.CONSTRAINT_NAME as constraint_name',
+        this.knex.raw('NULL as "on_update"'),
+        'uc.DELETE_RULE as on_delete'
+      )
+      .from('USER_CONSTRAINTS as uc')
+      .leftJoin('ucc as cc', 'uc.CONSTRAINT_NAME', 'cc.CONSTRAINT_NAME')
+      .leftJoin('ucc as rcc', 'uc.R_CONSTRAINT_NAME', 'rcc.CONSTRAINT_NAME')
+      .where({ 'uc.CONSTRAINT_TYPE': 'R' });
 
     if (table) {
-      return result?.filter((row) => row.table === table);
+      query.andWhere({ 'uc.TABLE_NAME': table });
     }
 
-    return result;
+    return await query;
   }
 }
