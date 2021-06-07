@@ -142,13 +142,13 @@ export default class oracleDB implements SchemaInspector {
       .with(
         'uc',
         this.knex.raw(
-          `SELECT "TABLE_NAME", "CONSTRAINT_NAME", "R_CONSTRAINT_NAME", "CONSTRAINT_TYPE", "DELETE_RULE", "SEARCH_CONDITION" FROM "USER_CONSTRAINTS"`
+          'SELECT "TABLE_NAME", "CONSTRAINT_NAME", "R_CONSTRAINT_NAME", "CONSTRAINT_TYPE", "DELETE_RULE", "SEARCH_CONDITION" FROM "USER_CONSTRAINTS"'
         )
       )
       .with(
         'ucc',
         this.knex.raw(
-          `SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"`
+          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
         )
       )
       .select(
@@ -266,7 +266,7 @@ export default class oracleDB implements SchemaInspector {
       .with(
         'ucc',
         this.knex.raw(
-          `SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"`
+          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
         )
       )
       .select<ForeignKey[]>(
