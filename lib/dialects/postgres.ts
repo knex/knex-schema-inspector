@@ -160,13 +160,15 @@ export default class Postgres implements SchemaInspector {
 
     const records = await query;
 
-    return records.map((rawTable: RawTable): Table => {
-      return {
-        name: rawTable.table_name,
-        schema: rawTable.table_schema,
-        comment: rawTable.table_comment,
-      };
-    });
+    return records.map(
+      (rawTable: RawTable): Table => {
+        return {
+          name: rawTable.table_name,
+          schema: rawTable.table_schema,
+          comment: rawTable.table_comment,
+        };
+      }
+    );
   }
 
   /**
