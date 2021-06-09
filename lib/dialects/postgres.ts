@@ -160,15 +160,13 @@ export default class Postgres implements SchemaInspector {
 
     const records = await query;
 
-    return records.map(
-      (rawTable: RawTable): Table => {
-        return {
-          name: rawTable.table_name,
-          schema: rawTable.table_schema,
-          comment: rawTable.table_comment,
-        };
-      }
-    );
+    return records.map((rawTable: RawTable): Table => {
+      return {
+        name: rawTable.table_name,
+        schema: rawTable.table_schema,
+        comment: rawTable.table_comment,
+      };
+    });
   }
 
   /**
@@ -447,10 +445,24 @@ export default class Postgres implements SchemaInspector {
         c.contype = 'f';
     `);
 
+    const rowsWithoutQuotes = result.rows.map(stripQuotes);
+
     if (table) {
-      return result.rows?.filter((row) => row.table === table);
+      return rowsWithoutQuotes.filter((row) => row.table === table);
     }
 
-    return result.rows;
+    return rowsWithoutQuotes;
+
+    function stripQuotes(row: ForeignKey): ForeignKey {
+      return Object.fromEntries(
+        Object.entries(row).map(([key, value]) => {
+          if (value?.startsWith('"') && value?.endsWith('"')) {
+            return [key, value.slice(1, -1)];
+          }
+
+          return [key, value];
+        })
+      ) as ForeignKey;
+    }
   }
 }
