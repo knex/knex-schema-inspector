@@ -216,7 +216,7 @@ export default class oracleDB implements SchemaInspector {
   // Foreign Keys
   // ===============================================================================================
 
-  async foreignKeys(table?: string): Promise<ForeignKey> {
+  async foreignKeys(table?: string): Promise<ForeignKey[]> {
     const query = this.knex
       .with(
         'ucc',
