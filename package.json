@@ -1,6 +1,6 @@
 {
   "name": "knex-schema-inspector",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "Utility for extracting information about existing DB schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -48,7 +48,7 @@
     "mysql": "^2.18.1",
     "oracledb": "^5.1.0",
     "pg": "^8.4.0",
-    "prettier": "^2.0.5",
+    "prettier": "^2.3.1",
     "sqlite3": "^5.0.2",
     "tedious": "^11.0.5",
     "ts-mocha": "^8.0.0",

@@ -168,7 +168,7 @@ export default class oracleDB implements SchemaInspector {
     }
 
     if (column) {
-      const [rawColumn]: [RawColumn] = await query
+      const [rawColumn] = await query
         .andWhere({
           'c.COLUMN_NAME': column,
         })
@@ -187,7 +187,7 @@ export default class oracleDB implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
-    const { count } = await this.knex
+    const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('USER_TAB_COLS')
       .where({
@@ -195,7 +195,7 @@ export default class oracleDB implements SchemaInspector {
         COLUMN_NAME: column,
       })
       .first();
-    return !!count;
+    return !!result?.count;
   }
 
   /**

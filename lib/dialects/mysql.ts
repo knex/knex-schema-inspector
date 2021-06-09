@@ -136,17 +136,15 @@ export default class MySQL implements SchemaInspector {
 
     const records: RawTable[] = await query;
 
-    return records.map(
-      (rawTable): Table => {
-        return {
-          name: rawTable.TABLE_NAME,
-          schema: rawTable.TABLE_SCHEMA,
-          comment: rawTable.TABLE_COMMENT,
-          collation: rawTable.TABLE_COLLATION,
-          engine: rawTable.ENGINE,
-        };
-      }
-    ) as T extends string ? Table : Table[];
+    return records.map((rawTable): Table => {
+      return {
+        name: rawTable.TABLE_NAME,
+        schema: rawTable.TABLE_SCHEMA,
+        comment: rawTable.TABLE_COMMENT,
+        collation: rawTable.TABLE_COLLATION,
+        engine: rawTable.ENGINE,
+      };
+    }) as T extends string ? Table : Table[];
   }
 
   /**
