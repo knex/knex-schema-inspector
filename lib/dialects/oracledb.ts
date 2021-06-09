@@ -4,10 +4,6 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 
-type RawTable = {
-  TABLE_NAME: string;
-};
-
 type RawColumn = {
   TABLE_NAME: string;
   COLUMN_NAME: string;
@@ -58,11 +54,11 @@ export default class oracleDB implements SchemaInspector {
   /**
    * List all existing tables in the current schema/database
    */
-  async tables() {
+  async tables(): Promise<string[]> {
     const records = await this.knex
-      .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
+      .select<Table[]>('TABLE_NAME as name')
       .from('USER_TABLES');
-    return records.map(({ TABLE_NAME }) => TABLE_NAME);
+    return records.map(({ name }) => name);
   }
 
   /**
@@ -72,7 +68,9 @@ export default class oracleDB implements SchemaInspector {
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
-    const query = this.knex.select('TABLE_NAME as name').from('USER_TABLES');
+    const query = this.knex
+      .select<Table[]>('TABLE_NAME as name')
+      .from('USER_TABLES');
 
     if (table) {
       return await query.andWhere({ TABLE_NAME: table }).first();
@@ -90,7 +88,7 @@ export default class oracleDB implements SchemaInspector {
       .from('USER_TABLES')
       .where({ TABLE_NAME: table })
       .first();
-    return (result && result.count === 1) || false;
+    return !!result?.count;
   }
 
   // Columns
@@ -136,7 +134,7 @@ export default class oracleDB implements SchemaInspector {
           WHERE "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
         `)
       )
-      .select(
+      .select<RawColumn[]>(
         'c.TABLE_NAME',
         'c.COLUMN_NAME',
         'c.DATA_DEFAULT',
@@ -218,7 +216,7 @@ export default class oracleDB implements SchemaInspector {
   // Foreign Keys
   // ===============================================================================================
 
-  async foreignKeys(table?: string) {
+  async foreignKeys(table?: string): Promise<ForeignKey> {
     const query = this.knex
       .with(
         'ucc',
