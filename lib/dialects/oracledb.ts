@@ -203,9 +203,11 @@ export default class oracleDB implements SchemaInspector {
     const result = await this.knex
       .select('cc.COLUMN_NAME')
       .from('USER_CONSTRAINTS as uc')
-      .join('USER_CONS_COLUMNS as cc', {
-        'uc.CONSTRAINT_NAME': 'cc.CONSTRAINT_NAME',
-      })
+      .join(
+        'USER_CONS_COLUMNS as cc', 
+        'uc.CONSTRAINT_NAME',
+        'cc.CONSTRAINT_NAME'
+      )
       .where({
         'uc.TABLE_NAME': table,
         'uc.CONSTRAINT_TYPE': 'P',
