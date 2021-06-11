@@ -481,6 +481,15 @@ describe('oracledb', () => {
     });
   });
 
+  describe('.hasColumn', () => {
+    it('returns has column', async () => {
+      expect(await inspector.hasColumn('TEAMS', 'ID')).to.equal(true);
+      expect(await inspector.hasColumn('PAGE_VISITS', 'INVALID')).to.equal(
+        false
+      );
+    });
+  });
+
   describe('.primary', () => {
     it('returns primary key for a table', async () => {
       expect(await inspector.primary('TEAMS')).to.equal('ID');

@@ -4,10 +4,6 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 
-type RawTable = {
-  TABLE_NAME: string;
-};
-
 type RawColumn = {
   TABLE_NAME: string;
   COLUMN_NAME: string;
@@ -20,7 +16,7 @@ type RawColumn = {
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
-  CONSTRAINT_TYPE: 'P' | 'U' | null;
+  CONSTRAINT_TYPE: 'P' | 'U' | 'R' | null;
   VIRTUAL_COLUMN: 'YES' | 'NO';
   IDENTITY_COLUMN: 'YES' | 'NO';
 };
@@ -58,11 +54,11 @@ export default class oracleDB implements SchemaInspector {
   /**
    * List all existing tables in the current schema/database
    */
-  async tables() {
+  async tables(): Promise<string[]> {
     const records = await this.knex
-      .select<{ TABLE_NAME: string }[]>('TABLE_NAME')
+      .select<Table[]>('TABLE_NAME as name')
       .from('USER_TABLES');
-    return records.map(({ TABLE_NAME }) => TABLE_NAME);
+    return records.map(({ name }) => name);
   }
 
   /**
@@ -72,25 +68,15 @@ export default class oracleDB implements SchemaInspector {
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
-    const query = this.knex.select('TABLE_NAME').from('USER_TABLES');
+    const query = this.knex
+      .select<Table[]>('TABLE_NAME as name')
+      .from('USER_TABLES');
 
     if (table) {
-      const rawTable: RawTable = await query
-        .andWhere({ TABLE_NAME: table })
-        .first();
-
-      return {
-        name: rawTable.TABLE_NAME,
-      } as T extends string ? Table : Table[];
+      return await query.andWhere({ TABLE_NAME: table }).first();
     }
 
-    const records: RawTable[] = await query;
-
-    return records.map((rawTable): Table => {
-      return {
-        name: rawTable.TABLE_NAME,
-      };
-    }) as T extends string ? Table : Table[];
+    return await query;
   }
 
   /**
@@ -102,7 +88,7 @@ export default class oracleDB implements SchemaInspector {
       .from('USER_TABLES')
       .where({ TABLE_NAME: table })
       .first();
-    return (result && result.count === 1) || false;
+    return !!result?.count;
   }
 
   // Columns
@@ -113,9 +99,9 @@ export default class oracleDB implements SchemaInspector {
    */
   async columns(table?: string) {
     const query = this.knex
-      .select<{ TABLE_NAME: string; COLUMN_NAME: string }[]>(
-        'TABLE_NAME',
-        'COLUMN_NAME'
+      .select<{ table: string; column: string }[]>(
+        'TABLE_NAME as table',
+        'COLUMN_NAME as column'
       )
       .from('USER_TAB_COLS');
 
@@ -123,12 +109,7 @@ export default class oracleDB implements SchemaInspector {
       query.where({ TABLE_NAME: table });
     }
 
-    const records = await query;
-
-    return records.map(({ TABLE_NAME, COLUMN_NAME }) => ({
-      table: TABLE_NAME,
-      column: COLUMN_NAME,
-    }));
+    return await query;
   }
 
   /**
@@ -141,17 +122,19 @@ export default class oracleDB implements SchemaInspector {
     const query = this.knex
       .with(
         'uc',
-        this.knex.raw(
-          'SELECT "TABLE_NAME", "CONSTRAINT_NAME", "R_CONSTRAINT_NAME", "CONSTRAINT_TYPE" FROM "USER_CONSTRAINTS"'
-        )
+        this.knex.raw(`
+          SELECT /*+ materialize */ DISTINCT
+            "uc"."TABLE_NAME",
+            "ucc"."COLUMN_NAME",
+            "uc"."CONSTRAINT_NAME",
+            "uc"."CONSTRAINT_TYPE",
+            "uc"."R_CONSTRAINT_NAME"
+          FROM "USER_CONSTRAINTS" "uc"
+            INNER JOIN "USER_CONS_COLUMNS" "ucc" ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
+            AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+        `)
       )
-      .with(
-        'ucc',
-        this.knex.raw(
-          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
-        )
-      )
-      .select(
+      .select<RawColumn[]>(
         'c.TABLE_NAME',
         'c.COLUMN_NAME',
         'c.DATA_DEFAULT',
@@ -163,56 +146,32 @@ export default class oracleDB implements SchemaInspector {
         'c.IDENTITY_COLUMN',
         'c.VIRTUAL_COLUMN',
         'cm.COMMENTS as COLUMN_COMMENT',
-        'pk.CONSTRAINT_TYPE',
-        'fk.REFERENCED_TABLE_NAME',
-        'fk.REFERENCED_COLUMN_NAME'
+        'ct.CONSTRAINT_TYPE',
+        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
+        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
       )
       .from('USER_TAB_COLS as c')
       .leftJoin('USER_COL_COMMENTS as cm', {
         'c.TABLE_NAME': 'cm.TABLE_NAME',
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
-      .leftJoin(
-        this.knex.raw(`
-        (
-          SELECT
-            "uc"."CONSTRAINT_TYPE",
-            "uc"."TABLE_NAME",
-            "cc"."COLUMN_NAME"
-          FROM
-            "uc"
-            INNER JOIN "ucc" "cc" ON "uc"."CONSTRAINT_NAME" = "cc"."CONSTRAINT_NAME"
-          WHERE
-            "uc"."CONSTRAINT_TYPE" IN ('P', 'U')
-        ) "pk" ON "c"."TABLE_NAME" = "pk"."TABLE_NAME" AND "c"."COLUMN_NAME" = "pk"."COLUMN_NAME"
-      `)
-      )
-      .leftJoin(
-        this.knex.raw(`
-        (
-          SELECT
-            "uc"."TABLE_NAME",
-            "cc"."COLUMN_NAME",
-            "rc"."TABLE_NAME" AS "REFERENCED_TABLE_NAME",
-            "rc"."COLUMN_NAME" AS "REFERENCED_COLUMN_NAME"
-          FROM
-            "uc"
-            INNER JOIN "ucc" "cc" ON "uc"."CONSTRAINT_NAME" = "cc"."CONSTRAINT_NAME"
-            INNER JOIN "ucc" "rc" ON "uc"."R_CONSTRAINT_NAME" = "rc"."CONSTRAINT_NAME"
-          WHERE
-            "uc"."CONSTRAINT_TYPE" = 'R'
-        ) "fk" ON "c"."TABLE_NAME" = "fk"."TABLE_NAME" AND "c"."COLUMN_NAME" = "fk"."COLUMN_NAME"
-      `)
-      );
+      .leftJoin('uc as ct', {
+        'c.TABLE_NAME': 'ct.TABLE_NAME',
+        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
+      })
+      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME');
 
     if (table) {
       query.where({ 'c.TABLE_NAME': table });
     }
 
     if (column) {
-      const rawColumn: RawColumn = await query
-        .andWhere({ 'c.COLUMN_NAME': column })
-        .first();
+      const [rawColumn] = await query
+        .andWhere({
+          'c.COLUMN_NAME': column,
+        })
+        // NOTE: .first() is signifigantly slower on this query
+        .andWhereRaw('rownum = 1');
 
       return rawColumnToColumn(rawColumn);
     }
@@ -226,7 +185,7 @@ export default class oracleDB implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
-    const { count } = this.knex
+    const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
       .from('USER_TAB_COLS')
       .where({
@@ -234,39 +193,37 @@ export default class oracleDB implements SchemaInspector {
         COLUMN_NAME: column,
       })
       .first();
-    return !!count;
+    return !!result?.count;
   }
 
   /**
    * Get the primary key column for the given table
    */
-
   async primary(table: string): Promise<string> {
     const result = await this.knex
       .select('cc.COLUMN_NAME')
       .from('USER_CONSTRAINTS as uc')
-      .leftJoin(
-        'USER_CONS_COLUMNS as cc',
-        'uc.CONSTRAINT_NAME',
-        'cc.CONSTRAINT_NAME'
-      )
+      .join('USER_CONS_COLUMNS as cc', {
+        'uc.CONSTRAINT_NAME': 'cc.CONSTRAINT_NAME',
+      })
       .where({
-        'uc.CONSTRAINT_TYPE': 'P',
         'uc.TABLE_NAME': table,
+        'uc.CONSTRAINT_TYPE': 'P',
       })
       .first();
-    return result ? result.COLUMN_NAME : null;
+
+    return result?.COLUMN_NAME ?? null;
   }
 
   // Foreign Keys
   // ===============================================================================================
 
-  async foreignKeys(table?: string) {
+  async foreignKeys(table?: string): Promise<ForeignKey[]> {
     const query = this.knex
       .with(
         'ucc',
         this.knex.raw(
-          'SELECT "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
+          'SELECT /*+ materialize */ "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
         )
       )
       .select<ForeignKey[]>(
