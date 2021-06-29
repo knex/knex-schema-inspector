@@ -47,8 +47,8 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 export function parseDefaultValue(value: string | null) {
   if (!value) return null;
 
-  value = value.replace(/^\((.*)\)$/, '$1');
-  value = value.replace(/^\'(.*)\'$/, '$1');
+  value = value.replace(/^\(([\s\S]*)\)$/, '$1');
+  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
   return isNaN(value as any) ? String(value) : Number(value);
 }
