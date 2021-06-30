@@ -67,7 +67,7 @@ export function parseDefaultValue(type: string | null) {
 
   let [value, cast] = type.split('::');
 
-  value = value.replace(/^\'(.*)\'$/, '$1');
+  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
   if (/.*json.*/.test(cast)) return JSON.parse(value);
   if (/.*(char|text).*/.test(cast)) return String(value);
