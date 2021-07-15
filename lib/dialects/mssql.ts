@@ -48,7 +48,10 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 export function parseDefaultValue(value: string | null) {
   if (isNil(value)) return null;
 
-  value = value.replace(/^\(([\s\S]*)\)$/, '$1');
+  while (value.startsWith('(') && value.endsWith(')')) {
+    value = value.slice(1, -1);
+  }
+
   value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
   return isNaN(value as any) ? String(value) : Number(value);
