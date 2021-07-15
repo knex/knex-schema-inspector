@@ -3,6 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
+import isNil from 'lodash.isnil';
 
 type RawTable = {
   table_name: string;
@@ -62,7 +63,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Eg `'example'::character varying` => `example`
  */
 export function parseDefaultValue(type: string | null) {
-  if (!type) return null;
+  if (isNil(type)) return null;
   if (type.startsWith('nextval(')) return type;
 
   let [value, cast] = type.split('::');

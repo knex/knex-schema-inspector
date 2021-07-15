@@ -3,6 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
+import isNil from 'lodash.isnil';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -45,7 +46,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 export function parseDefaultValue(value: string | null) {
-  if (!value) return null;
+  if (isNil(value)) return null;
 
   value = value.replace(/^\(([\s\S]*)\)$/, '$1');
   value = value.replace(/^\'([\s\S]*)\'$/, '$1');
