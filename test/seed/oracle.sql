@@ -28,6 +28,7 @@ create table users (
   team_id number(10) not null,
   email varchar2(100),
   password varchar2(60),
+  status varchar2(60) default 'active',
   constraint fk_team_id
     foreign key (team_id)
     references teams (id)
