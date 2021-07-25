@@ -3,7 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
-import { stripDoubleQuotes } from '../utils/strip-quotes';
+import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
 
 type RawTable = {
@@ -458,7 +458,7 @@ export default class Postgres implements SchemaInspector {
     function stripRowQuotes(row: ForeignKey): ForeignKey {
       return Object.fromEntries(
         Object.entries(row).map(([key, value]) => {
-          return [key, stripDoubleQuotes(value)];
+          return [key, stripQuotes(value)];
         })
       ) as ForeignKey;
     }
