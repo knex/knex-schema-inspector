@@ -3,6 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
+import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
 
 type RawTable = {
@@ -446,7 +447,7 @@ export default class Postgres implements SchemaInspector {
         c.contype = 'f';
     `);
 
-    const rowsWithoutQuotes = result.rows.map(stripQuotes);
+    const rowsWithoutQuotes = result.rows.map(stripRowQuotes);
 
     if (table) {
       return rowsWithoutQuotes.filter((row) => row.table === table);
@@ -454,14 +455,10 @@ export default class Postgres implements SchemaInspector {
 
     return rowsWithoutQuotes;
 
-    function stripQuotes(row: ForeignKey): ForeignKey {
+    function stripRowQuotes(row: ForeignKey): ForeignKey {
       return Object.fromEntries(
         Object.entries(row).map(([key, value]) => {
-          if (value?.startsWith('"') && value?.endsWith('"')) {
-            return [key, value.slice(1, -1)];
-          }
-
-          return [key, value];
+          return [key, stripQuotes(value)];
         })
       ) as ForeignKey;
     }

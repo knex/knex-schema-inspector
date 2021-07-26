@@ -98,6 +98,7 @@ describe('mysql', () => {
         { table: 'users', column: 'team_id' },
         { table: 'users', column: 'email' },
         { table: 'users', column: 'password' },
+        { table: 'users', column: 'status' },
       ]);
     });
 
@@ -343,6 +344,23 @@ describe('mysql', () => {
           table: 'users',
           data_type: 'varchar',
           default_value: null,
+          max_length: 60,
+          numeric_precision: null,
+          numeric_scale: null,
+          is_generated: false,
+          is_nullable: true,
+          is_unique: false,
+          is_primary_key: false,
+          has_auto_increment: false,
+          foreign_key_column: null,
+          foreign_key_table: null,
+          comment: '',
+        },
+        {
+          name: 'status',
+          table: 'users',
+          data_type: 'varchar',
+          default_value: 'active',
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,

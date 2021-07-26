@@ -61,14 +61,14 @@ describe('sqlite', () => {
           name: 'users',
           sql:
             'CREATE TABLE "users" (\n' +
-            '\t"id" INTEGER NOT NULL,\n' +
-            '\t"team_id" integer NOT NULL,\n' +
-            '\t"email" varchar(100),\n' +
-            '\t"password" varchar(60),\n' +
-            '\tPRIMARY KEY("id" AUTOINCREMENT),\n' +
-            '\tFOREIGN KEY("team_id") REFERENCES "teams"("id")\n' +
-            '\tON UPDATE CASCADE\n' +
-            '\tON DELETE CASCADE\n' +
+            '\t"id"\tINTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n' +
+            '\t"team_id"\tinteger NOT NULL,\n' +
+            '\t"email"\tvarchar(100),\n' +
+            '\t"password"\tvarchar(60),\n' +
+            `\t"status"\tvarchar(60) DEFAULT 'active',\n` +
+            '\tFOREIGN KEY("team_id") REFERENCES "teams"("id") ' +
+            'ON UPDATE CASCADE ' +
+            'ON DELETE CASCADE\n' +
             ')',
         },
       ]);
@@ -116,6 +116,7 @@ describe('sqlite', () => {
         { table: 'users', column: 'team_id' },
         { table: 'users', column: 'email' },
         { table: 'users', column: 'password' },
+        { table: 'users', column: 'status' },
       ]);
     });
 
@@ -348,6 +349,22 @@ describe('sqlite', () => {
           table: 'users',
           data_type: 'varchar',
           default_value: null,
+          max_length: 60,
+          numeric_precision: null,
+          numeric_scale: null,
+          is_generated: false,
+          is_nullable: true,
+          is_unique: false,
+          is_primary_key: false,
+          has_auto_increment: false,
+          foreign_key_column: null,
+          foreign_key_table: null,
+        },
+        {
+          name: 'status',
+          table: 'users',
+          data_type: 'varchar',
+          default_value: 'active',
           max_length: 60,
           numeric_precision: null,
           numeric_scale: null,

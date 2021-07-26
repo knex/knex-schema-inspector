@@ -3,6 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawColumn = {
   TABLE_NAME: string;
@@ -26,7 +27,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
     data_type: rawColumn.DATA_TYPE,
-    default_value: rawColumn.DATA_DEFAULT,
+    default_value: stripQuotes(rawColumn.DATA_DEFAULT),
     max_length: rawColumn.DATA_LENGTH,
     numeric_precision: rawColumn.DATA_PRECISION,
     numeric_scale: rawColumn.DATA_SCALE,
