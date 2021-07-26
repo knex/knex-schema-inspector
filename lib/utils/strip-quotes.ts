@@ -1,9 +1,10 @@
 export function stripQuotes(value?: string | null) {
+  const trimmed = value?.trim();
   if (
-    (value?.startsWith(`'`) && value?.endsWith(`'`)) ||
-    (value?.startsWith('"') && value?.endsWith('"'))
+    (trimmed?.startsWith(`'`) && trimmed?.endsWith(`'`)) ||
+    (trimmed?.startsWith('"') && trimmed?.endsWith('"'))
   ) {
-    return value.slice(1, -1);
+    return trimmed.slice(1, -1);
   }
   return value;
 }
