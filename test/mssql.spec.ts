@@ -145,7 +145,7 @@ describe('mssql', () => {
         {
           name: 'name',
           table: 'teams',
-          data_type: 'varchar',
+          data_type: 'nvarchar',
           default_value: null,
           max_length: 100,
           numeric_precision: null,
