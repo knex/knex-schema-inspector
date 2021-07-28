@@ -4,7 +4,7 @@ GO
 create table teams (
   id int not null identity primary key,
   uuid char(36) not null,
-  name varchar(100),
+  name nvarchar(100),
   description varchar(max),
   credits integer,
   created_at datetime2(0),
