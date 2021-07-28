@@ -42,7 +42,29 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     has_auto_increment: rawColumn.has_auto_increment === 'YES',
     numeric_precision: rawColumn.numeric_precision || null,
     numeric_scale: rawColumn.numeric_scale || null,
+    max_length: parseMaxLength(rawColumn),
   };
+
+  function parseMaxLength(rawColumn: RawColumn) {
+    if (
+      Number.isNaN(Number(rawColumn.max_length)) ||
+      rawColumn.max_length === null ||
+      rawColumn.max_length === undefined
+    ) {
+      return null;
+    }
+
+    // n-* columns save every character as 2 bytes, which causes the max_length column to return the
+    // max length in bytes instead of characters. For example:
+    // varchar(100) => max_length == 100
+    // nvarchar(100) => max_length == 200
+    // In order to get the actual max_length value, we'll divide the value by 2
+    if (['nvarchar', 'nchar', 'ntext'].includes(rawColumn.data_type)) {
+      return Number(rawColumn.max_length) / 2;
+    }
+
+    return Number(rawColumn.max_length);
+  }
 }
 
 export function parseDefaultValue(value: string | null) {
