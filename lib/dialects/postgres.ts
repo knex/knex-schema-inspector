@@ -19,7 +19,7 @@ type RawColumn = {
   data_type: string;
   column_default: any | null;
   character_maximum_length: number | null;
-  is_generated: 'YES' | 'NO';
+  is_generated: 'NEVER' | 'ALWAYS';
   is_nullable: 'YES' | 'NO';
   is_unique: boolean;
   is_primary: boolean;
@@ -45,7 +45,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     max_length: rawColumn.character_maximum_length,
     numeric_precision: rawColumn.numeric_precision,
     numeric_scale: rawColumn.numeric_scale,
-    is_generated: rawColumn.is_generated === 'YES',
+    is_generated: rawColumn.is_generated === 'ALWAYS',
     is_nullable: rawColumn.is_nullable === 'YES',
     is_unique: rawColumn.is_unique,
     is_primary_key: rawColumn.is_primary,
