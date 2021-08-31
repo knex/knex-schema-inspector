@@ -291,7 +291,7 @@ export default class MySQL implements SchemaInspector {
   async foreignKeys(table?: string) {
     const result = await this.knex.raw<[ForeignKey[]]>(
       `
-      SELECT
+      SELECT DISTINCT
         rc.TABLE_NAME AS 'table',
         kcu.COLUMN_NAME AS 'column',
         rc.REFERENCED_TABLE_NAME AS 'foreign_key_table',
