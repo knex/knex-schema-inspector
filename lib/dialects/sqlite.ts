@@ -160,6 +160,7 @@ export default class SQLite implements SchemaInspector {
           numeric_precision: null,
           numeric_scale: null,
           is_generated: raw.hidden !== 0,
+          generation_expression: null,
           is_nullable: raw.notnull === 0,
           is_unique: !!index?.unique,
           is_primary_key: raw.pk === 1,

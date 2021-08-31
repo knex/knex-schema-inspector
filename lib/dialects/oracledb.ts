@@ -32,6 +32,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     numeric_precision: rawColumn.DATA_PRECISION,
     numeric_scale: rawColumn.DATA_SCALE,
     is_generated: rawColumn.VIRTUAL_COLUMN === 'YES',
+    generation_expression: null,
     is_nullable: rawColumn.NULLABLE === 'Y',
     is_unique: rawColumn.CONSTRAINT_TYPE === 'U',
     is_primary_key: rawColumn.CONSTRAINT_TYPE === 'P',

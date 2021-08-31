@@ -5,6 +5,7 @@ create table teams (
   id int not null identity primary key,
   uuid char(36) not null,
   name nvarchar(100),
+  name_upper as upper(name),
   description varchar(max),
   credits integer,
   created_at datetime2(0),
