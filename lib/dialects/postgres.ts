@@ -39,9 +39,8 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.column_name,
     table: rawColumn.table_name,
     data_type: rawColumn.data_type,
-    default_value:
-      parseDefaultValue(rawColumn.column_default) ||
-      parseDefaultValue(rawColumn.generation_expression),
+    default_value: parseDefaultValue(rawColumn.column_default),
+    generation_expression: rawColumn.generation_expression || null,
     max_length: rawColumn.character_maximum_length,
     numeric_precision: rawColumn.numeric_precision,
     numeric_scale: rawColumn.numeric_scale,

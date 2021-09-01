@@ -2,6 +2,7 @@ create table teams (
   id serial primary key,
   uuid char(36) not null,
   name varchar(100),
+  name_upper varchar(100) generated always as (upper(name)) stored,
   description text,
   credits integer,
   created_at timestamp,

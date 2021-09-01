@@ -23,11 +23,14 @@ type RawColumn = {
 };
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
+  const is_generated = rawColumn.VIRTUAL_COLUMN === 'YES';
+  const default_value = stripQuotes(rawColumn.DATA_DEFAULT);
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
     data_type: rawColumn.DATA_TYPE,
-    default_value: stripQuotes(rawColumn.DATA_DEFAULT),
+    default_value: !is_generated ? default_value : null,
+    generation_expression: is_generated ? default_value : null,
     max_length: rawColumn.DATA_LENGTH,
     numeric_precision: rawColumn.DATA_PRECISION,
     numeric_scale: rawColumn.DATA_SCALE,

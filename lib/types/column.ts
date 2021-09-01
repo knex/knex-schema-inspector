@@ -11,6 +11,7 @@ export interface Column {
   is_unique: boolean;
   is_primary_key: boolean;
   is_generated: boolean;
+  generation_expression?: string | null;
   has_auto_increment: boolean;
   foreign_key_table: string | null;
   foreign_key_column: string | null;
