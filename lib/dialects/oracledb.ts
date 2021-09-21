@@ -107,10 +107,11 @@ export default class oracleDB implements SchemaInspector {
         'TABLE_NAME as table',
         'COLUMN_NAME as column'
       )
-      .from('USER_TAB_COLS');
+      .from('USER_TAB_COLS')
+      .where({ HIDDEN_COLUMN: 'NO' });
 
     if (table) {
-      query.where({ TABLE_NAME: table });
+      query.andWhere({ TABLE_NAME: table });
     }
 
     return await query;
@@ -163,10 +164,11 @@ export default class oracleDB implements SchemaInspector {
         'c.TABLE_NAME': 'ct.TABLE_NAME',
         'c.COLUMN_NAME': 'ct.COLUMN_NAME',
       })
-      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME');
+      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
+      .where({ 'c.HIDDEN_COLUMN': 'NO' });
 
     if (table) {
-      query.where({ 'c.TABLE_NAME': table });
+      query.andWhere({ 'c.TABLE_NAME': table });
     }
 
     if (column) {
@@ -195,6 +197,7 @@ export default class oracleDB implements SchemaInspector {
       .where({
         TABLE_NAME: table,
         COLUMN_NAME: column,
+        HIDDEN_COLUMN: 'NO',
       })
       .first();
     return !!result?.count;
