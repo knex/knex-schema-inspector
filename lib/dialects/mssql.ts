@@ -132,7 +132,7 @@ export default class MSSQL implements SchemaInspector {
   async tableInfo<T>(table?: string) {
     const query = this.knex
       .select('TABLE_NAME', 'TABLE_SCHEMA', 'TABLE_CATALOG', 'TABLE_TYPE')
-      .from('information_schema.tables')
+      .from('INFORMATION_SCHEMA.TABLES')
       .where({
         TABLE_CATALOG: this.knex.client.database(),
         TABLE_TYPE: 'BASE TABLE',
@@ -168,7 +168,7 @@ export default class MSSQL implements SchemaInspector {
   async hasTable(table: string): Promise<boolean> {
     const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('information_schema.tables')
+      .from('INFORMATION_SCHEMA.TABLES')
       .where({
         TABLE_CATALOG: this.knex.client.database(),
         table_name: table,
@@ -300,9 +300,9 @@ export default class MSSQL implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
-    const { count } = this.knex
+    const result = await this.knex
       .count<{ count: 0 | 1 }>({ count: '*' })
-      .from('information_schema.tables')
+      .from('INFORMATION_SCHEMA.COLUMNS')
       .where({
         TABLE_CATALOG: this.knex.client.database(),
         TABLE_NAME: table,
@@ -310,7 +310,8 @@ export default class MSSQL implements SchemaInspector {
         TABLE_SCHEMA: this.schema,
       })
       .first();
-    return !!count;
+
+    return (result && result.count === 1) || false;
   }
 
   /**
