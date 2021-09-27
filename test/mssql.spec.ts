@@ -73,6 +73,14 @@ describe('mssql', () => {
     });
   });
 
+  describe('.hasColumns', () => {
+    it('returns if table and column exists or not', async () => {
+      expect(await inspector.hasColumn('teams', 'credits')).to.equal(true);
+      expect(await inspector.hasColumn('teams', 'foobar')).to.equal(false);
+      expect(await inspector.hasColumn('foobar', 'foobar')).to.equal(false);
+    });
+  });
+
   describe('.columns', () => {
     it('returns information for all tables', async () => {
       expect(await inspector.columns()).to.have.deep.members([
