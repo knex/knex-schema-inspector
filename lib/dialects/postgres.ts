@@ -5,6 +5,7 @@ import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
+import { builtins, getTypeParser } from 'pg-types';
 
 type RawTable = {
   table_name: string;
@@ -70,10 +71,13 @@ export function parseDefaultValue(type: string | null) {
 
   value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
-  if (/.*json.*/.test(cast)) return JSON.parse(value);
-  if (/.*(char|text).*/.test(cast)) return String(value);
+  const pgBuiltins = builtins as any;
 
-  return isNaN(value as any) ? value : Number(value);
+  const code = pgBuiltins[cast.toUpperCase()];
+
+  const parser = getTypeParser(code);
+
+  return parser(value);
 }
 
 export default class Postgres implements SchemaInspector {
