@@ -23,6 +23,8 @@ create table users (
     on delete cascade
 );
 
+alter table users add constraint fk_team_unique unique(team_id);
+
 -- One table without a primary key
 create table page_visits (
   request_path varchar(100),
