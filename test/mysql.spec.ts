@@ -119,7 +119,9 @@ describe('mysql', () => {
 
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
-      expect(await inspector.columnInfo()).to.deep.include.members([
+      const columnInfo = await inspector.columnInfo();
+      expect(columnInfo).to.have.length(16);
+      expect(columnInfo).to.deep.include.members([
         {
           name: 'team_id',
           table: 'users',
@@ -131,7 +133,7 @@ describe('mysql', () => {
           is_generated: false,
           generation_expression: null,
           is_nullable: false,
-          is_unique: false,
+          is_unique: true,
           is_primary_key: false,
           has_auto_increment: false,
           foreign_key_column: 'id',
