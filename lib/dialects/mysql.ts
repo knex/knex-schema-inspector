@@ -217,27 +217,19 @@ export default class MySQL implements SchemaInspector {
         'rc.DELETE_RULE',
         'rc.MATCH_OPTION'
       )
-      .from(
-        this.knex.raw(`
-        INFORMATION_SCHEMA.COLUMNS AS c
-        LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS fk
-          ON c.TABLE_NAME = fk.TABLE_NAME
-          AND c.COLUMN_NAME = fk.COLUMN_NAME
-          AND c.TABLE_SCHEMA = fk.CONSTRAINT_SCHEMA
-          AND fk.CONSTRAINT_NAME = (
-            SELECT _fk.CONSTRAINT_NAME
-            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS _fk
-            WHERE fk.TABLE_NAME = _fk.TABLE_NAME
-            AND fk.COLUMN_NAME = _fk.COLUMN_NAME
-            AND fk.CONSTRAINT_SCHEMA = _fk.CONSTRAINT_SCHEMA
-            ORDER BY REFERENCED_TABLE_NAME IS NULL
-            LIMIT 1
-          )
-        LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc
-          ON rc.TABLE_NAME = fk.TABLE_NAME
-          AND rc.CONSTRAINT_NAME = fk.CONSTRAINT_NAME
-          AND rc.CONSTRAINT_SCHEMA = fk.CONSTRAINT_SCHEMA
-      `)
+      .from('INFORMATION_SCHEMA.COLUMNS as c')
+      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
+        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
+          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
+          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+      })
+      .leftJoin(
+        'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
+        function () {
+          this.on('rc.TABLE_NAME', '=', 'fk.TABLE_NAME')
+            .andOn('rc.CONSTRAINT_NAME', '=', 'fk.CONSTRAINT_NAME')
+            .andOn('rc.CONSTRAINT_SCHEMA', '=', 'fk.CONSTRAINT_SCHEMA');
+        }
       )
       .where({
         'c.TABLE_SCHEMA': this.knex.client.database(),
@@ -257,7 +249,15 @@ export default class MySQL implements SchemaInspector {
 
     const records: RawColumn[] = await query;
 
-    return records.map(rawColumnToColumn);
+    return records
+      .map(rawColumnToColumn)
+      .sort((column) => +!column.foreign_key_column)
+      .filter((column, index, records) => {
+        const first = records.findIndex((_column) => {
+          return column.name === _column.name && column.table === _column.table;
+        });
+        return first === index;
+      });
   }
 
   /**
