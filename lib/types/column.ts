@@ -2,6 +2,7 @@ export interface Column {
   name: string;
   table: string;
   data_type: string;
+  default_value_raw: any | null;
   default_value: any | null;
   max_length: number | null;
   numeric_precision: number | null;

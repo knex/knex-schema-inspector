@@ -7,6 +7,19 @@ import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
 import { builtins, getTypeParser } from 'pg-types';
 
+const pgTypes = builtins as any;
+
+pgTypes['SMALLINT'] = pgTypes['INT2'];
+pgTypes['INTEGER'] = pgTypes['INT4'];
+pgTypes['BIGINT'] = pgTypes['INT8'];
+pgTypes['REAL'] = pgTypes['FLOAT4'];
+pgTypes['DOUBLE_PRECISION'] = pgTypes['FLOAT8'];
+pgTypes['BOOLEAN'] = pgTypes['BOOL'];
+pgTypes['CHARACTER'] = pgTypes['VARCHAR'];
+pgTypes['CHARACTER_VARYING'] = pgTypes['VARCHAR'];
+pgTypes['TIMESTAMP_WITHOUT_TIME_ZONE'] = pgTypes['TIMESTAMP'];
+pgTypes['TIMESTAMP_WITH_TIME_ZONE'] = pgTypes['TIMESTAMPTZ'];
+
 type RawTable = {
   table_name: string;
   table_schema: 'public' | string;
@@ -40,7 +53,11 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.column_name,
     table: rawColumn.table_name,
     data_type: rawColumn.data_type,
-    default_value: parseDefaultValue(rawColumn.column_default),
+    default_value_raw: rawColumn.column_default,
+    default_value: parseDefaultValue(
+      rawColumn.column_default,
+      rawColumn.data_type
+    ),
     generation_expression: rawColumn.generation_expression || null,
     max_length: rawColumn.character_maximum_length,
     numeric_precision: rawColumn.numeric_precision,
@@ -63,21 +80,36 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Converts Postgres default value to JS
  * Eg `'example'::character varying` => `example`
  */
-export function parseDefaultValue(type: string | null) {
-  if (isNil(type)) return null;
-  if (type.startsWith('nextval(')) return type;
+export function parseDefaultValue(
+  column_default: string | null,
+  column_type: string
+) {
+  if (isNil(column_default)) return null;
+  if (column_default.startsWith('nextval(')) return column_default;
 
-  let [value, cast] = type.split('::');
+  try {
+    let [value, cast] = column_default.split('::');
 
-  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+    value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
-  const pgBuiltins = builtins as any;
+    if (!cast) {
+      cast = column_type;
+    }
 
-  const code = pgBuiltins[cast.toUpperCase()];
+    cast = cast.toUpperCase().replace(/ /g, '_');
 
-  const parser = getTypeParser(code);
+    if (!pgTypes.hasOwnProperty(cast)) {
+      throw `type ${cast} not supported`;
+    }
 
-  return parser(value);
+    const code = pgTypes[cast];
+
+    const parser = getTypeParser(code);
+
+    return parser(value);
+  } catch (e: any) {
+    return null;
+  }
 }
 
 export default class Postgres implements SchemaInspector {

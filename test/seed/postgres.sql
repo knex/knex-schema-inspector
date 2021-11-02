@@ -36,6 +36,33 @@ create table page_visits (
   created_at timestamp
 );
 
+-- One table with multiple default values
+create table multiple_defaults (
+  i1 int default 12,
+  i2 smallint default '12'::smallint,
+  i3 integer default '12'::integer,
+  i4 bigint default '12'::bigint,
+
+  f1 float default 12.12,
+  f2 float4 default '12.12'::float4,
+  f3 float8 default '12.12'::float8,
+  f4 real default '12.12'::real,
+
+  b1 bool default false,
+  b2 bool default false::boolean,
+  
+  c1 char default 'Lorem Ipsum',
+  c2 varchar default 'Lorem Ipsum',
+
+  t1 timestamp default '2021-11-01 10:23:54',
+  t2 timestamp with time zone default '2021-11-01 10:23:54+02',
+
+  d1 date default '2021-11-01',
+
+  j1 json default '{"text":"Lorem Ipsum"}'::json,
+  j2 jsonb default '{"text":"Lorem Ipsum"}'::jsonb
+);
+
 -- One table in a schema
 create schema test;
 create table test.test (

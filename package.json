@@ -67,6 +67,7 @@
   },
   "dependencies": {
     "lodash.flatten": "^4.4.0",
-    "lodash.isnil": "^4.0.0"
+    "lodash.isnil": "^4.0.0",
+    "pg-types": "^3.0.1"
   }
 }
