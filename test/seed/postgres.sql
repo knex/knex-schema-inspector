@@ -60,7 +60,12 @@ create table multiple_defaults (
   d1 date default '2021-11-01',
 
   j1 json default '{"text":"Lorem Ipsum"}'::json,
-  j2 jsonb default '{"text":"Lorem Ipsum"}'::jsonb
+  j2 jsonb default '{"text":"Lorem Ipsum"}'::jsonb,
+
+  a1 json[] default array[]::json[],
+  a2 jsonb[] default array[]::jsonb[],
+  a3 json[] default array['{"text":"Lorem Ipsum"}', '{"text":"dolor sit amet"}']::json[],
+  a4 jsonb[] default array['{"text":"Lorem Ipsum"}', '{"text":"dolor sit amet"}']::jsonb[]
 );
 
 -- One table in a schema
