@@ -77,6 +77,24 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 /**
+ * Converts Postgres default array to JS
+ * Eg `array['{"text":"Lorem Ipsum"}']::json[],` => [{"text":"Lorem Ipsum"}]
+ */
+function parseDefaultArray(column_default: string): Array<any> | null {
+  if (column_default.startsWith('ARRAY[]')) return [];
+
+  const matches = column_default.match(/^ARRAY\[(.*)\]$/);
+
+  if (!matches) return null;
+
+  const match = matches[1];
+
+  const parts = match.split(',');
+
+  return parts.map((p) => parseDefaultValue(p.trim(), '_'));
+}
+
+/**
  * Converts Postgres default value to JS
  * Eg `'example'::character varying` => `example`
  */
@@ -88,6 +106,8 @@ export function parseDefaultValue(
   if (column_default.startsWith('nextval(')) return column_default;
 
   try {
+    if (column_type === 'ARRAY') return parseDefaultArray(column_default);
+
     let [value, cast] = column_default.split('::');
 
     value = value.replace(/^\'([\s\S]*)\'$/, '$1');
