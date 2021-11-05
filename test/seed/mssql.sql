@@ -25,7 +25,9 @@ create table users (
     foreign key (team_id)
     references teams (id)
     on update cascade
-    on delete cascade
+    on delete cascade,
+  constraint team_id_email_unique
+    unique (team_id, email)
 );
 
 GO
