@@ -17,7 +17,7 @@ type RawColumn = {
   COLUMN_COMMENT: string | null;
   REFERENCED_TABLE_NAME: string | null;
   REFERENCED_COLUMN_NAME: string | null;
-  CONSTRAINT_TYPE: 'P' | 'U' | 'R' | null;
+  CONSTRAINT_TYPE: 'P' | 'U' | null;
   VIRTUAL_COLUMN: 'YES' | 'NO';
   IDENTITY_COLUMN: 'YES' | 'NO';
 };
@@ -125,57 +125,72 @@ export default class oracleDB implements SchemaInspector {
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
     const query = this.knex
-      .with(
-        'uc',
-        this.knex.raw(`
-          SELECT /*+ materialize */ DISTINCT
-            "uc"."TABLE_NAME",
-            "ucc"."COLUMN_NAME",
-            "uc"."CONSTRAINT_NAME",
-            "uc"."CONSTRAINT_TYPE",
-            "uc"."R_CONSTRAINT_NAME"
-          FROM "USER_CONSTRAINTS" "uc"
-            INNER JOIN "USER_CONS_COLUMNS" "ucc" ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
-            AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
-        `)
+      .select(
+        this.knex.raw(
+          `
+          c.TABLE_NAME
+          , c.COLUMN_NAME
+          , c.DATA_DEFAULT
+          , c.DATA_TYPE
+          , c.DATA_LENGTH
+          , c.DATA_PRECISION
+          , c.DATA_SCALE
+          , c.NULLABLE
+          , c.IDENTITY_COLUMN
+          , c.VIRTUAL_COLUMN
+          , c.HIDDEN_COLUMN
+          , cm.COMMENTS as COLUMN_COMMENT
+          , uu.CONSTRAINT_TYPE
+          , uc.REFERENCED_TABLE_NAME
+          , uc.REFERENCED_COLUMN_NAME
+        FROM USER_TAB_COLS c
+        LEFT JOIN USER_COL_COMMENTS cm
+          on c.TABLE_NAME = cm.TABLE_NAME
+          and c.COLUMN_NAME = cm.COLUMN_NAME
+        LEFT JOIN (
+          SELECT
+              ucc.TABLE_NAME
+            , ucc.COLUMN_NAME
+            , uc.CONSTRAINT_TYPE
+            , max(ucc.POSITION) over(partition by ucc.CONSTRAINT_NAME) as INDEX_COLUMN_COUNT
+          FROM USER_CONSTRAINTS uc
+          INNER JOIN USER_CONS_COLUMNS ucc
+            ON uc.CONSTRAINT_NAME = ucc.CONSTRAINT_NAME
+            AND uc.CONSTRAINT_TYPE in ('P' 'U')
+        ) uu, 
+          ON c.TABLE_NAME = uu.TABLE_NAME
+          AND c.COLUMN_NAME = uu.COLUMN_NAME
+          AND INDEX_COLUMN_COUNT = 1
+        LEFT JOIN (
+          SELECT
+            uc.TABLE_NAME
+            , ucc.COLUMN_NAME
+            , ucr.TABLE_NAME as REFERENCED_TABLE_NAME
+            , uccr.COLUMN_NAME as REFERENCED_COLUMN_NAME
+          FROM USER_CONSTRAINTS uc
+          INNER JOIN USER_CONS_COLUMNS ucc
+            ON uc.CONSTRAINT_NAME = ucc.CONSTRAINT_NAME
+            AND uc.CONSTRAINT_TYPE = 'R'
+          LEFT JOIN USER_CONSTRAINTS ucr
+            ON uc.R_CONSTRAINT_NAME = ucr.CONSTRAINT_NAME
+            AND ucr.CONSTRAINT_TYPE = 'P'
+          LEFT JOIN USER_CONS_COLUMNS uccr
+            ON ucr.CONSTRAINT_NAME = uccr.CONSTRAINT_NAME
+        ) uc
+          on c.TABLE_NAME = uc.TABLE_NAME
+          and c.COLUMN_NAME = uc.COLUMN_NAME
+      `
+        )
       )
-      .select<RawColumn[]>(
-        'c.TABLE_NAME',
-        'c.COLUMN_NAME',
-        'c.DATA_DEFAULT',
-        'c.DATA_TYPE',
-        'c.DATA_LENGTH',
-        'c.DATA_PRECISION',
-        'c.DATA_SCALE',
-        'c.NULLABLE',
-        'c.IDENTITY_COLUMN',
-        'c.VIRTUAL_COLUMN',
-        'cm.COMMENTS as COLUMN_COMMENT',
-        'ct.CONSTRAINT_TYPE',
-        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
-        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
-      )
-      .from('USER_TAB_COLS as c')
-      .leftJoin('USER_COL_COMMENTS as cm', {
-        'c.TABLE_NAME': 'cm.TABLE_NAME',
-        'c.COLUMN_NAME': 'cm.COLUMN_NAME',
-      })
-      .leftJoin('uc as ct', {
-        'c.TABLE_NAME': 'ct.TABLE_NAME',
-        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-      })
-      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
-      .where({ 'c.HIDDEN_COLUMN': 'NO' });
+      .whereRaw(`c.HIDDEN_COLUMN = 'NO'`);
 
     if (table) {
-      query.andWhere({ 'c.TABLE_NAME': table });
+      query.andWhereRaw(`c.TABLE_NAME = ? `, table);
     }
 
     if (column) {
       const [rawColumn] = await query
-        .andWhere({
-          'c.COLUMN_NAME': column,
-        })
+        .andWhereRaw(`c.COLUMN_NAME = ? `, column)
         // NOTE: .first() is signifigantly slower on this query
         .andWhereRaw('rownum = 1');
 
