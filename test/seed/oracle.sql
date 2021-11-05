@@ -33,9 +33,7 @@ create table users (
   constraint fk_team_id
     foreign key (team_id)
     references teams (id)
-    on delete cascade,
-  constraint team_id_email_unique
-    unique (team_id, email)
+    on delete cascade
 );
 
 -- Generate ID using sequence and trigger
