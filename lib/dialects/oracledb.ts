@@ -177,8 +177,6 @@ export default class oracleDB implements SchemaInspector {
       .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
 
-    console.log(query.toString());
-
     if (table) {
       query.andWhere({ 'c.TABLE_NAME': table });
     }
