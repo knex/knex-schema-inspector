@@ -19,6 +19,17 @@ pgTypes['CHARACTER'] = pgTypes['VARCHAR'];
 pgTypes['CHARACTER_VARYING'] = pgTypes['VARCHAR'];
 pgTypes['TIMESTAMP_WITHOUT_TIME_ZONE'] = pgTypes['TIMESTAMP'];
 pgTypes['TIMESTAMP_WITH_TIME_ZONE'] = pgTypes['TIMESTAMPTZ'];
+pgTypes['_SMALLINT'] = 1005;
+pgTypes['_INTEGER'] = 1007;
+pgTypes['_BIGINT'] = 1016;
+pgTypes['_REAL'] = 1021;
+pgTypes['_DOUBLE_PRECISION'] = 1022;
+pgTypes['_BOOLEAN'] = 1000;
+pgTypes['_BPCHAR'] = 1014;
+pgTypes['_CHARACTER_VARYING'] = 1015;
+pgTypes['_TIMESTAMP_WITHOUT_TIME_ZONE'] = 1115;
+pgTypes['_TIMESTAMP_WITH_TIME_ZONE'] = 1185;
+pgTypes['_DATE'] = 1182;
 
 type RawTable = {
   table_name: string;
@@ -80,7 +91,22 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Converts Postgres default array to JS
  * Eg `array['{"text":"Lorem Ipsum"}']::json[],` => [{"text":"Lorem Ipsum"}]
  */
-function parseDefaultArray(column_default: string): Array<any> | null {
+function parseDefaultArray(column_default: string): any {
+  // case when '{el1,el2,el3}'::cast[]
+  if (column_default.startsWith("'{")) {
+    let [value, cast] = column_default.split('::');
+
+    cast = cast.substring(0, cast.length - 2).replace(/ /g, '_');
+    value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+
+    const code = pgTypes['_' + cast.toUpperCase()];
+
+    const parser = getTypeParser(code);
+
+    return parser(value);
+  }
+
+  // case when ARRAY[el1::cast,el2::cast]
   if (column_default.startsWith('ARRAY[]')) return [];
 
   const matches = column_default.match(/^ARRAY\[(.*)\]$/);

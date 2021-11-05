@@ -65,7 +65,23 @@ create table multiple_defaults (
   a1 json[] default array[]::json[],
   a2 jsonb[] default array[]::jsonb[],
   a3 json[] default array['{"text":"Lorem Ipsum"}', '{"text":"dolor sit amet"}']::json[],
-  a4 jsonb[] default array['{"text":"Lorem Ipsum"}', '{"text":"dolor sit amet"}']::jsonb[]
+
+  p1 int[] default '{12, 24, 48}',
+  p2 int2[] default '{12, 24, 48}',
+  p3 bigint[] default '{12, 24, 48}',
+  
+  p4 float4[] default '{12.12, 24.12, 48.12}',
+  p5 float8[] default '{12.12, 24.12, 48.12}',
+  p6 real[] default '{12.12, 24.12, 48.12}',
+
+  p7 bool[] default '{1, true, t, false, f}',
+
+  p8 character[] default '{"Lorem Ipsum","dolor sit amet"}',
+  p9 varchar[] default '{"Lorem Ipsum","dolor sit amet"}',
+
+  p10 timestamp[] default '{"2021-11-01 10:23:54","2021-11-11 10:23:54"}',
+  p11 timestamp with time zone[] default '{"2021-11-01 10:23:54","2021-11-11 10:23:54"}',
+  p12 date[] default '{"2021-11-01","2021-11-11"}'
 );
 
 -- One table in a schema
