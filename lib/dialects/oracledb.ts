@@ -128,7 +128,7 @@ export default class oracleDB implements SchemaInspector {
       .with(
         'uc',
         this.knex.raw(`
-          SELECT /*+ materialize */ DISTINCT
+          SELECT /*+ materialize */
             "uc"."TABLE_NAME",
             "ucc"."COLUMN_NAME",
             "uc"."CONSTRAINT_NAME",
@@ -151,7 +151,9 @@ export default class oracleDB implements SchemaInspector {
         'c.IDENTITY_COLUMN',
         'c.VIRTUAL_COLUMN',
         'cm.COMMENTS as COLUMN_COMMENT',
-        'ct.CONSTRAINT_TYPE',
+        this.knex.raw(
+          'COALESCE("ct"."CONSTRAINT_TYPE", "uct"."CONSTRAINT_TYPE") AS "CONSTRAINT_TYPE"'
+        ),
         'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
         'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
       )
@@ -160,12 +162,22 @@ export default class oracleDB implements SchemaInspector {
         'c.TABLE_NAME': 'cm.TABLE_NAME',
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
-      .leftJoin('uc as ct', {
-        'c.TABLE_NAME': 'ct.TABLE_NAME',
-        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-      })
+      .joinRaw(
+        `LEFT JOIN "uc" "ct"
+          ON "c"."TABLE_NAME" = "ct"."TABLE_NAME"
+          AND "c"."COLUMN_NAME" = "ct"."COLUMN_NAME"
+          AND "ct"."CONSTRAINT_TYPE" != 'U'`
+      )
+      .joinRaw(
+        `LEFT JOIN "uc" "uct"
+          ON "c"."TABLE_NAME" = "uct"."TABLE_NAME"
+          AND "c"."COLUMN_NAME" = "uct"."COLUMN_NAME"
+          AND "uct"."CONSTRAINT_TYPE" = 'U'`
+      )
       .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
+
+    console.log(query.toString());
 
     if (table) {
       query.andWhere({ 'c.TABLE_NAME': table });
