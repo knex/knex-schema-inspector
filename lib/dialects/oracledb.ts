@@ -137,10 +137,10 @@ export default class oracleDB implements SchemaInspector {
           FROM "USER_CONSTRAINTS" "uc"
           INNER JOIN (
             SELECT
-              "ucc"."COLUMN_NAME",
-              "ucc"."CONSTRAINT_NAME",
-              COUNT(*) OVER(PARTITION BY "ucc"."CONSTRAINT_NAME") "INDEX_COLUMN_COUNT"
-            FROM "USER_CONS_COLUMNS" "ucc"
+              "COLUMN_NAME",
+              "CONSTRAINT_NAME",
+              COUNT(*) OVER(PARTITION BY "CONSTRAINT_NAME") "INDEX_COLUMN_COUNT"
+            FROM "USER_CONS_COLUMNS"
           ) "ucc"
             ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
             AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
