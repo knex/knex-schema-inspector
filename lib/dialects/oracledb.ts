@@ -135,8 +135,16 @@ export default class oracleDB implements SchemaInspector {
             "uc"."CONSTRAINT_TYPE",
             "uc"."R_CONSTRAINT_NAME"
           FROM "USER_CONSTRAINTS" "uc"
-            INNER JOIN "USER_CONS_COLUMNS" "ucc" ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
+          INNER JOIN (
+            SELECT
+              "ucc"."COLUMN_NAME",
+              "ucc"."CONSTRAINT_NAME",
+              COUNT(*) OVER(PARTITION BY "ucc"."CONSTRAINT_NAME") "INDEX_COLUMN_COUNT"
+            FROM "USER_CONS_COLUMNS" "ucc"
+          ) "ucc"
+            ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
             AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+            AND "ucc"."INDEX_COLUMN_COUNT" = 1
         `)
       )
       .select<RawColumn[]>(
@@ -151,9 +159,7 @@ export default class oracleDB implements SchemaInspector {
         'c.IDENTITY_COLUMN',
         'c.VIRTUAL_COLUMN',
         'cm.COMMENTS as COLUMN_COMMENT',
-        this.knex.raw(
-          'COALESCE("ct"."CONSTRAINT_TYPE", "uct"."CONSTRAINT_TYPE") AS "CONSTRAINT_TYPE"'
-        ),
+        'ct.CONSTRAINT_TYPE',
         'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
         'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
       )
@@ -162,18 +168,10 @@ export default class oracleDB implements SchemaInspector {
         'c.TABLE_NAME': 'cm.TABLE_NAME',
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
-      .joinRaw(
-        `LEFT JOIN "uc" "ct"
-          ON "c"."TABLE_NAME" = "ct"."TABLE_NAME"
-          AND "c"."COLUMN_NAME" = "ct"."COLUMN_NAME"
-          AND "ct"."CONSTRAINT_TYPE" != 'U'`
-      )
-      .joinRaw(
-        `LEFT JOIN "uc" "uct"
-          ON "c"."TABLE_NAME" = "uct"."TABLE_NAME"
-          AND "c"."COLUMN_NAME" = "uct"."COLUMN_NAME"
-          AND "uct"."CONSTRAINT_TYPE" = 'U'`
-      )
+      .leftJoin('uc as ct', {
+        'c.TABLE_NAME': 'ct.TABLE_NAME',
+        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
+      })
       .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
 
