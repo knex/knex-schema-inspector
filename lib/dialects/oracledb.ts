@@ -168,10 +168,27 @@ export default class oracleDB implements SchemaInspector {
         'c.TABLE_NAME': 'cm.TABLE_NAME',
         'c.COLUMN_NAME': 'cm.COLUMN_NAME',
       })
-      .leftJoin('uc as ct', {
-        'c.TABLE_NAME': 'ct.TABLE_NAME',
-        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-      })
+      .leftJoin(
+        this.knex.raw(
+          `(
+          SELECT
+            "TABLE_NAME",
+            "COLUMN_NAME",
+            "CONSTRAINT_TYPE",
+            "R_CONSTRAINT_NAME",
+            ROW_NUMBER() OVER(
+              PARTITION BY
+                "TABLE_NAME",
+                "COLUMN_NAME"
+              ORDER BY "CONSTRAINT_TYPE"
+            ) "CONSTRAINT_COLUMN_INDEX"
+          FROM "uc"
+        ) "ct"
+          ON "c"."TABLE_NAME" = "ct"."TABLE_NAME"
+          AND "c"."COLUMN_NAME" = "ct"."COLUMN_NAME"
+          AND "ct".CONSTRAINT_COLUMN_INDEX = 1`
+        )
+      )
       .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
 

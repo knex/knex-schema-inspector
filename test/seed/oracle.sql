@@ -34,6 +34,8 @@ create table users (
     foreign key (team_id)
     references teams (id)
     on delete cascade,
+  constraint team_id_unique
+    unique (team_id),
   constraint team_id_email_unique
     unique (team_id, email)
 );
