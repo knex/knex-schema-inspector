@@ -124,6 +124,10 @@ export default class oracleDB implements SchemaInspector {
   columnInfo(table: string): Promise<Column[]>;
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
+    /**
+     * NOTICE: This query is optimized for speed and sacrifices some elegance and
+     * beauty to achive this. If you plan on refactoring, please keep this in mind.
+     */
     const query = this.knex
       .with(
         'uc',
@@ -246,6 +250,9 @@ export default class oracleDB implements SchemaInspector {
   // ===============================================================================================
 
   async foreignKeys(table?: string): Promise<ForeignKey[]> {
+    /**
+     * NOTICE: This query is optimized for speed. Please keep this in mind.
+     */
     const query = this.knex
       .with(
         'ucc',
