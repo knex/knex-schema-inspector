@@ -176,12 +176,8 @@ export default class oracleDB implements SchemaInspector {
             "COLUMN_NAME",
             "CONSTRAINT_TYPE",
             "R_CONSTRAINT_NAME",
-            ROW_NUMBER() OVER(
-              PARTITION BY
-                "TABLE_NAME",
-                "COLUMN_NAME"
-              ORDER BY "CONSTRAINT_TYPE"
-            ) "CONSTRAINT_COLUMN_INDEX"
+            ROW_NUMBER()
+              OVER(PARTITION BY "TABLE_NAME", "COLUMN_NAME" ORDER BY "CONSTRAINT_TYPE") "CONSTRAINT_COLUMN_INDEX"
           FROM "uc"
         ) "ct"
           ON "c"."TABLE_NAME" = "ct"."TABLE_NAME"
