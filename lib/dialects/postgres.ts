@@ -271,6 +271,7 @@ export default class Postgres implements SchemaInspector {
             AND pg_attribute.attnum = any(pg_index.indkey)
           WHERE pg_index.indrelid = quote_ident(c.table_name)::regclass
           AND pg_attribute.attname = c.column_name
+          AND pg_index.indnkeyatts = 1 
           LIMIT 1
         ) pg ON true
       `
