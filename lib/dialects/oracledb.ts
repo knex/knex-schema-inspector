@@ -132,7 +132,7 @@ export default class oracleDB implements SchemaInspector {
       .with(
         'uc',
         this.knex.raw(`
-          SELECT /*+ materialize */ DISTINCT
+          SELECT /*+ materialize */
             "uc"."TABLE_NAME",
             "ucc"."COLUMN_NAME",
             "uc"."CONSTRAINT_NAME",
