@@ -174,8 +174,8 @@ export default class oracleDB implements SchemaInspector {
       .leftJoin('uc as ct', {
         'c.TABLE_NAME': 'ct.TABLE_NAME',
         'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-        'ct.CONSTRAINT_COUNT': this.knex.raw('1'),
-        'ct.CONSTRAINT_PRIORITY': this.knex.raw('1'),
+        'ct.CONSTRAINT_COUNT': 1,
+        'ct.CONSTRAINT_PRIORITY': 1,
       })
       .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
