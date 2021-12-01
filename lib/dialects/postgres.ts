@@ -255,7 +255,7 @@ export default class Postgres implements SchemaInspector {
       .joinRaw(
         `
         LEFT JOIN pg_catalog.pg_class
-          ON pg_catalog.pg_class.oid = quote_ident(c.table_name):: regclass:: oid
+          ON pg_catalog.pg_class.oid = CONCAT_WS('.', quote_ident(c.table_schema), quote_ident(c.table_name)):: regclass:: oid
           AND pg_catalog.pg_class.relname = c.table_name
       `
       )
@@ -271,7 +271,7 @@ export default class Postgres implements SchemaInspector {
             AND pg_attribute.attnum = any(pg_index.indkey)
           WHERE pg_index.indrelid = quote_ident(c.table_name)::regclass
           AND pg_attribute.attname = c.column_name
-          AND pg_index.indnkeyatts = 1 
+          AND pg_index.indnatts = 1
           LIMIT 1
         ) pg ON true
       `
