@@ -13,7 +13,7 @@ npm install knex-schema-inspector
 ```
 
 ```
-yarn knex-schema-inspector
+yarn add knex-schema-inspector
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ The package is initialized by passing it an instance of Knex:
 import Knex from 'knex';
 import schemaInspector from 'knex-schema-inspector';
 
-const database = knex({
+const database = Knex({
   client: 'mysql',
   connection: {
     host: '127.0.0.1',
@@ -58,6 +58,25 @@ Note: MySQL doesn't support the `schema` parameter, as schema and database are a
 Note 2: Some database types might return slightly more information than others. See the type files for a specific overview what to expect from driver to driver.
 
 Note 3: MSSQL doesn't support comment for either tables or columns
+
+### Methods
+
+**Table**
+- [`tables(): Promise<string[]>`](#tables-promisestring)
+- [`tableInfo(table?: string): Promise<Table | Table[]>`](#tableinfotable-string-promisetable--table)
+- [`hasTable(table: string): Promise<boolean>`](#hastabletable-string-promiseboolean)
+
+**Columns**
+- [`columns(table?: string): Promise<{ table: string, column: string }[]>`](#columnstable-string-promise-table-string-column-string-)
+- [`columnInfo(table?: string, column?: string): Promise<Column[] | Column>`](#columninfotable-string-column-string-promisecolumn--column)
+- [`primary(table: string): Promise<string>`](#primarytable-string-promisestring)
+
+**Foreign Keys**
+- [`foreignKeys(): Promise<ForeignKey>`](#foreign-keys)
+
+**Misc.**
+- [`withSchema(schema: string): void`](#withschemaschema-string-void)
+
 
 ### Tables
 
