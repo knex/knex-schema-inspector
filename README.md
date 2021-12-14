@@ -62,21 +62,24 @@ Note 3: MSSQL doesn't support comment for either tables or columns
 ### Methods
 
 **Table**
+
 - [`tables(): Promise<string[]>`](#tables-promisestring)
 - [`tableInfo(table?: string): Promise<Table | Table[]>`](#tableinfotable-string-promisetable--table)
 - [`hasTable(table: string): Promise<boolean>`](#hastabletable-string-promiseboolean)
 
 **Columns**
+
 - [`columns(table?: string): Promise<{ table: string, column: string }[]>`](#columnstable-string-promise-table-string-column-string-)
 - [`columnInfo(table?: string, column?: string): Promise<Column[] | Column>`](#columninfotable-string-column-string-promisecolumn--column)
 - [`primary(table: string): Promise<string>`](#primarytable-string-promisestring)
 
 **Foreign Keys**
+
 - [`foreignKeys(): Promise<ForeignKey>`](#foreign-keys)
 
 **Misc.**
-- [`withSchema(schema: string): void`](#withschemaschema-string-void)
 
+- [`withSchema(schema: string): void`](#withschemaschema-string-void)
 
 ### Tables
 

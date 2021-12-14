@@ -18,21 +18,25 @@ type RawColumn = {
   table_schema: string;
   data_type: string;
   column_default: any | null;
-  character_maximum_length: number | null;
+  character_maximum_length: null | number | string;
   is_generated: 'NEVER' | 'ALWAYS';
   is_nullable: 'YES' | 'NO';
   is_unique: boolean;
   is_primary: boolean;
   is_identity: 'YES' | 'NO';
   generation_expression: null | string;
-  numeric_precision: null | number;
-  numeric_scale: null | number;
+  numeric_precision: null | number | string;
+  numeric_scale: null | number | string;
   serial: null | string;
   column_comment: string | null;
   foreign_key_schema: null | string;
   foreign_key_table: null | string;
   foreign_key_column: null | string;
 };
+
+function convertStringOrNumber(t: string | number | null): number | null {
+  return t == undefined ? t : Number(t)
+}
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
@@ -41,9 +45,9 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     data_type: rawColumn.data_type,
     default_value: parseDefaultValue(rawColumn.column_default),
     generation_expression: rawColumn.generation_expression || null,
-    max_length: rawColumn.character_maximum_length,
-    numeric_precision: rawColumn.numeric_precision,
-    numeric_scale: rawColumn.numeric_scale,
+    max_length: convertStringOrNumber(rawColumn.character_maximum_length),
+    numeric_precision: convertStringOrNumber(rawColumn.numeric_precision),
+    numeric_scale: convertStringOrNumber(rawColumn.numeric_scale),
     is_generated: rawColumn.is_generated === 'ALWAYS',
     is_nullable: rawColumn.is_nullable === 'YES',
     is_unique: rawColumn.is_unique,
