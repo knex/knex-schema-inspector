@@ -32,6 +32,7 @@ type RawColumn = {
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     ...rawColumn,
+    default_value_raw: rawColumn.default_value,
     default_value: parseDefaultValue(rawColumn.default_value),
     generation_expression: rawColumn.generation_expression || null,
     is_generated: !!rawColumn.is_generated,
