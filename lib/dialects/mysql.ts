@@ -52,6 +52,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
     data_type: dataType,
+    default_value_raw: rawColumn.COLUMN_DEFAULT,
     default_value: parseDefaultValue(rawColumn.COLUMN_DEFAULT),
     generation_expression: rawColumn.GENERATION_EXPRESSION || null,
     max_length: rawColumn.CHARACTER_MAXIMUM_LENGTH,
