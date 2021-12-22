@@ -35,7 +35,7 @@ type RawColumn = {
 };
 
 function convertStringOrNumber(t: string | number | null): number | null {
-  return t == undefined ? t : Number(t)
+  return t == undefined ? t : Number(t);
 }
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
