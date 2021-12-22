@@ -64,7 +64,6 @@ create table multiple_defaults (
 
   a1 json[] default array[]::json[],
   a2 jsonb[] default array[]::jsonb[],
-  a3 json[] default array['{"text":"Lorem Ipsum"}', '{"text":"dolor sit amet"}']::json[],
 
   p1 int[] default '{12, 24, 48}',
   p2 int2[] default '{12, 24, 48}',

@@ -109,15 +109,10 @@ function parseDefaultArray(column_default: string): any {
   // case when ARRAY[el1::cast,el2::cast]
   if (column_default.startsWith('ARRAY[]')) return [];
 
-  const matches = column_default.match(/^ARRAY\[(.*)\]$/);
-
-  if (!matches) return null;
-
-  const match = matches[1];
-
-  const parts = match.split(',');
-
-  return parts.map((p) => parseDefaultValue(p.trim(), '_'));
+  // For any other case, information_schema.data_type
+  // is not enough to identify the appropriate parser
+  // for each array element
+  return null;
 }
 
 /**
