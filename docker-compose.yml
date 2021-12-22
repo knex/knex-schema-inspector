@@ -58,5 +58,24 @@ services:
     volumes:
       - ./test:/tmp/test
 
+  cockroachdb:
+    image: cockroachdb/cockroach:latest-v21.1
+    container_name: crdb
+    hostname: crdb
+    command: start-single-node --cluster-name=example-single-node --insecure
+    volumes:
+      - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
+    ports:
+      - '26257:26257'
+      - '8080:8080'
+
+  cockroachdb-init:
+    image: cockroachdb/cockroach:latest-v21.1
+    volumes:
+      - ./test/seed/cockroachdb.sql:/seed.sql
+      - ./test/scripts/cockroachdb-init.sh:/init.sh
+    entrypoint: '/bin/bash'
+    command: /init.sh
+
 volumes:
   mssql-volume:
