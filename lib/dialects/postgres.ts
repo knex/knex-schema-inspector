@@ -302,6 +302,7 @@ export default class Postgres implements SchemaInspector {
       `
       )
       .whereIn('c.table_schema', this.explodedSchema)
+      .andWhere('pg_class.relkind', '!=', 'S')
       .orderBy(['c.table_name', 'c.ordinal_position']);
 
     if (table) {

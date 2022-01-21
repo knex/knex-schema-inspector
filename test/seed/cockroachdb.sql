@@ -9,6 +9,7 @@ create table teams (
   activated_at date,
   unique(uuid)
 );
+
 comment on column teams.credits is 'Remaining usage credits';
 
 create table users (
