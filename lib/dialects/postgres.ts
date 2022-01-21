@@ -13,54 +13,29 @@ type RawTable = {
 };
 
 type RawColumn = {
-  column_name: string;
-  table_name: string;
-  table_schema: string;
+  name: string;
+  table: string;
+  schema: string;
   data_type: string;
-  column_default: any | null;
-  character_maximum_length: null | number | string;
-  is_generated: 'NEVER' | 'ALWAYS';
-  is_nullable: 'YES' | 'NO';
-  is_unique: boolean;
-  is_primary: boolean;
-  is_identity: 'YES' | 'NO';
+  is_nullable: boolean;
   generation_expression: null | string;
-  numeric_precision: null | number | string;
-  numeric_scale: null | number | string;
-  serial: null | string;
-  column_comment: string | null;
+  default_value: null | string;
+  is_generated: boolean;
+  max_length: null | number;
+  comment: null | string;
+  numeric_precision: null | number;
+  numeric_scale: null | number;
+};
+
+type Constraint = {
+  type: 'f' | 'p' | 'u';
+  table: string;
+  column: string;
   foreign_key_schema: null | string;
   foreign_key_table: null | string;
   foreign_key_column: null | string;
+  has_auto_increment: null | boolean;
 };
-
-function convertStringOrNumber(t: string | number | null): number | null {
-  return t == undefined ? t : Number(t);
-}
-
-export function rawColumnToColumn(rawColumn: RawColumn): Column {
-  return {
-    name: rawColumn.column_name,
-    table: rawColumn.table_name,
-    data_type: rawColumn.data_type,
-    default_value: parseDefaultValue(rawColumn.column_default),
-    generation_expression: rawColumn.generation_expression || null,
-    max_length: convertStringOrNumber(rawColumn.character_maximum_length),
-    numeric_precision: convertStringOrNumber(rawColumn.numeric_precision),
-    numeric_scale: convertStringOrNumber(rawColumn.numeric_scale),
-    is_generated: rawColumn.is_generated === 'ALWAYS',
-    is_nullable: rawColumn.is_nullable === 'YES',
-    is_unique: rawColumn.is_unique,
-    is_primary_key: rawColumn.is_primary,
-    has_auto_increment:
-      rawColumn.serial !== null || rawColumn.is_identity === 'YES',
-    comment: rawColumn.column_comment,
-    schema: rawColumn.table_schema,
-    foreign_key_schema: rawColumn.foreign_key_schema,
-    foreign_key_table: rawColumn.foreign_key_table,
-    foreign_key_column: rawColumn.foreign_key_column,
-  };
-}
 
 /**
  * Converts Postgres default value to JS
@@ -225,101 +200,128 @@ export default class Postgres implements SchemaInspector {
   async columnInfo<T>(table?: string, column?: string) {
     const { knex } = this;
 
-    const query = knex
-      .select(
-        'c.column_name',
-        'c.table_name',
-        'c.data_type',
-        'c.column_default',
-        'c.character_maximum_length',
-        'c.is_generated',
-        'c.is_nullable',
-        'c.numeric_precision',
-        'c.numeric_scale',
-        'c.table_schema',
-        'c.is_identity',
-        'c.generation_expression',
+    const bindings = [];
+    if (table) bindings.push(table);
+    if (column) bindings.push(column);
 
-        knex.raw(
-          'pg_get_serial_sequence(quote_ident(c.table_name), c.column_name) as serial'
+    const [columns, constraints] = await Promise.all([
+      knex.raw<{ rows: RawColumn[] }>(
+        `
+        SELECT
+        	att.attname AS name,
+          rel.relname AS table,
+          rel.relnamespace::regnamespace::text as schema,
+          att.atttypid::regtype::text AS data_type,
+          NOT att.attnotnull AS is_nullable,
+          CASE WHEN att.attgenerated = 's' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS generation_expression,
+          CASE WHEN att.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS default_value,
+          att.attgenerated = 's' AS is_generated,
+          CASE
+            WHEN att.atttypid IN (1042, 1043) THEN (att.atttypmod - 4)::int4
+            WHEN att.atttypid IN (1560, 1562) THEN (att.atttypmod)::int4
+            ELSE NULL
+          END AS max_length,
+          des.description AS comment,
+          CASE att.atttypid
+            WHEN 21 THEN 16
+            WHEN 23 THEN 32
+            WHEN 20 THEN 64
+            WHEN 1700 THEN
+              CASE WHEN atttypmod = -1 THEN NULL
+                ELSE (((atttypmod - 4) >> 16) & 65535)::int4
+              END
+            WHEN 700 THEN 24
+            WHEN 701 THEN 53
+            ELSE NULL
+          END AS numeric_precision,
+          CASE
+            WHEN atttypid IN (21, 23, 20) THEN 0
+            WHEN atttypid = 1700 THEN
+              CASE
+                WHEN atttypmod = -1 THEN NULL
+                ELSE ((atttypmod - 4) & 65535)::int4
+              END
+            ELSE null
+          END AS numeric_scale
+        FROM
+          pg_attribute att
+          LEFT JOIN pg_class rel ON att.attrelid = rel.oid
+          LEFT JOIN pg_attrdef ad ON (att.attrelid, att.attnum) = (ad.adrelid, ad.adnum)
+          LEFT JOIN pg_description des ON (att.attrelid, att.attnum) = (des.objoid, des.objsubid)
+        WHERE
+          rel.relnamespace = 'public'::regnamespace
+          ${table ? 'AND rel.relname = ?' : ''}
+          ${column ? 'AND att.attname = ?' : ''}
+          AND rel.relkind = 'r'
+          AND att.attnum > 0
+          AND NOT att.attisdropped
+        ORDER BY rel.relname, att.attnum;
+      `,
+        bindings
+      ),
+      knex.raw<{ rows: Constraint[] }>(
+        `
+        SELECT
+          con.contype AS type,
+          rel.relname AS table,
+          att.attname AS column,
+          frel.relnamespace::regnamespace::text AS foreign_key_schema,
+          frel.relname AS foreign_key_table,
+          fatt.attname AS foreign_key_column,
+          CASE con.contype
+            WHEN 'p' THEN
+              CASE 
+                WHEN pg_get_serial_sequence(quote_ident(rel.relname), att.attname) != '' THEN TRUE
+                ELSE FALSE
+              END
+            ELSE NULL
+          END AS has_auto_increment
+        FROM
+          pg_constraint con
+        LEFT JOIN pg_class rel ON con.conrelid = rel.oid
+        LEFT JOIN pg_class frel ON con.confrelid = frel.oid
+        LEFT JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = con.conkey[1]
+        LEFT JOIN pg_attribute fatt ON fatt.attrelid = con.confrelid AND fatt.attnum = con.confkey[1]
+        WHERE con.connamespace = 'public'::regnamespace 
+          AND array_length(con.conkey, 1) <= 1
+          AND (con.confkey IS NULL OR array_length(con.confkey, 1) = 1)
+          ${table ? 'AND rel.relname = ?' : ''}
+          ${column ? 'AND att.attname = ?' : ''}
+        `,
+        bindings
+      ),
+    ]);
+
+    const parsedColumms: Column[] = columns.rows.map((col): Column => {
+      const constraintsForColumn = constraints.rows.filter(
+        (constraint) =>
+          constraint.table === col.table && constraint.column === col.name
+      );
+
+      const foreignKeyConstraint = constraintsForColumn.find(
+        (constraint) => constraint.type === 'f'
+      );
+
+      return {
+        ...col,
+        is_unique: constraintsForColumn.some((constraint) =>
+          ['u', 'p'].includes(constraint.type)
         ),
-
-        knex.raw(
-          'pg_catalog.col_description(pg_class.oid, c.ordinal_position:: int) as column_comment'
+        is_primary_key: constraintsForColumn.some(
+          (constraint) => constraint.type === 'p'
         ),
+        has_auto_increment: constraintsForColumn.some(
+          (constraint) => constraint.has_auto_increment
+        ),
+        default_value: parseDefaultValue(col.default_value),
+        foreign_key_schema: foreignKeyConstraint?.foreign_key_schema ?? null,
+        foreign_key_table: foreignKeyConstraint?.foreign_key_table ?? null,
+        foreign_key_column: foreignKeyConstraint?.foreign_key_column ?? null,
+      };
+    });
 
-        knex.raw(`COALESCE(pg.indisunique, false) as is_unique`),
-        knex.raw(`COALESCE(pg.indisprimary, false) as is_primary`),
-
-        'ffk.foreign_key_schema',
-        'ffk.foreign_key_table',
-        'ffk.foreign_key_column'
-      )
-      .from(knex.raw('information_schema.columns c'))
-      .joinRaw(
-        `
-        LEFT JOIN pg_catalog.pg_class
-          ON pg_catalog.pg_class.oid = CONCAT_WS('.', quote_ident(c.table_schema), quote_ident(c.table_name)):: regclass:: oid
-          AND pg_catalog.pg_class.relname = c.table_name
-      `
-      )
-      .joinRaw(
-        `
-        LEFT JOIN LATERAL (
-          SELECT
-            pg_index.indisprimary,
-            pg_index.indisunique
-          FROM pg_index
-          JOIN pg_attribute
-            ON pg_attribute.attrelid = pg_index.indrelid
-            AND pg_attribute.attnum = any(pg_index.indkey)
-          WHERE pg_index.indrelid = quote_ident(c.table_name)::regclass
-          AND pg_attribute.attname = c.column_name
-          AND pg_index.indnatts = 1
-          LIMIT 1
-        ) pg ON true
-      `
-      )
-      .joinRaw(
-        `
-        LEFT JOIN LATERAL (
-          SELECT
-            k2.table_schema AS foreign_key_schema,
-            k2.table_name AS foreign_key_table,
-            k2.column_name AS foreign_key_column
-          FROM
-            information_schema.key_column_usage k1
-            JOIN information_schema.referential_constraints fk using (
-              constraint_schema, constraint_name
-            )
-            JOIN information_schema.key_column_usage k2
-              ON k2.constraint_schema = fk.unique_constraint_schema
-              AND k2.constraint_name = fk.unique_constraint_name
-              AND k2.ordinal_position = k1.position_in_unique_constraint
-            WHERE k1.table_name = c.table_name
-            AND k1.column_name = c.column_name
-        ) ffk ON TRUE
-      `
-      )
-      .whereIn('c.table_schema', this.explodedSchema)
-      .andWhere('pg_class.relkind', '!=', 'S')
-      .orderBy(['c.table_name', 'c.ordinal_position']);
-
-    if (table) {
-      query.andWhere({ 'c.table_name': table });
-    }
-
-    if (column) {
-      const rawColumn = await query
-        .andWhere({ 'c.column_name': column })
-        .first();
-
-      return rawColumnToColumn(rawColumn);
-    }
-
-    const records: RawColumn[] = await query;
-
-    return records.map(rawColumnToColumn);
+    if (table && column) return parsedColumms[0];
+    return parsedColumms;
   }
 
   /**
