@@ -88,11 +88,24 @@ export default class Postgres implements SchemaInspector {
    * List all existing tables in the current schema/database
    */
   async tables() {
-    const records = await this.knex
-      .select<{ tablename: string }[]>('tablename')
-      .from('pg_catalog.pg_tables')
-      .whereIn('schemaname', this.explodedSchema);
-    return records.map(({ tablename }) => tablename);
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
+
+    const result = await this.knex.raw(
+      `
+      SELECT
+        rel.relname AS name
+      FROM
+        pg_class rel
+      WHERE
+        rel.relnamespace IN (${schemaIn})
+        AND rel.relkind = 'r'
+      ORDER BY rel.relname
+    `
+    );
+
+    return result.rows.map((row: { name: string }) => row.name);
   }
 
   /**
