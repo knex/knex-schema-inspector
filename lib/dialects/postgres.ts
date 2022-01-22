@@ -148,15 +148,26 @@ export default class Postgres implements SchemaInspector {
    * Check if a table exists in the current schema/database
    */
   async hasTable(table: string) {
-    const subquery = this.knex
-      .select()
-      .from('information_schema.tables')
-      .whereIn('table_schema', this.explodedSchema)
-      .andWhere({ table_name: table });
-    const record = await this.knex
-      .select<{ exists: boolean }>(this.knex.raw('exists (?)', [subquery]))
-      .first();
-    return record?.exists || false;
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
+
+    const result = await this.knex.raw(
+      `
+      SELECT
+        rel.relname AS name
+      FROM
+        pg_class rel
+      WHERE
+        rel.relnamespace IN (${schemaIn})
+        AND rel.relkind = 'r'
+        AND rel.relname = ?
+      ORDER BY rel.relname
+    `,
+      [table]
+    );
+
+    return result.rows.length > 0;
   }
 
   // Columns
