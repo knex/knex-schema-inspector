@@ -346,43 +346,56 @@ export default class Postgres implements SchemaInspector {
    * Check if the given table contains the given column
    */
   async hasColumn(table: string, column: string) {
-    const subquery = this.knex
-      .select()
-      .from('information_schema.columns')
-      .whereIn('table_schema', this.explodedSchema)
-      .andWhere({
-        table_name: table,
-        column_name: column,
-      });
-    const record = await this.knex
-      .select<{ exists: boolean }>(this.knex.raw('exists (?)', [subquery]))
-      .first();
-    return record?.exists || false;
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
+
+    const result = await this.knex.raw(
+      `
+      SELECT
+        att.attname AS column,
+        rel.relname AS table
+      FROM
+        pg_attribute att
+        LEFT JOIN pg_class rel ON att.attrelid = rel.oid
+      WHERE
+        rel.relnamespace IN (${schemaIn})
+        AND rel.relname = ?
+        AND att.attname = ?
+        AND rel.relkind = 'r'
+        AND att.attnum > 0
+        AND NOT att.attisdropped;
+    `,
+      [table, column]
+    );
+
+    return result.rows;
   }
 
   /**
    * Get the primary key column for the given table
    */
-  async primary(table: string): Promise<string> {
-    const result = await this.knex
-      .select('information_schema.key_column_usage.column_name')
-      .from('information_schema.key_column_usage')
-      .leftJoin(
-        'information_schema.table_constraints',
-        'information_schema.table_constraints.constraint_name',
-        'information_schema.key_column_usage.constraint_name'
-      )
-      .whereIn(
-        'information_schema.table_constraints.table_schema',
-        this.explodedSchema
-      )
-      .andWhere({
-        'information_schema.table_constraints.constraint_type': 'PRIMARY KEY',
-        'information_schema.table_constraints.table_name': table,
-      })
-      .first();
+  async primary(table: string): Promise<string | null> {
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
 
-    return result ? result.column_name : null;
+    const result = await this.knex.raw(
+      `
+      SELECT
+          att.attname AS column
+        FROM
+          pg_constraint con
+        LEFT JOIN pg_class rel ON con.conrelid = rel.oid
+        LEFT JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = con.conkey[1]
+        WHERE con.connamespace IN (${schemaIn})
+          AND array_length(con.conkey, 1) <= 1
+          AND rel.relname = ?
+    `,
+      [table]
+    );
+
+    return result.rows?.[0]?.column ?? null;
   }
 
   // Foreign Keys
