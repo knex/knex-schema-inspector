@@ -2,8 +2,6 @@ import { Knex } from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
-import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
 
 type RawColumn = {
@@ -402,103 +400,65 @@ export default class Postgres implements SchemaInspector {
   // ===============================================================================================
 
   async foreignKeys(table?: string) {
-    const result = await this.knex.raw<{ rows: ForeignKey[] }>(`
-      SELECT
-        c.conrelid::regclass::text AS "table",
-        (
-          SELECT
-            STRING_AGG(a.attname, ','
-            ORDER BY
-              t.seq)
-          FROM (
-            SELECT
-              ROW_NUMBER() OVER (ROWS UNBOUNDED PRECEDING) AS seq,
-              attnum
-            FROM
-              UNNEST(c.conkey) AS t (attnum)) AS t
-          INNER JOIN pg_attribute AS a ON a.attrelid = c.conrelid
-            AND a.attnum = t.attnum) AS "column",
-        tt.name AS foreign_key_table,
-        (
-          SELECT
-            STRING_AGG(QUOTE_IDENT(a.attname), ','
-            ORDER BY
-              t.seq)
-          FROM (
-            SELECT
-              ROW_NUMBER() OVER (ROWS UNBOUNDED PRECEDING) AS seq,
-              attnum
-            FROM
-              UNNEST(c.confkey) AS t (attnum)) AS t
-        INNER JOIN pg_attribute AS a ON a.attrelid = c.confrelid
-          AND a.attnum = t.attnum) AS foreign_key_column,
-        tt.schema AS foreign_key_schema,
-        c.conname AS constraint_name,
-        CASE confupdtype
-        WHEN 'r' THEN
-          'RESTRICT'
-        WHEN 'c' THEN
-          'CASCADE'
-        WHEN 'n' THEN
-          'SET NULL'
-        WHEN 'd' THEN
-          'SET DEFAULT'
-        WHEN 'a' THEN
-          'NO ACTION'
-        ELSE
-          NULL
-        END AS on_update,
-        CASE confdeltype
-        WHEN 'r' THEN
-          'RESTRICT'
-        WHEN 'c' THEN
-          'CASCADE'
-        WHEN 'n' THEN
-          'SET NULL'
-        WHEN 'd' THEN
-          'SET DEFAULT'
-        WHEN 'a' THEN
-          'NO ACTION'
-        ELSE
-          NULL
-        END AS
-        on_delete
-      FROM
-        pg_catalog.pg_constraint AS c
-        INNER JOIN (
-          SELECT
-            pg_class.oid,
-            QUOTE_IDENT(pg_namespace.nspname) AS SCHEMA,
-            QUOTE_IDENT(pg_class.relname) AS name
-          FROM
-            pg_class
-            INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid) AS tf ON tf.oid = c.conrelid
-        INNER JOIN (
-          SELECT
-            pg_class.oid,
-            QUOTE_IDENT(pg_namespace.nspname) AS SCHEMA,
-            QUOTE_IDENT(pg_class.relname) AS name
-          FROM
-            pg_class
-            INNER JOIN pg_namespace ON pg_class.relnamespace = pg_namespace.oid) AS tt ON tt.oid = c.confrelid
-      WHERE
-        c.contype = 'f';
-    `);
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
 
-    const rowsWithoutQuotes = result.rows.map(stripRowQuotes);
+    const bindings: any[] = [];
+    if (table) bindings.push(table);
 
-    if (table) {
-      return rowsWithoutQuotes.filter((row) => row.table === table);
-    }
+    const result = await this.knex.raw(
+      `
+       SELECT
+          con.conname AS constraint_name,
+          rel.relname AS table,
+          att.attname AS column,
+          frel.relnamespace::regnamespace::text AS foreign_key_schema,
+          frel.relname AS foreign_key_table,
+          fatt.attname AS foreign_key_column,
+          CASE con.confupdtype
+            WHEN 'r' THEN
+              'RESTRICT'
+            WHEN 'c' THEN
+              'CASCADE'
+            WHEN 'n' THEN
+              'SET NULL'
+            WHEN 'd' THEN
+              'SET DEFAULT'
+            WHEN 'a' THEN
+              'NO ACTION'
+            ELSE
+              NULL
+          END AS on_update,
+          CASE con.confdeltype
+            WHEN 'r' THEN
+              'RESTRICT'
+            WHEN 'c' THEN
+              'CASCADE'
+            WHEN 'n' THEN
+              'SET NULL'
+            WHEN 'd' THEN
+              'SET DEFAULT'
+            WHEN 'a' THEN
+              'NO ACTION'
+            ELSE
+              NULL
+          END AS on_delete
+        FROM
+          pg_constraint con
+        LEFT JOIN pg_class rel ON con.conrelid = rel.oid
+        LEFT JOIN pg_class frel ON con.confrelid = frel.oid
+        LEFT JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = con.conkey[1]
+        LEFT JOIN pg_attribute fatt ON fatt.attrelid = con.confrelid AND fatt.attnum = con.confkey[1]
+        WHERE con.connamespace IN (${schemaIn})
+          AND array_length(con.conkey, 1) <= 1
+          AND (con.confkey IS NULL OR array_length(con.confkey, 1) = 1)
+          AND con.contype = 'f'
+          ${table ? 'AND rel.relname = ?' : ''}
+    `,
+      bindings
+    );
 
-    return rowsWithoutQuotes;
-
-    function stripRowQuotes(row: ForeignKey): ForeignKey {
-      return Object.fromEntries(
-        Object.entries(row).map(([key, value]) => {
-          return [key, stripQuotes(value)];
-        })
-      ) as ForeignKey;
-    }
+    return result.rows;
   }
 }
