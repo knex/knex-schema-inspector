@@ -171,24 +171,32 @@ export default class Postgres implements SchemaInspector {
    * Get all the available columns in the current schema/database. Can be filtered to a specific table
    */
   async columns(table?: string) {
-    const query = this.knex
-      .select<{ table_name: string; column_name: string }[]>(
-        'table_name',
-        'column_name'
-      )
-      .from('information_schema.columns')
-      .whereIn('table_schema', this.explodedSchema);
+    const bindings: any[] = [];
+    if (table) bindings.push(table);
 
-    if (table) {
-      query.andWhere({ table_name: table });
-    }
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
 
-    const records = await query;
+    const result = await this.knex.raw(
+      `
+      SELECT
+        att.attname AS column,
+        rel.relname AS table
+      FROM
+        pg_attribute att
+        LEFT JOIN pg_class rel ON att.attrelid = rel.oid
+      WHERE
+        rel.relnamespace IN (${schemaIn})
+        ${table ? 'AND rel.relname = ?' : ''}
+        AND rel.relkind = 'r'
+        AND att.attnum > 0
+        AND NOT att.attisdropped;
+    `,
+      bindings
+    );
 
-    return records.map(({ table_name, column_name }) => ({
-      table: table_name,
-      column: column_name,
-    }));
+    return result.rows;
   }
 
   /**
@@ -200,9 +208,13 @@ export default class Postgres implements SchemaInspector {
   async columnInfo<T>(table?: string, column?: string) {
     const { knex } = this;
 
-    const bindings = [];
+    const bindings: any[] = [];
     if (table) bindings.push(table);
     if (column) bindings.push(column);
+
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
 
     const [columns, constraints] = await Promise.all([
       knex.raw<{ rows: RawColumn[] }>(
@@ -249,7 +261,7 @@ export default class Postgres implements SchemaInspector {
           LEFT JOIN pg_attrdef ad ON (att.attrelid, att.attnum) = (ad.adrelid, ad.adnum)
           LEFT JOIN pg_description des ON (att.attrelid, att.attnum) = (des.objoid, des.objsubid)
         WHERE
-          rel.relnamespace = 'public'::regnamespace
+          rel.relnamespace IN (${schemaIn})
           ${table ? 'AND rel.relname = ?' : ''}
           ${column ? 'AND att.attname = ?' : ''}
           AND rel.relkind = 'r'
@@ -282,7 +294,7 @@ export default class Postgres implements SchemaInspector {
         LEFT JOIN pg_class frel ON con.confrelid = frel.oid
         LEFT JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = con.conkey[1]
         LEFT JOIN pg_attribute fatt ON fatt.attrelid = con.confrelid AND fatt.attnum = con.confkey[1]
-        WHERE con.connamespace = 'public'::regnamespace 
+        WHERE con.connamespace IN (${schemaIn})
           AND array_length(con.conkey, 1) <= 1
           AND (con.confkey IS NULL OR array_length(con.confkey, 1) = 1)
           ${table ? 'AND rel.relname = ?' : ''}
