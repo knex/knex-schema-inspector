@@ -5,6 +5,31 @@ import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
+import { builtins, getTypeParser } from 'pg-types';
+
+const pgTypes = builtins as any;
+
+pgTypes['SMALLINT'] = pgTypes['INT2'];
+pgTypes['INTEGER'] = pgTypes['INT4'];
+pgTypes['BIGINT'] = pgTypes['INT8'];
+pgTypes['REAL'] = pgTypes['FLOAT4'];
+pgTypes['DOUBLE_PRECISION'] = pgTypes['FLOAT8'];
+pgTypes['BOOLEAN'] = pgTypes['BOOL'];
+pgTypes['CHARACTER'] = pgTypes['VARCHAR'];
+pgTypes['CHARACTER_VARYING'] = pgTypes['VARCHAR'];
+pgTypes['TIMESTAMP_WITHOUT_TIME_ZONE'] = pgTypes['TIMESTAMP'];
+pgTypes['TIMESTAMP_WITH_TIME_ZONE'] = pgTypes['TIMESTAMPTZ'];
+pgTypes['_SMALLINT'] = 1005;
+pgTypes['_INTEGER'] = 1007;
+pgTypes['_BIGINT'] = 1016;
+pgTypes['_REAL'] = 1021;
+pgTypes['_DOUBLE_PRECISION'] = 1022;
+pgTypes['_BOOLEAN'] = 1000;
+pgTypes['_BPCHAR'] = 1014;
+pgTypes['_CHARACTER_VARYING'] = 1015;
+pgTypes['_TIMESTAMP_WITHOUT_TIME_ZONE'] = 1115;
+pgTypes['_TIMESTAMP_WITH_TIME_ZONE'] = 1185;
+pgTypes['_DATE'] = 1182;
 
 type RawTable = {
   table_name: string;
@@ -43,7 +68,11 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.column_name,
     table: rawColumn.table_name,
     data_type: rawColumn.data_type,
-    default_value: parseDefaultValue(rawColumn.column_default),
+    default_value_raw: rawColumn.column_default,
+    default_value: parseDefaultValue(
+      rawColumn.column_default,
+      rawColumn.data_type
+    ),
     generation_expression: rawColumn.generation_expression || null,
     max_length: convertStringOrNumber(rawColumn.character_maximum_length),
     numeric_precision: convertStringOrNumber(rawColumn.numeric_precision),
@@ -63,21 +92,69 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 /**
+ * Converts Postgres default array to JS
+ * Eg `array['{"text":"Lorem Ipsum"}']::json[],` => [{"text":"Lorem Ipsum"}]
+ */
+function parseDefaultArray(column_default: string): any {
+  // case when '{el1,el2,el3}'::cast[]
+  if (column_default.startsWith("'{")) {
+    let [value, cast] = column_default.split('::');
+
+    cast = cast.substring(0, cast.length - 2).replace(/ /g, '_');
+    value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+
+    const code = pgTypes['_' + cast.toUpperCase()];
+
+    const parser = getTypeParser(code);
+
+    return parser(value);
+  }
+
+  // case when ARRAY[el1::cast,el2::cast]
+  if (column_default.startsWith('ARRAY[]')) return [];
+
+  // For any other case, information_schema.data_type
+  // is not enough to identify the appropriate parser
+  // for each array element
+  return null;
+}
+
+/**
  * Converts Postgres default value to JS
  * Eg `'example'::character varying` => `example`
  */
-export function parseDefaultValue(type: string | null) {
-  if (isNil(type)) return null;
-  if (type.startsWith('nextval(')) return type;
+export function parseDefaultValue(
+  column_default: string | null,
+  column_type: string
+) {
+  if (isNil(column_default)) return null;
+  if (column_default.startsWith('nextval(')) return column_default;
 
-  let [value, cast] = type.split('::');
+  try {
+    if (column_type === 'ARRAY') return parseDefaultArray(column_default);
 
-  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+    let [value, cast] = column_default.split('::');
 
-  if (/.*json.*/.test(cast)) return JSON.parse(value);
-  if (/.*(char|text).*/.test(cast)) return String(value);
+    value = value.replace(/^\'([\s\S]*)\'$/, '$1');
 
-  return isNaN(value as any) ? value : Number(value);
+    if (!cast) {
+      cast = column_type;
+    }
+
+    cast = cast.toUpperCase().replace(/ /g, '_');
+
+    if (!pgTypes.hasOwnProperty(cast)) {
+      throw `type ${cast} not supported`;
+    }
+
+    const code = pgTypes[cast];
+
+    const parser = getTypeParser(code);
+
+    return parser(value);
+  } catch (e: any) {
+    return null;
+  }
 }
 
 export default class Postgres implements SchemaInspector {

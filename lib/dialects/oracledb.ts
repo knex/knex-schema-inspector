@@ -29,6 +29,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
     data_type: rawColumn.DATA_TYPE,
+    default_value_raw: !is_generated ? default_value : null,
     default_value: !is_generated ? default_value : null,
     generation_expression: is_generated ? default_value : null,
     max_length: rawColumn.DATA_LENGTH,
