@@ -6,12 +6,6 @@ import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
 import isNil from 'lodash.isnil';
 
-type RawTable = {
-  table_name: string;
-  table_schema: 'public' | string;
-  table_comment: string | null;
-};
-
 type RawColumn = {
   name: string;
   table: string;
@@ -108,45 +102,33 @@ export default class Postgres implements SchemaInspector {
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
   async tableInfo(table?: string) {
-    const query = this.knex
-      .select(
-        'table_name',
-        'table_schema',
-        this.knex
-          .select(this.knex.raw('obj_description(oid)'))
-          .from('pg_class')
-          .where({ relkind: 'r' })
-          .andWhere({ relname: 'table_name' })
-          .as('table_comment')
-      )
-      .from('information_schema.tables')
-      .whereIn('table_schema', this.explodedSchema)
-      .andWhereRaw(`"table_catalog" = current_database()`)
-      .andWhere({ table_type: 'BASE TABLE' })
-      .orderBy('table_name', 'asc');
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
 
-    if (table) {
-      const rawTable: RawTable = await query
-        .andWhere({ table_name: table })
-        .limit(1)
-        .first();
+    const bindings: any[] = [];
+    if (table) bindings.push(table);
 
-      return {
-        name: rawTable.table_name,
-        schema: rawTable.table_schema,
-        comment: rawTable.table_comment,
-      } as Table;
-    }
+    const result = await this.knex.raw(
+      `
+      SELECT
+        rel.relnamespace::regnamespace::text AS schema,
+        rel.relname AS name,
+        des.description AS comment
+      FROM
+        pg_class rel
+      LEFT JOIN pg_description des ON rel.oid = des.objoid AND des.objsubid = 0
+      WHERE
+        rel.relnamespace IN (${schemaIn})
+        ${table ? 'AND rel.relname = ?' : ''}
+        AND rel.relkind = 'r'
+      ORDER BY rel.relname
+    `,
+      bindings
+    );
 
-    const records = await query;
-
-    return records.map((rawTable: RawTable): Table => {
-      return {
-        name: rawTable.table_name,
-        schema: rawTable.table_schema,
-        comment: rawTable.table_comment,
-      };
-    });
+    if (table) return result.rows[0];
+    return result.rows;
   }
 
   /**
