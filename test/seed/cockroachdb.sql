@@ -10,6 +10,7 @@ create table teams (
   unique(uuid)
 );
 
+comment on table teams is 'Teams in competition';
 comment on column teams.credits is 'Remaining usage credits';
 
 create table users (

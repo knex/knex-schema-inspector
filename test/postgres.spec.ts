@@ -42,14 +42,14 @@ describe('postgres-no-search-path', () => {
       expect(await inspector.tableInfo()).to.have.deep.members([
         { name: 'camelCase', schema: 'public', comment: null },
         { name: 'page_visits', schema: 'public', comment: null },
-        { name: 'teams', schema: 'public', comment: null },
+        { name: 'teams', schema: 'public', comment: 'Teams in competition' },
         { name: 'users', schema: 'public', comment: null },
       ]);
     });
 
     it('returns information for specific table', async () => {
       expect(await inspector.tableInfo('teams')).to.deep.equal({
-        comment: null,
+        comment: 'Teams in competition',
         name: 'teams',
         schema: 'public',
       });
