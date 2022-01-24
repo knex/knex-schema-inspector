@@ -130,7 +130,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'primaryKey',
           table: 'camelCase',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: 'unique_rowid()',
           max_length: null,
           numeric_precision: 64,
@@ -149,7 +149,7 @@ describe('cockroachdb-no-search-path', () => {
         },
         {
           comment: null,
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: 'unique_rowid()',
           foreign_key_column: null,
           foreign_key_schema: null,
@@ -169,7 +169,7 @@ describe('cockroachdb-no-search-path', () => {
         },
         {
           comment: null,
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: null,
           foreign_key_column: 'primaryKey',
           foreign_key_schema: 'public',
@@ -189,7 +189,7 @@ describe('cockroachdb-no-search-path', () => {
         },
         {
           comment: null,
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: null,
           foreign_key_column: 'id',
           foreign_key_schema: 'public',
@@ -250,7 +250,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'created_at',
           table: 'page_visits',
-          data_type: 'timestamp',
+          data_type: 'timestamp without time zone',
           default_value: null,
           max_length: null,
           numeric_precision: null,
@@ -270,7 +270,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'id',
           table: 'teams',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: 'unique_rowid()',
           max_length: null,
           numeric_precision: 64,
@@ -290,7 +290,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'uuid',
           table: 'teams',
-          data_type: 'bpchar',
+          data_type: 'character',
           default_value: null,
           max_length: 36,
           numeric_precision: null,
@@ -370,7 +370,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'credits',
           table: 'teams',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: null,
           max_length: null,
           numeric_precision: 64,
@@ -390,7 +390,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'created_at',
           table: 'teams',
-          data_type: 'timestamp',
+          data_type: 'timestamp without time zone',
           default_value: null,
           max_length: null,
           numeric_precision: null,
@@ -430,7 +430,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'id',
           table: 'users',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: 'unique_rowid()',
           max_length: null,
           numeric_precision: 64,
@@ -450,7 +450,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'team_id',
           table: 'users',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: null,
           max_length: null,
           numeric_precision: 64,
@@ -535,7 +535,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'id',
           table: 'teams',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: 'unique_rowid()',
           max_length: null,
           numeric_precision: 64,
@@ -555,7 +555,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'uuid',
           table: 'teams',
-          data_type: 'bpchar',
+          data_type: 'character',
           default_value: null,
           max_length: 36,
           numeric_precision: null,
@@ -575,7 +575,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'name',
           table: 'teams',
-          data_type: 'varchar',
+          data_type: 'character varying',
           default_value: null,
           max_length: 100,
           numeric_precision: null,
@@ -595,12 +595,12 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'name_upper',
           table: 'teams',
-          data_type: 'varchar',
+          data_type: 'character varying',
           default_value: null,
           max_length: 100,
           numeric_precision: null,
           numeric_scale: null,
-          is_generated: true,
+          is_generated: false,
           generation_expression: 'upper(name)',
           is_nullable: true,
           is_unique: false,
@@ -635,7 +635,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'credits',
           table: 'teams',
-          data_type: 'int8',
+          data_type: 'bigint',
           default_value: null,
           max_length: null,
           numeric_precision: 64,
@@ -655,7 +655,7 @@ describe('cockroachdb-no-search-path', () => {
         {
           name: 'created_at',
           table: 'teams',
-          data_type: 'timestamp',
+          data_type: 'timestamp without time zone',
           default_value: null,
           max_length: null,
           numeric_precision: null,
@@ -700,7 +700,7 @@ describe('cockroachdb-no-search-path', () => {
         schema: 'public',
         name: 'uuid',
         table: 'teams',
-        data_type: 'bpchar',
+        data_type: 'character',
         default_value: null,
         max_length: 36,
         numeric_precision: null,
