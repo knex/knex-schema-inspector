@@ -284,12 +284,8 @@ export default class Postgres implements SchemaInspector {
           frel.relnamespace::regnamespace::text AS foreign_key_schema,
           frel.relname AS foreign_key_table,
           fatt.attname AS foreign_key_column,
-          CASE con.contype
-            WHEN 'p' THEN
-              CASE 
-                WHEN pg_get_serial_sequence(quote_ident(rel.relname), att.attname) != '' THEN TRUE
-                ELSE FALSE
-              END
+          CASE
+            WHEN con.contype = 'p' THEN pg_get_serial_sequence(att.attrelid::regclass::text, att.attname) != ''
             ELSE NULL
           END AS has_auto_increment
         FROM
