@@ -220,6 +220,25 @@ export default class Postgres implements SchemaInspector {
       (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
     );
 
+    const versionResponse = await this.knex.raw(`SHOW server_version`);
+
+    const majorVersion =
+      versionResponse.rows?.[0]?.server_version?.split('.')?.[0] ?? 10;
+
+    let generationSelect = `
+      NULL AS generation_expression,
+      pg_get_expr(ad.adbin, ad.adrelid) AS default_value,
+      FALSE AS is_generated,
+    `;
+
+    if (Number(majorVersion) > 12) {
+      generationSelect = `
+        CASE WHEN att.attgenerated = 's' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS generation_expression,
+        CASE WHEN att.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS default_value,
+        att.attgenerated = 's' AS is_generated,
+      `;
+    }
+
     const [columns, constraints] = await Promise.all([
       knex.raw<{ rows: RawColumn[] }>(
         `
@@ -229,9 +248,7 @@ export default class Postgres implements SchemaInspector {
           rel.relnamespace::regnamespace::text as schema,
           att.atttypid::regtype::text AS data_type,
           NOT att.attnotnull AS is_nullable,
-          CASE WHEN att.attgenerated = 's' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS generation_expression,
-          CASE WHEN att.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS default_value,
-          att.attgenerated = 's' AS is_generated,
+          ${generationSelect}
           CASE
             WHEN att.atttypid IN (1042, 1043) THEN (att.atttypmod - 4)::int4
             WHEN att.atttypid IN (1560, 1562) THEN (att.atttypmod)::int4

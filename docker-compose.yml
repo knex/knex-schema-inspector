@@ -20,6 +20,18 @@ services:
       - 5101:5432
     volumes:
       - ./test/seed/postgres.sql:/docker-entrypoint-initdb.d/seed.sql
+
+  postgres10:
+    image: postgres:10
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: test_db
+    ports:
+      - 5102:5432
+    volumes:
+      - ./test/seed/postgres10.sql:/docker-entrypoint-initdb.d/seed.sql
+
   mssql:
     image: mcr.microsoft.com/mssql/server:2017-CU24-ubuntu-16.04
     restart: always
