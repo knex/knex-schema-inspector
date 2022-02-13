@@ -45,8 +45,9 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 
   function parseMaxLength(rawColumn: RawColumn) {
+    const max_length = Number(rawColumn.max_length);
     if (
-      Number.isNaN(Number(rawColumn.max_length)) ||
+      Number.isNaN(max_length) ||
       rawColumn.max_length === null ||
       rawColumn.max_length === undefined
     ) {
@@ -58,11 +59,12 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     // varchar(100) => max_length == 100
     // nvarchar(100) => max_length == 200
     // In order to get the actual max_length value, we'll divide the value by 2
+    // Unless the value is -1, which is the case for n(var)char(MAX)
     if (['nvarchar', 'nchar', 'ntext'].includes(rawColumn.data_type)) {
-      return Number(rawColumn.max_length) / 2;
+      return max_length === -1 ? max_length : max_length / 2;
     }
 
-    return Number(rawColumn.max_length);
+    return max_length;
   }
 }
 
