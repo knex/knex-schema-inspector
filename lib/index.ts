@@ -6,6 +6,7 @@ export default function SchemaInspector(knex: Knex) {
 
   switch (knex.client.constructor.name) {
     case 'Client_MySQL':
+    case 'Client_MySQL2':
       constructor = require('./dialects/mysql').default;
       break;
     case 'Client_PG':
