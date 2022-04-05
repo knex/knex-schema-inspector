@@ -659,7 +659,7 @@ describe('postgres-no-search-path', () => {
 
   describe('.primary', () => {
     it('returns primary key for a table', async () => {
-      expect(await inspector.primary('teams')).to.equal('id');
+      expect(await inspector.primary('users')).to.equal('id');
       expect(await inspector.primary('page_visits')).to.equal(null);
     });
   });
@@ -699,7 +699,7 @@ describe('postgres-with-search-path', () => {
 
   describe('.primary', () => {
     it('returns primary key for a table', async () => {
-      expect(await inspector.primary('test')).to.equal('id');
+      expect(await inspector.primary('users')).to.equal('id');
     });
   });
 
