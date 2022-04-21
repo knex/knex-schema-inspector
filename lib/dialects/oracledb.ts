@@ -60,7 +60,7 @@ export default class oracleDB implements SchemaInspector {
    */
   async tables(): Promise<string[]> {
     const records = await this.knex
-      .select<Table[]>('TABLE_NAME as name')
+      .select<Table[]>(this.knex.raw('/*+ rule */ "TABLE_NAME" "name"'))
       .from('USER_TABLES');
     return records.map(({ name }) => name);
   }
@@ -73,7 +73,7 @@ export default class oracleDB implements SchemaInspector {
   tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
     const query = this.knex
-      .select<Table[]>('TABLE_NAME as name')
+      .select<Table[]>(this.knex.raw('/*+ rule */ "TABLE_NAME" "name"'))
       .from('USER_TABLES');
 
     if (table) {
@@ -88,7 +88,7 @@ export default class oracleDB implements SchemaInspector {
    */
   async hasTable(table: string): Promise<boolean> {
     const result = await this.knex
-      .count<{ count: 0 | 1 }>({ count: '*' })
+      .select<{ count: 0 | 1 }>(this.knex.raw('/*+ rule */ COUNT(*) "count"'))
       .from('USER_TABLES')
       .where({ TABLE_NAME: table })
       .first();
@@ -104,8 +104,9 @@ export default class oracleDB implements SchemaInspector {
   async columns(table?: string) {
     const query = this.knex
       .select<{ table: string; column: string }[]>(
-        'TABLE_NAME as table',
-        'COLUMN_NAME as column'
+        this.knex.raw(
+          '/*+ rule */ "TABLE_NAME" "table", "COLUMN_NAME" "column"'
+        )
       )
       .from('USER_TAB_COLS')
       .where({ HIDDEN_COLUMN: 'NO' });
@@ -129,55 +130,60 @@ export default class oracleDB implements SchemaInspector {
      * beauty to achive this. If you plan on refactoring, please keep this in mind.
      */
     const query = this.knex
-      .with(
-        'uc',
+      .select(
         this.knex.raw(`
-          SELECT /*+ materialize */
-            "uc"."TABLE_NAME",
-            "ucc"."COLUMN_NAME",
-            "uc"."CONSTRAINT_NAME",
-            "uc"."CONSTRAINT_TYPE",
-            "uc"."R_CONSTRAINT_NAME",
-            COUNT(*) OVER(
-              PARTITION BY "uc"."CONSTRAINT_NAME"
-            ) "CONSTRAINT_COUNT",
-            ROW_NUMBER() OVER(
-              PARTITION BY "uc"."TABLE_NAME", "ucc"."COLUMN_NAME" ORDER BY "uc"."CONSTRAINT_TYPE"
-            ) "CONSTRAINT_PRIORITY"
-          FROM "USER_CONSTRAINTS" "uc"
-          INNER JOIN "USER_CONS_COLUMNS" "ucc"
-            ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
-            AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+          /*+ rule */
+            "c"."TABLE_NAME", 
+            "c"."COLUMN_NAME", 
+            "c"."DATA_DEFAULT", 
+            "c"."DATA_TYPE", 
+            "c"."DATA_LENGTH", 
+            "c"."DATA_PRECISION", 
+            "c"."DATA_SCALE", 
+            "c"."NULLABLE", 
+            "c"."IDENTITY_COLUMN", 
+            "c"."VIRTUAL_COLUMN", 
+            "cm"."COMMENTS" "COLUMN_COMMENT", 
+            "ct"."CONSTRAINT_TYPE", 
+            "ct"."REFERENCED_TABLE_NAME", 
+            "ct"."REFERENCED_COLUMN_NAME" 
+          FROM 
+            "USER_TAB_COLS" "c" 
+          LEFT JOIN "USER_COL_COMMENTS" "cm"
+            ON "c"."TABLE_NAME" = "cm"."TABLE_NAME" 
+            AND "c"."COLUMN_NAME" = "cm"."COLUMN_NAME" 
+          LEFT JOIN (
+            SELECT /*+ rule */
+              "uc"."TABLE_NAME", 
+              "ucc"."COLUMN_NAME", 
+              "uc"."CONSTRAINT_NAME", 
+              "uc"."CONSTRAINT_TYPE", 
+              "rc"."TABLE_NAME" AS "REFERENCED_TABLE_NAME",
+              "rc"."COLUMN_NAME" AS "REFERENCED_COLUMN_NAME",
+              COUNT(*) OVER(
+                PARTITION BY
+                  "uc"."CONSTRAINT_NAME"
+              ) "CONSTRAINT_COUNT", 
+              ROW_NUMBER() OVER(
+                PARTITION BY
+                  "uc"."TABLE_NAME", 
+                  "ucc"."COLUMN_NAME" 
+                ORDER BY 
+                  "uc"."CONSTRAINT_TYPE"
+              ) "CONSTRAINT_PRIORITY"
+            FROM "USER_CONSTRAINTS" "uc" 
+            INNER JOIN "USER_CONS_COLUMNS" "ucc"
+              ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME" 
+              AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+            LEFT JOIN "USER_CONS_COLUMNS" "rc"
+              ON "uc"."R_CONSTRAINT_NAME" = "rc"."CONSTRAINT_NAME"
+          ) "ct"
+            ON "c"."TABLE_NAME" = "ct"."TABLE_NAME" 
+            AND "c"."COLUMN_NAME" = "ct"."COLUMN_NAME" 
+            AND "ct"."CONSTRAINT_COUNT" = 1 
+            AND "ct"."CONSTRAINT_PRIORITY" = 1  
         `)
       )
-      .select<RawColumn[]>(
-        'c.TABLE_NAME',
-        'c.COLUMN_NAME',
-        'c.DATA_DEFAULT',
-        'c.DATA_TYPE',
-        'c.DATA_LENGTH',
-        'c.DATA_PRECISION',
-        'c.DATA_SCALE',
-        'c.NULLABLE',
-        'c.IDENTITY_COLUMN',
-        'c.VIRTUAL_COLUMN',
-        'cm.COMMENTS as COLUMN_COMMENT',
-        'ct.CONSTRAINT_TYPE',
-        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
-        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
-      )
-      .from('USER_TAB_COLS as c')
-      .leftJoin('USER_COL_COMMENTS as cm', {
-        'c.TABLE_NAME': 'cm.TABLE_NAME',
-        'c.COLUMN_NAME': 'cm.COLUMN_NAME',
-      })
-      .leftJoin('uc as ct', {
-        'c.TABLE_NAME': 'ct.TABLE_NAME',
-        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-        'ct.CONSTRAINT_COUNT': 1,
-        'ct.CONSTRAINT_PRIORITY': 1,
-      })
-      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
 
     if (table) {
@@ -185,13 +191,11 @@ export default class oracleDB implements SchemaInspector {
     }
 
     if (column) {
-      const [rawColumn] = await query
+      const rawColumn = await query
         .andWhere({
           'c.COLUMN_NAME': column,
         })
-        // NOTE: .first() is signifigantly slower on this query
-        .andWhereRaw('rownum = 1');
-
+        .first();
       return rawColumnToColumn(rawColumn);
     }
 
@@ -205,7 +209,7 @@ export default class oracleDB implements SchemaInspector {
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
     const result = await this.knex
-      .count<{ count: 0 | 1 }>({ count: '*' })
+      .select<{ count: 0 | 1 }>(this.knex.raw('/*+ rule */ COUNT(*) "count"'))
       .from('USER_TAB_COLS')
       .where({
         TABLE_NAME: table,
@@ -221,7 +225,7 @@ export default class oracleDB implements SchemaInspector {
    */
   async primary(table: string): Promise<string> {
     const result = await this.knex
-      .select('cc.COLUMN_NAME')
+      .select(this.knex.raw('/*+ rule */ "cc"."COLUMN_NAME"'))
       .from('USER_CONSTRAINTS as uc')
       .join(
         'USER_CONS_COLUMNS as cc',
@@ -244,26 +248,24 @@ export default class oracleDB implements SchemaInspector {
     /**
      * NOTICE: This query is optimized for speed. Please keep this in mind.
      */
-    const query = this.knex
-      .with(
-        'ucc',
-        this.knex.raw(
-          'SELECT /*+ materialize */ "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
-        )
-      )
-      .select<ForeignKey[]>(
-        'uc.TABLE_NAME as table',
-        'cc.COLUMN_NAME as column',
-        'rcc.TABLE_NAME as foreign_key_table',
-        'rcc.COLUMN_NAME as foreign_key_column',
-        'uc.CONSTRAINT_NAME as constraint_name',
-        this.knex.raw('NULL as "on_update"'),
-        'uc.DELETE_RULE as on_delete'
-      )
-      .from('USER_CONSTRAINTS as uc')
-      .leftJoin('ucc as cc', 'uc.CONSTRAINT_NAME', 'cc.CONSTRAINT_NAME')
-      .leftJoin('ucc as rcc', 'uc.R_CONSTRAINT_NAME', 'rcc.CONSTRAINT_NAME')
-      .where({ 'uc.CONSTRAINT_TYPE': 'R' });
+    const query = this.knex.select(
+      this.knex.raw(`
+          /*+ rule */
+            "uc"."TABLE_NAME" "table", 
+            "ucc"."COLUMN_NAME" "column", 
+            "rc"."TABLE_NAME" AS "foreign_key_table",
+            "rc"."COLUMN_NAME" AS "foreign_key_column",
+            "uc"."CONSTRAINT_NAME" "constraint_name", 
+            NULL as "on_update", 
+            "uc"."DELETE_RULE" "on_delete" 
+          FROM "USER_CONSTRAINTS" "uc" 
+          INNER JOIN "USER_CONS_COLUMNS" "ucc"
+            ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME" 
+            AND "uc"."CONSTRAINT_TYPE" = 'R'
+          LEFT JOIN "USER_CONS_COLUMNS" "rc"
+            ON "uc"."R_CONSTRAINT_NAME" = "rc"."CONSTRAINT_NAME"
+        `)
+    );
 
     if (table) {
       query.andWhere({ 'uc.TABLE_NAME': table });
