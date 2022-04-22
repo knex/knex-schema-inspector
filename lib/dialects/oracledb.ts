@@ -253,8 +253,9 @@ export default class oracleDB implements SchemaInspector {
     /**
      * NOTE: This query is optimized for speed. Please keep this in mind.
      */
-    const query = this.knex.select(
-      this.knex.raw(`
+    const query = this.knex
+      .select(
+        this.knex.raw(`
           /*+ RULE */
             "uc"."TABLE_NAME" "table", 
             "ucc"."COLUMN_NAME" "column", 
@@ -268,9 +269,9 @@ export default class oracleDB implements SchemaInspector {
             ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME" 
           INNER JOIN "USER_CONS_COLUMNS" "rcc"
             ON "uc"."R_CONSTRAINT_NAME" = "rcc"."CONSTRAINT_NAME"
-          WHERE "uc"."CONSTRAINT_TYPE" = 'R'
         `)
-    );
+      )
+      .where({ 'uc.CONSTRAINT_TYPE': 'R' });
 
     if (table) {
       query.andWhere({ 'uc.TABLE_NAME': table });
