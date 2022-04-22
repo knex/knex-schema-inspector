@@ -179,9 +179,9 @@ export default class oracleDB implements SchemaInspector {
             FROM "USER_CONSTRAINTS" "uc" 
             INNER JOIN "USER_CONS_COLUMNS" "ucc"
               ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME" 
-              AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
             LEFT JOIN "USER_CONS_COLUMNS" "rcc"
               ON "uc"."R_CONSTRAINT_NAME" = "rcc"."CONSTRAINT_NAME"
+            WHERE "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
           ) "uc"
             ON "c"."TABLE_NAME" = "uc"."TABLE_NAME" 
             AND "c"."COLUMN_NAME" = "uc"."COLUMN_NAME" 
@@ -266,9 +266,9 @@ export default class oracleDB implements SchemaInspector {
           FROM "USER_CONSTRAINTS" "uc" 
           INNER JOIN "USER_CONS_COLUMNS" "ucc"
             ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME" 
-            AND "uc"."CONSTRAINT_TYPE" = 'R'
           INNER JOIN "USER_CONS_COLUMNS" "rcc"
             ON "uc"."R_CONSTRAINT_NAME" = "rcc"."CONSTRAINT_NAME"
+          WHERE "uc"."CONSTRAINT_TYPE" = 'R'
         `)
     );
 
