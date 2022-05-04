@@ -28,7 +28,7 @@ describe('oracledb', () => {
 
   describe('.tables', () => {
     it('returns tables', async () => {
-      expect(await inspector.tables()).to.deep.equal([
+      expect(await inspector.tables()).to.deep.members([
         'TEAMS',
         'USERS',
         'PAGE_VISITS',
@@ -38,7 +38,7 @@ describe('oracledb', () => {
 
   describe('.tableInfo', () => {
     it('returns information for all tables', async () => {
-      expect(await inspector.tableInfo()).to.deep.equal([
+      expect(await inspector.tableInfo()).to.deep.members([
         { name: 'TEAMS' },
         { name: 'USERS' },
         { name: 'PAGE_VISITS' },
