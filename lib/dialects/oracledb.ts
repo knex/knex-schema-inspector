@@ -234,7 +234,7 @@ export default class oracleDB implements SchemaInspector {
     const result = await this.knex
       .select<{ count: 0 | 1 }>(
         this.knex.raw(`
-          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') NO_QUERY_TRANSFORMATION */
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
             COUNT(*) "count"
         `)
       )
