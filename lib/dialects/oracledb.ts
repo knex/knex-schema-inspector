@@ -125,7 +125,7 @@ export default class oracleDB implements SchemaInspector {
     const query = this.knex
       .select<{ table: string; column: string }[]>(
         this.knex.raw(`
-          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') NO_QUERY_TRANSFORMATION */
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
             "TABLE_NAME" "table",
             "COLUMN_NAME" "column"
         `)
