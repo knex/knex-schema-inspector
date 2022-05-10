@@ -21,6 +21,7 @@ export interface SchemaInspector {
 
   hasColumn(table: string, column: string): Promise<boolean>;
   primary(table: string): Promise<string | null>;
+  primarys(table: string): Promise<object | null>;
 
   foreignKeys(table?: string): Promise<ForeignKey[]>;
 
