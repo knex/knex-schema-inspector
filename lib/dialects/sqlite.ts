@@ -6,7 +6,7 @@ import { Column } from '../types/column';
 import extractMaxLength from '../utils/extract-max-length';
 import extractType from '../utils/extract-type';
 import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
+import { parseDataDefault } from '../utils/parse-data-default';
 
 type RawColumn = {
   cid: number;
@@ -168,7 +168,7 @@ export default class SQLite implements SchemaInspector {
           name: raw.name,
           table: table,
           data_type: extractType(raw.type),
-          default_value: stripQuotes(raw.dflt_value),
+          default_value: parseDataDefault(raw.dflt_value),
           max_length: extractMaxLength(raw.type),
           /** @NOTE SQLite3 doesn't support precision/scale */
           numeric_precision: null,

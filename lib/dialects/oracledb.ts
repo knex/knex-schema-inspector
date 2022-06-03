@@ -3,7 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
+import { parseDataDefault } from '../utils/parse-data-default';
 
 type RawColumn = {
   TABLE_NAME: string;
@@ -24,7 +24,7 @@ type RawColumn = {
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   const is_generated = rawColumn.VIRTUAL_COLUMN === 'YES';
-  const default_value = stripQuotes(rawColumn.DATA_DEFAULT);
+  const default_value = parseDataDefault(rawColumn.DATA_DEFAULT);
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
