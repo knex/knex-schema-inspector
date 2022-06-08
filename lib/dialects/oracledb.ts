@@ -3,7 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
-import { parseDataDefault } from '../utils/parse-data-default';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawColumn = {
   TABLE_NAME: string;
@@ -43,6 +43,14 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
     comment: rawColumn.COLUMN_COMMENT,
   };
+}
+
+function parseDataDefault(value: string | null): string | null {
+  if (value?.trim().toLocaleLowerCase() === 'null') {
+    return null;
+  }
+
+  return stripQuotes(value);
 }
 
 export default class oracleDB implements SchemaInspector {

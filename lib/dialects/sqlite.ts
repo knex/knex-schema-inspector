@@ -6,7 +6,7 @@ import { Column } from '../types/column';
 import extractMaxLength from '../utils/extract-max-length';
 import extractType from '../utils/extract-type';
 import { ForeignKey } from '../types/foreign-key';
-import { parseDataDefault } from '../utils/parse-data-default';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawColumn = {
   cid: number;
@@ -29,6 +29,14 @@ type RawForeignKey = {
   on_delete: ForeignKey['on_delete'];
   match: string;
 };
+
+function parseDataDefault(value: string | null): string | null {
+  if (value?.trim().toLocaleLowerCase() === 'null') {
+    return null;
+  }
+
+  return stripQuotes(value);
+}
 
 export default class SQLite implements SchemaInspector {
   knex: Knex;
