@@ -69,11 +69,9 @@ export function parseDefaultValue(type: string | null) {
   if (type === null) return null;
   if (type.startsWith('nextval(')) return type;
 
-  let [value, cast] = type.split('::');
+  let [value] = type.split('::');
 
-  if (/.*json.*/.test(cast)) return JSON.parse(value);
-
-  return stripQuotes(value);
+  return stripQuotes(value)!;
 }
 
 export default class CockroachDB implements SchemaInspector {

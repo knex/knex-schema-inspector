@@ -7,6 +7,7 @@ create table teams (
   credits integer,
   created_at timestamp,
   activated_at date,
+  aiden_test jsonb not null default '{}'::jsonb,
   unique(uuid)
 );
 comment on column teams.credits is 'Remaining usage credits';

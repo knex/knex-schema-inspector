@@ -37,9 +37,7 @@ export function parseDefaultValue(type: string | null) {
   if (type === null || /null|NULL/.test(type.trim())) return null;
   if (type.startsWith('nextval(')) return type;
 
-  const [value, cast] = type.split('::');
-
-  if (/.*json.*/.test(cast)) return JSON.parse(value);
+  const [value] = type.split('::');
 
   return stripQuotes(value);
 }
