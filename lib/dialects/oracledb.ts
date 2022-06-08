@@ -46,9 +46,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 function parseDataDefault(value: string | null): string | null {
-  if (value?.trim().toLocaleLowerCase() === 'null') {
-    return null;
-  }
+  if (value === null || /null|NULL/.test(value.trim())) return null;
 
   return stripQuotes(value);
 }

@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
-import isNil from 'lodash.isnil';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawColumn = {
   name: string;
@@ -34,17 +34,14 @@ type Constraint = {
  * Eg `'example'::character varying` => `example`
  */
 export function parseDefaultValue(type: string | null) {
-  if (isNil(type)) return null;
+  if (type === null || /null|NULL/.test(type.trim())) return null;
   if (type.startsWith('nextval(')) return type;
 
-  let [value, cast] = type.split('::');
-
-  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+  const [value, cast] = type.split('::');
 
   if (/.*json.*/.test(cast)) return JSON.parse(value);
-  if (/.*(char|text).*/.test(cast)) return String(value);
 
-  return isNaN(value as any) ? value : Number(value);
+  return stripQuotes(value);
 }
 
 export default class Postgres implements SchemaInspector {

@@ -69,17 +69,13 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 function parseDefaultValue(value: string | null) {
-  if (value === null) {
-    return null;
-  }
+  if (value === null) return null;
 
   while (value.startsWith('(') && value.endsWith(')')) {
     value = value.slice(1, -1);
   }
 
-  if (value.trim().toLowerCase() === 'null') {
-    return null;
-  }
+  if (/null|NULL/.test(value.trim())) return null;
 
   return stripQuotes(value);
 }

@@ -31,9 +31,7 @@ type RawForeignKey = {
 };
 
 function parseDataDefault(value: string | null): string | null {
-  if (value?.trim().toLocaleLowerCase() === 'null') {
-    return null;
-  }
+  if (value === null || /null|NULL/.test(value)) return null;
 
   return stripQuotes(value);
 }
