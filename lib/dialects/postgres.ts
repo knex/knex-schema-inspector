@@ -87,7 +87,7 @@ export default class Postgres implements SchemaInspector {
    */
   async tables() {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const result = await this.knex.raw(
@@ -114,7 +114,7 @@ export default class Postgres implements SchemaInspector {
   tableInfo(table: string): Promise<Table>;
   async tableInfo(table?: string) {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const bindings: any[] = [];
@@ -147,7 +147,7 @@ export default class Postgres implements SchemaInspector {
    */
   async hasTable(table: string) {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const result = await this.knex.raw(
@@ -179,7 +179,7 @@ export default class Postgres implements SchemaInspector {
     if (table) bindings.push(table);
 
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const result = await this.knex.raw(
@@ -217,7 +217,7 @@ export default class Postgres implements SchemaInspector {
     if (column) bindings.push(column);
 
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const versionResponse = await this.knex.raw(`SHOW server_version`);
@@ -358,7 +358,7 @@ export default class Postgres implements SchemaInspector {
    */
   async hasColumn(table: string, column: string) {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const result = await this.knex.raw(
@@ -388,7 +388,7 @@ export default class Postgres implements SchemaInspector {
    */
   async primary(table: string): Promise<string | null> {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const result = await this.knex.raw(
@@ -415,7 +415,7 @@ export default class Postgres implements SchemaInspector {
 
   async foreignKeys(table?: string) {
     const schemaIn = this.explodedSchema.map(
-      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+      (schemaName) => `${this.knex.raw("'??'", [schemaName])}::regnamespace`
     );
 
     const bindings: any[] = [];
