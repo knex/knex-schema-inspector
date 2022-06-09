@@ -33,11 +33,13 @@ type Constraint = {
  * Converts Postgres default value to JS
  * Eg `'example'::character varying` => `example`
  */
-export function parseDefaultValue(type: string | null) {
-  if (type === null || /null|NULL/.test(type.trim())) return null;
-  if (type.startsWith('nextval(')) return type;
+export function parseDefaultValue(value: string | null) {
+  if (value === null) return null;
+  if (value.startsWith('nextval(')) return value;
 
-  const [value] = type.split('::');
+  value = value.split('::')[0];
+
+  if (value.trim().toLowerCase() === 'null') return null;
 
   return stripQuotes(value);
 }

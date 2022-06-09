@@ -61,7 +61,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 export function parseDefaultValue(value: string | null) {
-  if (value === null || /null|NULL/.test(value.trim())) return null;
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
 
   return value;
 }

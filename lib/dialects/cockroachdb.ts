@@ -65,13 +65,13 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Converts CockroachDB default value to JS
  * Eg `'example'::character varying` => `example`
  */
-export function parseDefaultValue(type: string | null) {
-  if (type === null) return null;
-  if (type.startsWith('nextval(')) return type;
+export function parseDefaultValue(value: string | null) {
+  if (value === null) return null;
+  if (value.startsWith('nextval(')) return value;
 
-  let [value] = type.split('::');
+  value = value.split('::')[0];
 
-  return stripQuotes(value)!;
+  return stripQuotes(value);
 }
 
 export default class CockroachDB implements SchemaInspector {

@@ -24,7 +24,7 @@ type RawColumn = {
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   const is_generated = rawColumn.VIRTUAL_COLUMN === 'YES';
-  const default_value = parseDataDefault(rawColumn.DATA_DEFAULT);
+  const default_value = parseDefaultValue(rawColumn.DATA_DEFAULT);
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
@@ -45,8 +45,8 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
-function parseDataDefault(value: string | null): string | null {
-  if (value === null || /null|NULL/.test(value.trim())) return null;
+export function parseDefaultValue(value: string | null): string | null {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
 
   return stripQuotes(value);
 }
