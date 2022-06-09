@@ -75,7 +75,7 @@ export function parseDefaultValue(value: string | null) {
     value = value.slice(1, -1);
   }
 
-  if (value.trim().toLowerCase().trim() === 'null') return null;
+  if (value.trim().toLowerCase() === 'null') return null;
 
   return stripQuotes(value);
 }
