@@ -60,9 +60,10 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
-export function parseDefaultValue(value: any) {
-  // MariaDB returns string NULL for not-nullable varchar fields
-  return /null|NULL/.test(value) ? null : value;
+export function parseDefaultValue(value: string | null) {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
+
+  return value;
 }
 
 export default class MySQL implements SchemaInspector {

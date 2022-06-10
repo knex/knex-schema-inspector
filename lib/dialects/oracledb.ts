@@ -29,7 +29,7 @@ type RawColumn = {
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   const is_generated = rawColumn.VIRTUAL_COLUMN === 'YES';
-  const default_value = stripQuotes(rawColumn.DATA_DEFAULT);
+  const default_value = parseDefaultValue(rawColumn.DATA_DEFAULT);
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
@@ -48,6 +48,12 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
     comment: rawColumn.COLUMN_COMMENT,
   };
+}
+
+export function parseDefaultValue(value: string | null): string | null {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
+
+  return stripQuotes(value);
 }
 
 export default class oracleDB implements SchemaInspector {

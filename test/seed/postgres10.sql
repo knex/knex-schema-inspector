@@ -1,7 +1,7 @@
 create table teams (
   id serial primary key,
   uuid char(36) not null,
-  name varchar(100),
+  name varchar(100) default null,
   name_upper varchar(100), -- generated always as (upper(name)) stored, Postgres 10 doesn't have generated columns
   description text,
   credits integer,

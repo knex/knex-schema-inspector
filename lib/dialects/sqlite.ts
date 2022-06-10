@@ -30,6 +30,12 @@ type RawForeignKey = {
   match: string;
 };
 
+export function parseDefaultValue(value: string | null): string | null {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
+
+  return stripQuotes(value);
+}
+
 export default class SQLite implements SchemaInspector {
   knex: Knex;
 
@@ -168,7 +174,7 @@ export default class SQLite implements SchemaInspector {
           name: raw.name,
           table: table,
           data_type: extractType(raw.type),
-          default_value: stripQuotes(raw.dflt_value),
+          default_value: parseDefaultValue(raw.dflt_value),
           max_length: extractMaxLength(raw.type),
           /** @NOTE SQLite3 doesn't support precision/scale */
           numeric_precision: null,

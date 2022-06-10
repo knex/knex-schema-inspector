@@ -4,7 +4,6 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
-import isNil from 'lodash.isnil';
 
 type RawTable = {
   table_name: string;
@@ -17,7 +16,7 @@ type RawColumn = {
   table_name: string;
   table_schema: string;
   data_type: string;
-  column_default: any | null;
+  column_default: string | null;
   character_maximum_length: null | number | string;
   is_generated: 'NEVER' | 'ALWAYS';
   is_nullable: 'YES' | 'NO';
@@ -66,18 +65,13 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
  * Converts CockroachDB default value to JS
  * Eg `'example'::character varying` => `example`
  */
-export function parseDefaultValue(type: string | null) {
-  if (isNil(type)) return null;
-  if (type.startsWith('nextval(')) return type;
+export function parseDefaultValue(value: string | null) {
+  if (value === null) return null;
+  if (value.startsWith('nextval(')) return value;
 
-  let [value, cast] = type.split('::');
+  value = value.split('::')[0];
 
-  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
-
-  if (/.*json.*/.test(cast)) return JSON.parse(value);
-  if (/.*(char|text).*/.test(cast)) return String(value);
-
-  return isNaN(value as any) ? value : Number(value);
+  return stripQuotes(value);
 }
 
 export default class CockroachDB implements SchemaInspector {
