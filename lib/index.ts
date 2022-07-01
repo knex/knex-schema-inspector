@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { SchemaInspectorConstructor } from './types/schema-inspector';
 
-export default function SchemaInspector(knex: Knex) {
+export function SchemaInspector(knex: Knex) {
   let constructor: SchemaInspectorConstructor;
 
   switch (knex.client.constructor.name) {
@@ -32,3 +32,5 @@ export default function SchemaInspector(knex: Knex) {
 
   return new constructor(knex);
 }
+
+export default SchemaInspector;
