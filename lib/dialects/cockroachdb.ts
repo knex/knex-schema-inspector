@@ -255,7 +255,6 @@ export default class CockroachDB implements SchemaInspector {
         'ffk.foreign_key_table',
         'ffk.foreign_key_column'
       )
-      .distinctOn('c.table_name', 'c.ordinal_position')
       .from(knex.raw('information_schema.columns c'))
       .joinRaw(
         `
