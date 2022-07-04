@@ -3,7 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
-import isNil from 'lodash.isnil';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -69,15 +69,15 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
 }
 
 export function parseDefaultValue(value: string | null) {
-  if (isNil(value)) return null;
+  if (value === null) return null;
 
   while (value.startsWith('(') && value.endsWith(')')) {
     value = value.slice(1, -1);
   }
 
-  value = value.replace(/^\'([\s\S]*)\'$/, '$1');
+  if (value.trim().toLowerCase() === 'null') return null;
 
-  return isNaN(value as any) ? String(value) : Number(value);
+  return stripQuotes(value);
 }
 
 export default class MSSQL implements SchemaInspector {

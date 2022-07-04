@@ -1,7 +1,7 @@
 create table teams (
   id number(10) not null primary key,
   uuid char(36) not null,
-  name varchar2(100),
+  name varchar2(100) default null,
   name_upper varchar2(100) generated always as (upper(name)),
   description clob,
   credits number(10),

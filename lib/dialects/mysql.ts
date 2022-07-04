@@ -3,6 +3,7 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
+import { stripQuotes } from '../utils/strip-quotes';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -60,9 +61,10 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
-export function parseDefaultValue(value: any) {
-  // MariaDB returns string NULL for not-nullable varchar fields
-  return /null|NULL/.test(value) ? null : value;
+export function parseDefaultValue(value: string | null) {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
+
+  return stripQuotes(value);
 }
 
 export default class MySQL implements SchemaInspector {

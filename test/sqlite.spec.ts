@@ -25,8 +25,8 @@ describe('sqlite', () => {
     it('returns tables', async () => {
       expect(await inspector.tables()).to.deep.equal([
         'page_visits',
-        'teams',
         'users',
+        'teams',
       ]);
     });
   });
@@ -44,20 +44,6 @@ describe('sqlite', () => {
             ')',
         },
         {
-          name: 'teams',
-          sql:
-            'CREATE TABLE "teams" (\n' +
-            '\t"id"\tINTEGER NOT NULL,\n' +
-            '\t"uuid"\tvarchar(36) NOT NULL UNIQUE,\n' +
-            '\t"name"\tvarchar(100),\n' +
-            '\t"description"\ttext,\n' +
-            '\t"credits"\tinteger,\n' +
-            '\t"created_at"\tdatetime,\n' +
-            '\t"activated_at"\tdate,\n' +
-            '\tPRIMARY KEY("id" AUTOINCREMENT)\n' +
-            ')',
-        },
-        {
           name: 'users',
           sql:
             'CREATE TABLE "users" (\n' +
@@ -71,6 +57,19 @@ describe('sqlite', () => {
             'ON DELETE CASCADE\n' +
             ')',
         },
+        {
+          name: 'teams',
+          sql:
+            'CREATE TABLE "teams" (\n' +
+            '\t"id"\tINTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n' +
+            '\t"uuid"\tvarchar(36) NOT NULL UNIQUE,\n' +
+            '\t"name"\tvarchar(100) DEFAULT NULL,\n' +
+            '\t"description"\ttext,\n' +
+            '\t"credits"\tinteger,\n' +
+            '\t"created_at"\tdatetime,\n' +
+            '\t"activated_at"\tdate\n' +
+            ')',
+        },
       ]);
     });
 
@@ -79,14 +78,13 @@ describe('sqlite', () => {
         name: 'teams',
         sql:
           'CREATE TABLE "teams" (\n' +
-          '\t"id"\tINTEGER NOT NULL,\n' +
+          '\t"id"\tINTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n' +
           '\t"uuid"\tvarchar(36) NOT NULL UNIQUE,\n' +
-          '\t"name"\tvarchar(100),\n' +
+          '\t"name"\tvarchar(100) DEFAULT NULL,\n' +
           '\t"description"\ttext,\n' +
           '\t"credits"\tinteger,\n' +
           '\t"created_at"\tdatetime,\n' +
-          '\t"activated_at"\tdate,\n' +
-          '\tPRIMARY KEY("id" AUTOINCREMENT)\n' +
+          '\t"activated_at"\tdate\n' +
           ')',
       });
     });

@@ -5,6 +5,11 @@ import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
 
+/**
+ * NOTE: Use previous optimizer for better data dictionary performance.
+ */
+const OPTIMIZER_FEATURES = '11.2.0.4';
+
 type RawColumn = {
   TABLE_NAME: string;
   COLUMN_NAME: string;
@@ -24,7 +29,7 @@ type RawColumn = {
 
 export function rawColumnToColumn(rawColumn: RawColumn): Column {
   const is_generated = rawColumn.VIRTUAL_COLUMN === 'YES';
-  const default_value = stripQuotes(rawColumn.DATA_DEFAULT);
+  const default_value = parseDefaultValue(rawColumn.DATA_DEFAULT);
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
@@ -45,6 +50,12 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   };
 }
 
+export function parseDefaultValue(value: string | null): string | null {
+  if (value === null || value.trim().toLowerCase() === 'null') return null;
+
+  return stripQuotes(value);
+}
+
 export default class oracleDB implements SchemaInspector {
   knex: Knex;
 
@@ -60,7 +71,12 @@ export default class oracleDB implements SchemaInspector {
    */
   async tables(): Promise<string[]> {
     const records = await this.knex
-      .select<Table[]>('TABLE_NAME as name')
+      .select<Table[]>(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "TABLE_NAME" "name"
+        `)
+      )
       .from('USER_TABLES');
     return records.map(({ name }) => name);
   }
@@ -73,7 +89,12 @@ export default class oracleDB implements SchemaInspector {
   tableInfo(table: string): Promise<Table>;
   async tableInfo<T>(table?: string) {
     const query = this.knex
-      .select<Table[]>('TABLE_NAME as name')
+      .select<Table[]>(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "TABLE_NAME" "name"
+        `)
+      )
       .from('USER_TABLES');
 
     if (table) {
@@ -88,7 +109,12 @@ export default class oracleDB implements SchemaInspector {
    */
   async hasTable(table: string): Promise<boolean> {
     const result = await this.knex
-      .count<{ count: 0 | 1 }>({ count: '*' })
+      .select<{ count: 0 | 1 }>(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            COUNT(*) "count"
+        `)
+      )
       .from('USER_TABLES')
       .where({ TABLE_NAME: table })
       .first();
@@ -104,8 +130,11 @@ export default class oracleDB implements SchemaInspector {
   async columns(table?: string) {
     const query = this.knex
       .select<{ table: string; column: string }[]>(
-        'TABLE_NAME as table',
-        'COLUMN_NAME as column'
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') NO_QUERY_TRANSFORMATION */
+            "TABLE_NAME" "table",
+            "COLUMN_NAME" "column"
+        `)
       )
       .from('USER_TAB_COLS')
       .where({ HIDDEN_COLUMN: 'NO' });
@@ -125,59 +154,65 @@ export default class oracleDB implements SchemaInspector {
   columnInfo(table: string, column: string): Promise<Column>;
   async columnInfo<T>(table?: string, column?: string) {
     /**
-     * NOTICE: This query is optimized for speed and sacrifices some elegance and
-     * beauty to achive this. If you plan on refactoring, please keep this in mind.
+     * NOTE: Keep in mind, this query is optimized for speed.
      */
     const query = this.knex
       .with(
         'uc',
         this.knex.raw(`
-          SELECT /*+ materialize */
+          SELECT /*+ MATERIALIZE */
             "uc"."TABLE_NAME",
             "ucc"."COLUMN_NAME",
             "uc"."CONSTRAINT_NAME",
             "uc"."CONSTRAINT_TYPE",
             "uc"."R_CONSTRAINT_NAME",
             COUNT(*) OVER(
-              PARTITION BY "uc"."CONSTRAINT_NAME"
-            ) "CONSTRAINT_COUNT",
+              PARTITION BY
+                "uc"."CONSTRAINT_NAME"
+            ) "CONSTRAINT_COUNT", 
             ROW_NUMBER() OVER(
-              PARTITION BY "uc"."TABLE_NAME", "ucc"."COLUMN_NAME" ORDER BY "uc"."CONSTRAINT_TYPE"
+              PARTITION BY
+                "uc"."TABLE_NAME", 
+                "ucc"."COLUMN_NAME" 
+              ORDER BY 
+                "uc"."CONSTRAINT_TYPE"
             ) "CONSTRAINT_PRIORITY"
           FROM "USER_CONSTRAINTS" "uc"
           INNER JOIN "USER_CONS_COLUMNS" "ucc"
             ON "uc"."CONSTRAINT_NAME" = "ucc"."CONSTRAINT_NAME"
-            AND "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+          WHERE "uc"."CONSTRAINT_TYPE" IN ('P', 'U', 'R')
+      `)
+      )
+      .select(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "c"."TABLE_NAME", 
+            "c"."COLUMN_NAME", 
+            "c"."DATA_DEFAULT", 
+            "c"."DATA_TYPE", 
+            "c"."DATA_LENGTH", 
+            "c"."DATA_PRECISION", 
+            "c"."DATA_SCALE", 
+            "c"."NULLABLE", 
+            "c"."IDENTITY_COLUMN", 
+            "c"."VIRTUAL_COLUMN", 
+            "cm"."COMMENTS" "COLUMN_COMMENT", 
+            "ct"."CONSTRAINT_TYPE",
+            "fk"."TABLE_NAME" "REFERENCED_TABLE_NAME",
+            "fk"."COLUMN_NAME" "REFERENCED_COLUMN_NAME"
+          FROM "USER_TAB_COLS" "c" 
+          LEFT JOIN "USER_COL_COMMENTS" "cm"
+            ON "c"."TABLE_NAME" = "cm"."TABLE_NAME" 
+            AND "c"."COLUMN_NAME" = "cm"."COLUMN_NAME" 
+          LEFT JOIN "uc" "ct"
+            ON "c"."TABLE_NAME" = "ct"."TABLE_NAME" 
+            AND "c"."COLUMN_NAME" = "ct"."COLUMN_NAME"
+            AND "ct"."CONSTRAINT_COUNT" = 1 
+            AND "ct"."CONSTRAINT_PRIORITY" = 1
+          LEFT JOIN "uc" "fk"
+            ON "ct"."R_CONSTRAINT_NAME" = "fk"."CONSTRAINT_NAME"
         `)
       )
-      .select<RawColumn[]>(
-        'c.TABLE_NAME',
-        'c.COLUMN_NAME',
-        'c.DATA_DEFAULT',
-        'c.DATA_TYPE',
-        'c.DATA_LENGTH',
-        'c.DATA_PRECISION',
-        'c.DATA_SCALE',
-        'c.NULLABLE',
-        'c.IDENTITY_COLUMN',
-        'c.VIRTUAL_COLUMN',
-        'cm.COMMENTS as COLUMN_COMMENT',
-        'ct.CONSTRAINT_TYPE',
-        'fk.TABLE_NAME as REFERENCED_TABLE_NAME',
-        'fk.COLUMN_NAME as REFERENCED_COLUMN_NAME'
-      )
-      .from('USER_TAB_COLS as c')
-      .leftJoin('USER_COL_COMMENTS as cm', {
-        'c.TABLE_NAME': 'cm.TABLE_NAME',
-        'c.COLUMN_NAME': 'cm.COLUMN_NAME',
-      })
-      .leftJoin('uc as ct', {
-        'c.TABLE_NAME': 'ct.TABLE_NAME',
-        'c.COLUMN_NAME': 'ct.COLUMN_NAME',
-        'ct.CONSTRAINT_COUNT': 1,
-        'ct.CONSTRAINT_PRIORITY': 1,
-      })
-      .leftJoin('uc as fk', 'ct.R_CONSTRAINT_NAME', 'fk.CONSTRAINT_NAME')
       .where({ 'c.HIDDEN_COLUMN': 'NO' });
 
     if (table) {
@@ -185,13 +220,11 @@ export default class oracleDB implements SchemaInspector {
     }
 
     if (column) {
-      const [rawColumn] = await query
+      const rawColumn = await query
         .andWhere({
           'c.COLUMN_NAME': column,
         })
-        // NOTE: .first() is signifigantly slower on this query
-        .andWhereRaw('rownum = 1');
-
+        .first();
       return rawColumnToColumn(rawColumn);
     }
 
@@ -205,7 +238,12 @@ export default class oracleDB implements SchemaInspector {
    */
   async hasColumn(table: string, column: string): Promise<boolean> {
     const result = await this.knex
-      .count<{ count: 0 | 1 }>({ count: '*' })
+      .select<{ count: 0 | 1 }>(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') NO_QUERY_TRANSFORMATION */
+            COUNT(*) "count"
+        `)
+      )
       .from('USER_TAB_COLS')
       .where({
         TABLE_NAME: table,
@@ -220,18 +258,29 @@ export default class oracleDB implements SchemaInspector {
    * Get the primary key column for the given table
    */
   async primary(table: string): Promise<string> {
+    /**
+     * NOTE: Keep in mind, this query is optimized for speed.
+     */
     const result = await this.knex
-      .select('cc.COLUMN_NAME')
-      .from('USER_CONSTRAINTS as uc')
-      .join(
-        'USER_CONS_COLUMNS as cc',
-        'uc.CONSTRAINT_NAME',
-        'cc.CONSTRAINT_NAME'
+      .with(
+        'uc',
+        this.knex
+          .select(this.knex.raw(`/*+ MATERIALIZE */ "CONSTRAINT_NAME"`))
+          .from('USER_CONSTRAINTS')
+          .where({
+            TABLE_NAME: table,
+            CONSTRAINT_TYPE: 'P',
+          })
       )
-      .where({
-        'uc.TABLE_NAME': table,
-        'uc.CONSTRAINT_TYPE': 'P',
-      })
+      .select(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "ucc"."COLUMN_NAME"
+          FROM "USER_CONS_COLUMNS" "ucc"
+          INNER JOIN "uc" "pk"
+            ON "ucc"."CONSTRAINT_NAME" = "pk"."CONSTRAINT_NAME"
+        `)
+      )
       .first();
 
     return result?.COLUMN_NAME ?? null;
@@ -242,27 +291,36 @@ export default class oracleDB implements SchemaInspector {
 
   async foreignKeys(table?: string): Promise<ForeignKey[]> {
     /**
-     * NOTICE: This query is optimized for speed. Please keep this in mind.
+     * NOTE: Keep in mind, this query is optimized for speed.
      */
     const query = this.knex
       .with(
         'ucc',
-        this.knex.raw(
-          'SELECT /*+ materialize */ "TABLE_NAME", "COLUMN_NAME", "CONSTRAINT_NAME" FROM "USER_CONS_COLUMNS"'
-        )
+        this.knex.raw(`
+          SELECT /*+ MATERIALIZE */
+            "TABLE_NAME",
+            "COLUMN_NAME",
+            "CONSTRAINT_NAME"
+          FROM "USER_CONS_COLUMNS"
+        `)
       )
-      .select<ForeignKey[]>(
-        'uc.TABLE_NAME as table',
-        'cc.COLUMN_NAME as column',
-        'rcc.TABLE_NAME as foreign_key_table',
-        'rcc.COLUMN_NAME as foreign_key_column',
-        'uc.CONSTRAINT_NAME as constraint_name',
-        this.knex.raw('NULL as "on_update"'),
-        'uc.DELETE_RULE as on_delete'
+      .select(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "uc"."TABLE_NAME" "table", 
+            "fcc"."COLUMN_NAME" "column", 
+            "rcc"."TABLE_NAME" AS "foreign_key_table",
+            "rcc"."COLUMN_NAME" AS "foreign_key_column",
+            "uc"."CONSTRAINT_NAME" "constraint_name", 
+            NULL as "on_update", 
+            "uc"."DELETE_RULE" "on_delete" 
+          FROM "USER_CONSTRAINTS" "uc" 
+          INNER JOIN "ucc" "fcc"
+            ON "uc"."CONSTRAINT_NAME" = "fcc"."CONSTRAINT_NAME"
+          INNER JOIN "ucc" "rcc"
+            ON "uc"."R_CONSTRAINT_NAME" = "rcc"."CONSTRAINT_NAME"
+      `)
       )
-      .from('USER_CONSTRAINTS as uc')
-      .leftJoin('ucc as cc', 'uc.CONSTRAINT_NAME', 'cc.CONSTRAINT_NAME')
-      .leftJoin('ucc as rcc', 'uc.R_CONSTRAINT_NAME', 'rcc.CONSTRAINT_NAME')
       .where({ 'uc.CONSTRAINT_TYPE': 'R' });
 
     if (table) {
