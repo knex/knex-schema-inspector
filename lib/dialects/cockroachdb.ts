@@ -206,21 +206,21 @@ export default class CockroachDB implements SchemaInspector {
       knex.raw<{ rows: RawColumn[] }>(
         `
          SELECT *, CASE WHEN res.is_generated THEN (
-          select
+          SELECT
             generation_expression
-          from
+          FROM
             information_schema.columns
-          where
+          WHERE
             table_schema = res.schema 
-            and table_name = res.table 
-            and column_name = res.name
+            AND table_name = res.table 
+            AND column_name = res.name
           ) ELSE NULL END AS generation_expression
-         from (
+         FROM (
          SELECT
            att.attname AS name,
            rel.relname AS table,
-           rel.relnamespace::regnamespace::text as schema,
-           format_type(att.atttypid, null) as data_type,
+           rel.relnamespace::regnamespace::text AS schema,
+           format_type(att.atttypid, null) AS data_type,
            NOT att.attnotnull AS is_nullable,
            CASE WHEN att.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) ELSE null END AS default_value,
            att.attgenerated = 's' AS is_generated,
