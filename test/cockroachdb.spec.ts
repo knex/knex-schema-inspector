@@ -1,13 +1,14 @@
-import knex, { Knex } from 'knex';
-import { expect } from 'chai';
-import schemaInspector from '../lib';
-import { SchemaInspector } from '../lib/types/schema-inspector';
+import type { Knex } from 'knex';
+import knex from 'knex';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import schemaInspector from '../lib/index.js';
+import type { SchemaInspector } from '../lib/types/schema-inspector';
 
 describe('cockroachdb-no-search-path', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
-  before(() => {
+  beforeAll(() => {
     database = knex({
       client: 'cockroachdb',
       connection: {
@@ -22,7 +23,7 @@ describe('cockroachdb-no-search-path', () => {
     inspector = schemaInspector(database);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await database.destroy();
   });
 
@@ -699,7 +700,7 @@ describe('cockroachdb-with-search-path', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
-  before(() => {
+  beforeAll(() => {
     database = knex({
       searchPath: ['public', 'test'],
       client: 'cockroachdb',
@@ -715,7 +716,7 @@ describe('cockroachdb-with-search-path', () => {
     inspector = schemaInspector(database);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await database.destroy();
   });
 

@@ -1,13 +1,14 @@
-import knex, { Knex } from 'knex';
-import { expect } from 'chai';
-import schemaInspector from '../lib';
-import { SchemaInspector } from '../lib/types/schema-inspector';
+import type { Knex } from 'knex';
+import knex from 'knex';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import schemaInspector from '../lib/index.js';
+import type { SchemaInspector } from '../lib/types/schema-inspector';
 
 describe('postgres10-no-search-path', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
-  before(() => {
+  beforeAll(() => {
     database = knex({
       client: 'pg',
       connection: {
@@ -22,7 +23,7 @@ describe('postgres10-no-search-path', () => {
     inspector = schemaInspector(database);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await database.destroy();
   });
 
@@ -677,7 +678,7 @@ describe('postgres10-with-search-path', () => {
   let database: Knex;
   let inspector: SchemaInspector;
 
-  before(() => {
+  beforeAll(() => {
     database = knex({
       searchPath: ['public', 'test'],
       client: 'pg',
@@ -693,7 +694,7 @@ describe('postgres10-with-search-path', () => {
     inspector = schemaInspector(database);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await database.destroy();
   });
 
