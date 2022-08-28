@@ -4,6 +4,7 @@
   "description": "Utility for extracting information about existing DB schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "tsc --build",
     "prepare": "npm run build",
@@ -37,8 +38,7 @@
   "homepage": "https://github.com/knex/knex-schema-inspector#readme",
   "devDependencies": {
     "@types/chai": "^4.3.1",
-    "@types/lodash.flatten": "^4.4.7",
-    "@types/lodash.isnil": "^4.0.7",
+    "@types/lodash-es": "^4.17.6",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.41",
     "chai": "^4.3.6",
@@ -46,14 +46,16 @@
     "knex": "^2.1.0",
     "lint-staged": "^13.0.1",
     "mocha": "^10.0.0",
+    "prettier": "^2.6.2",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.7.3"
+  },
+  "optionalDependencies": {
     "mysql": "^2.18.1",
     "oracledb": "^5.4.0",
     "pg": "^8.7.3",
-    "prettier": "^2.6.2",
     "sqlite3": "^5.0.8",
-    "tedious": "^14.5.0",
-    "ts-mocha": "^10.0.0",
-    "typescript": "^4.7.3"
+    "tedious": "^14.5.0"
   },
   "lint-staged": {
     "*.{ts, js,json}": [
@@ -66,7 +68,6 @@
     }
   },
   "dependencies": {
-    "lodash.flatten": "^4.4.0",
-    "lodash.isnil": "^4.0.0"
+    "lodash-es": "^4.17.21"
   }
 }

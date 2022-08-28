@@ -1,9 +1,9 @@
-import { Knex } from 'knex';
-import { SchemaInspector } from '../types/schema-inspector';
-import { Table } from '../types/table';
-import { Column } from '../types/column';
-import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
+import type { Knex } from 'knex';
+import type { SchemaInspector } from '../types/schema-inspector';
+import type { Table } from '../types/table';
+import type { Column } from '../types/column';
+import type { ForeignKey } from '../types/foreign-key';
+import { stripQuotes } from '../utils/strip-quotes.js';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -216,7 +216,7 @@ export default class MSSQL implements SchemaInspector {
   columnInfo(): Promise<Column[]>;
   columnInfo(table: string): Promise<Column[]>;
   columnInfo(table: string, column: string): Promise<Column>;
-  async columnInfo<T>(table?: string, column?: string) {
+  async columnInfo(table?: string, column?: string) {
     const dbName = this.knex.client.database();
 
     const query = this.knex

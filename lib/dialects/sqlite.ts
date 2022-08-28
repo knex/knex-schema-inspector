@@ -1,12 +1,12 @@
-import { Knex } from 'knex';
-import flatten from 'lodash.flatten';
-import { SchemaInspector } from '../types/schema-inspector';
-import { Table } from '../types/table';
-import { Column } from '../types/column';
+import type { Knex } from 'knex';
+import { flatten } from 'lodash-es';
+import type { Column } from '../types/column';
+import type { ForeignKey } from '../types/foreign-key';
+import type { SchemaInspector } from '../types/schema-inspector';
+import type { Table } from '../types/table';
 import extractMaxLength from '../utils/extract-max-length';
 import extractType from '../utils/extract-type';
-import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
+import { stripQuotes } from '../utils/strip-quotes.js';
 
 type RawColumn = {
   cid: number;

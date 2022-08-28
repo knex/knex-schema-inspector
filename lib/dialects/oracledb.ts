@@ -1,9 +1,9 @@
-import { Knex } from 'knex';
-import { SchemaInspector } from '../types/schema-inspector';
-import { Table } from '../types/table';
-import { Column } from '../types/column';
-import { ForeignKey } from '../types/foreign-key';
-import { stripQuotes } from '../utils/strip-quotes';
+import type { Knex } from 'knex';
+import type { SchemaInspector } from '../types/schema-inspector';
+import type { Table } from '../types/table';
+import type { Column } from '../types/column';
+import type { ForeignKey } from '../types/foreign-key';
+import { stripQuotes } from '../utils/strip-quotes.js';
 
 /**
  * NOTE: Use previous optimizer for better data dictionary performance.
@@ -87,7 +87,7 @@ export default class oracleDB implements SchemaInspector {
    */
   tableInfo(): Promise<Table[]>;
   tableInfo(table: string): Promise<Table>;
-  async tableInfo<T>(table?: string) {
+  async tableInfo(table?: string) {
     const query = this.knex
       .select<Table[]>(
         this.knex.raw(`
@@ -152,7 +152,7 @@ export default class oracleDB implements SchemaInspector {
   columnInfo(): Promise<Column[]>;
   columnInfo(table: string): Promise<Column[]>;
   columnInfo(table: string, column: string): Promise<Column>;
-  async columnInfo<T>(table?: string, column?: string) {
+  async columnInfo(table?: string, column?: string) {
     /**
      * NOTE: Keep in mind, this query is optimized for speed.
      */
