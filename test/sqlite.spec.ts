@@ -9,7 +9,7 @@ describe('sqlite', () => {
 
   before(() => {
     database = knex({
-      client: 'sqlite3',
+      client: 'better-sqlite3',
       connection: {
         filename: './test/db/sqlite.db',
       },
