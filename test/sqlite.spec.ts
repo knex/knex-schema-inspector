@@ -15,7 +15,7 @@ describe('sqlite test suite', function () {
         database = knex({
           client: clientType,
           connection: {
-            filename: './test/db/sqlite.db',
+            filename: `./test/db/${clientType}.db`,
           },
         });
         inspector = schemaInspector(database);
