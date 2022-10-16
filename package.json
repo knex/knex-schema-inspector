@@ -41,6 +41,7 @@
     "@types/lodash.isnil": "^4.0.7",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.41",
+    "better-sqlite3": "^7.6.2",
     "chai": "^4.3.6",
     "husky": "^8.0.1",
     "knex": "^2.1.0",
