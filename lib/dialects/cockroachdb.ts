@@ -275,8 +275,7 @@ export default class CockroachDB implements SchemaInspector {
            att.attname AS column,
            frel.relnamespace::regnamespace::text AS foreign_key_schema,
            frel.relname AS foreign_key_table,
-           fatt.attname AS foreign_key_column,
-           false AS has_auto_increment
+           fatt.attname AS foreign_key_column
          FROM
            pg_constraint con
          LEFT JOIN pg_class rel ON con.conrelid = rel.oid
@@ -311,9 +310,9 @@ export default class CockroachDB implements SchemaInspector {
         is_primary_key: constraintsForColumn.some(
           (constraint) => constraint.type === 'p'
         ),
-        has_auto_increment: constraintsForColumn.some(
-          (constraint) => constraint.has_auto_increment
-        ),
+        has_auto_increment:
+          ['integer', 'bigint'].includes(col.data_type) &&
+          (col.default_value?.startsWith('nextval(') ?? false),
         default_value: parseDefaultValue(col.default_value),
         foreign_key_schema: foreignKeyConstraint?.foreign_key_schema ?? null,
         foreign_key_table: foreignKeyConstraint?.foreign_key_table ?? null,
