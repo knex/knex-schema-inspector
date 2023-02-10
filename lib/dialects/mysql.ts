@@ -305,18 +305,14 @@ export default class MySQL implements SchemaInspector {
         rc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
         AND kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
       WHERE
-        rc.CONSTRAINT_SCHEMA = ?;
+        rc.CONSTRAINT_SCHEMA = ?
+        ${table ? ` AND rc.TABLE_NAME = '${table}'` : ''}
+        ;
     `,
       [this.knex.client.database()]
     );
 
     // Mapping casts "RowDataPacket" object from mysql to plain JS object
-
-    if (table) {
-      return result?.[0]
-        ?.filter((row) => row.table === table)
-        .map((row) => ({ ...row }));
-    }
 
     return result?.[0].map((row) => ({ ...row }));
   }
