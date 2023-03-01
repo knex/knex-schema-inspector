@@ -290,12 +290,12 @@ export default class MySQL implements SchemaInspector {
 
   async foreignKeys(table?: string) {
     const query = this.knex
-      .select<[ForeignKey[]]>(
-        `rc.TABLE_NAME AS 'table'`,
-        `kcu.COLUMN_NAME AS 'column'`,
-        `rc.REFERENCED_TABLE_NAME AS 'foreign_key_table'`,
-        `kcu.REFERENCED_COLUMN_NAME AS 'foreign_key_column'`,
-        `rc.CONSTRAINT_NAME AS 'constraint_name'`,
+      .select(
+        `rc.TABLE_NAME AS table`,
+        `kcu.COLUMN_NAME AS column`,
+        `rc.REFERENCED_TABLE_NAME AS foreign_key_table`,
+        `kcu.REFERENCED_COLUMN_NAME AS foreign_key_column`,
+        `rc.CONSTRAINT_NAME AS constraint_name`,
         `rc.UPDATE_RULE AS on_update`,
         `rc.DELETE_RULE AS on_delete`
       )
@@ -313,9 +313,7 @@ export default class MySQL implements SchemaInspector {
     if (table) {
       query.andWhere({ 'rc.TABLE_NAME': table });
     }
-    const result = await query;
-    // Mapping casts "RowDataPacket" object from mysql to plain JS object
-
-    return result?.[0].map((row) => ({ ...row }));
+    const result: ForeignKey[] = await query;
+    return result;
   }
 }
