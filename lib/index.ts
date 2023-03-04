@@ -3,31 +3,33 @@ import { SchemaInspectorConstructor } from './types/schema-inspector';
 
 export function SchemaInspector(knex: Knex) {
   let constructor: SchemaInspectorConstructor;
-
-  switch (knex.client.constructor.name) {
-    case 'Client_MySQL':
-    case 'Client_MySQL2':
+  
+  switch (knex.client.config.client) {
+    case 'mysql':
+    case 'mysql2':
       constructor = require('./dialects/mysql').default;
       break;
-    case 'Client_PG':
+    case 'postgres':
+    case 'pgnative':
       constructor = require('./dialects/postgres').default;
       break;
-    case 'Client_CockroachDB':
+    case 'cockroachdb':
       constructor = require('./dialects/cockroachdb').default;
       break;
-    case 'Client_SQLite3':
+    case 'sqlite3':
+    case 'better-sqlite3':
       constructor = require('./dialects/sqlite').default;
       break;
-    case 'Client_Oracledb':
-    case 'Client_Oracle':
+    case 'oracledb':
+    case 'oracle':
       constructor = require('./dialects/oracledb').default;
       break;
-    case 'Client_MSSQL':
+    case 'mssql':
       constructor = require('./dialects/mssql').default;
       break;
 
     default:
-      throw Error('Unsupported driver used: ' + knex.client.constructor.name);
+      throw Error('Unsupported driver used: ' + knex.client.config.client);
   }
 
   return new constructor(knex);
