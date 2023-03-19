@@ -353,7 +353,7 @@ export default class Postgres implements SchemaInspector {
   /**
    * Check if the given table contains the given column
    */
-  async hasColumn(table: string, column: string) {
+  async hasColumn(table: string, column: string): Promise<boolean> {
     const schemaIn = this.explodedSchema.map(
       (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
     );
