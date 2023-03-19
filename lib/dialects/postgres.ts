@@ -358,11 +358,10 @@ export default class Postgres implements SchemaInspector {
       (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
     );
 
-    const result = await this.knex.raw(
+    const result = await this.knex.raw<{ rows: { count: number }[] }>(
       `
       SELECT
-        att.attname AS column,
-        rel.relname AS table
+        COUNT(*)::integer as count
       FROM
         pg_attribute att
         LEFT JOIN pg_class rel ON att.attrelid = rel.oid
@@ -377,7 +376,7 @@ export default class Postgres implements SchemaInspector {
       [table, column]
     );
 
-    return result.rows;
+    return !!(result && result.rows[0].count > 0);
   }
 
   /**
