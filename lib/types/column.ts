@@ -22,4 +22,7 @@ export interface Column {
   // Postgres Only
   schema?: string;
   foreign_key_schema?: string | null;
+
+  // MySQL Only
+  collation?: string | null;
 }
