@@ -40,6 +40,14 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     dataType = 'boolean';
   }
 
+  const enumValues =
+    dataType === 'enum'
+      ? rawColumn.COLUMN_TYPE.match(/\((.*?)\)/)
+          ?.pop()
+          ?.split(',')
+          ?.map((value) => value.replace(/\s+|'/g, '')) || []
+      : null;
+
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
@@ -58,6 +66,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
     foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
     comment: rawColumn.COLUMN_COMMENT,
+    enum_values: enumValues,
   };
 }
 
