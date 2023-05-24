@@ -44,6 +44,7 @@ describe('mysql', () => {
           schema: 'test_db',
           comment: '',
           collation: 'latin1_swedish_ci',
+          charset: 'latin1',
           engine: 'InnoDB',
         },
         {
@@ -51,6 +52,7 @@ describe('mysql', () => {
           schema: 'test_db',
           comment: '',
           collation: 'latin1_swedish_ci',
+          charset: 'latin1',
           engine: 'InnoDB',
         },
         {
@@ -58,6 +60,7 @@ describe('mysql', () => {
           schema: 'test_db',
           comment: '',
           collation: 'latin1_swedish_ci',
+          charset: 'latin1',
           engine: 'InnoDB',
         },
       ]);
@@ -65,6 +68,7 @@ describe('mysql', () => {
 
     it('returns information for specific table', async () => {
       expect(await inspector.tableInfo('teams')).to.deep.equal({
+        charset: 'latin1',
         collation: 'latin1_swedish_ci',
         comment: '',
         engine: 'InnoDB',

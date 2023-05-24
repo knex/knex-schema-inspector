@@ -7,6 +7,7 @@ export interface Table {
 
   // MySQL Only
   collation?: string;
+  charset?: string;
   engine?: string;
 
   // Postgres Only
