@@ -139,6 +139,7 @@ describe('mysql', () => {
           foreign_key_column: 'id',
           foreign_key_table: 'teams',
           comment: '',
+          collation: null,
         },
         {
           name: 'id',
@@ -157,6 +158,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'uuid',
@@ -175,6 +177,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'id',
@@ -193,6 +196,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'request_path',
@@ -211,6 +215,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'user_agent',
@@ -229,6 +234,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'created_at',
@@ -247,6 +253,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'name',
@@ -265,6 +272,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'name_upper',
@@ -283,6 +291,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'description',
@@ -301,6 +310,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'credits',
@@ -319,6 +329,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
+          collation: null,
         },
         {
           name: 'created_at',
@@ -337,6 +348,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'activated_at',
@@ -355,6 +367,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'email',
@@ -373,6 +386,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'password',
@@ -391,6 +405,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'status',
@@ -409,6 +424,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
       ]);
     });
@@ -432,6 +448,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'uuid',
@@ -450,6 +467,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'name',
@@ -468,6 +486,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'name_upper',
@@ -486,6 +505,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'description',
@@ -504,6 +524,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: 'latin1_swedish_ci',
         },
         {
           name: 'credits',
@@ -522,6 +543,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
+          collation: null,
         },
         {
           name: 'created_at',
@@ -540,6 +562,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
         {
           name: 'activated_at',
@@ -558,6 +581,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          collation: null,
         },
       ]);
     });
@@ -580,6 +604,7 @@ describe('mysql', () => {
         foreign_key_column: null,
         foreign_key_table: null,
         comment: '',
+        collation: 'latin1_swedish_ci',
       });
     });
   });

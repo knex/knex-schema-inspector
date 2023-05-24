@@ -58,6 +58,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
     foreign_key_column: rawColumn.REFERENCED_COLUMN_NAME,
     foreign_key_table: rawColumn.REFERENCED_TABLE_NAME,
     comment: rawColumn.COLUMN_COMMENT,
+    collation: rawColumn.COLLATION_NAME,
   };
 }
 
