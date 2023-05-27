@@ -285,6 +285,22 @@ export default class MySQL implements SchemaInspector {
     return null;
   }
 
+  /**
+   * Get the primary key columns for the given table
+   */
+  async primaryKeys(table: string) {
+    const results = await this.knex.raw(
+      `SHOW KEYS FROM ?? WHERE Key_name = 'PRIMARY'`,
+      table
+    );
+
+    if (results && results.length && results[0].length) {
+      return results[0].map((r: any) => r['Column_name'] as string);
+    }
+
+    return [];
+  }
+
   // Foreign Keys
   // ===============================================================================================
 

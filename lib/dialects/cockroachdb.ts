@@ -349,11 +349,23 @@ export default class CockroachDB implements SchemaInspector {
     const result = await this.knex
       .select('information_schema.key_column_usage.column_name')
       .from('information_schema.key_column_usage')
-      .leftJoin(
-        'information_schema.table_constraints',
-        'information_schema.table_constraints.constraint_name',
-        'information_schema.key_column_usage.constraint_name'
-      )
+      .leftJoin('information_schema.table_constraints', function () {
+        this.on(
+          'information_schema.key_column_usage.constraint_catalog',
+          '=',
+          'information_schema.table_constraints.constraint_catalog'
+        )
+          .andOn(
+            'information_schema.key_column_usage.constraint_schema',
+            '=',
+            'information_schema.table_constraints.constraint_schema'
+          )
+          .andOn(
+            'information_schema.key_column_usage.constraint_name',
+            '=',
+            'information_schema.table_constraints.constraint_name'
+          );
+      })
       .whereIn(
         'information_schema.table_constraints.table_schema',
         this.explodedSchema
@@ -365,6 +377,42 @@ export default class CockroachDB implements SchemaInspector {
       .first();
 
     return result ? result.column_name : null;
+  }
+
+  /**
+   * Get the primary key columns for the given table
+   */
+  async primaryKeys(table: string): Promise<string[]> {
+    const results = await this.knex
+      .select('information_schema.key_column_usage.column_name')
+      .from('information_schema.key_column_usage')
+      .leftJoin('information_schema.table_constraints', function () {
+        this.on(
+          'information_schema.key_column_usage.constraint_catalog',
+          '=',
+          'information_schema.table_constraints.constraint_catalog'
+        )
+          .andOn(
+            'information_schema.key_column_usage.constraint_schema',
+            '=',
+            'information_schema.table_constraints.constraint_schema'
+          )
+          .andOn(
+            'information_schema.key_column_usage.constraint_name',
+            '=',
+            'information_schema.table_constraints.constraint_name'
+          );
+      })
+      .whereIn(
+        'information_schema.table_constraints.table_schema',
+        this.explodedSchema
+      )
+      .andWhere({
+        'information_schema.table_constraints.constraint_type': 'PRIMARY KEY',
+        'information_schema.table_constraints.table_name': table,
+      });
+
+    return results.map((r: any) => r.column_name);
   }
 
   // Foreign Keys

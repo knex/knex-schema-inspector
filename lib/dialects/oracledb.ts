@@ -287,6 +287,37 @@ export default class oracleDB implements SchemaInspector {
     return result?.COLUMN_NAME ?? null;
   }
 
+  /**
+   * Get the primary key columns for the given table
+   */
+  async primaryKeys(table: string): Promise<string[]> {
+    /**
+     * NOTE: Keep in mind, this query is optimized for speed.
+     */
+    const results = await this.knex
+      .with(
+        'uc',
+        this.knex
+          .select(this.knex.raw(`/*+ MATERIALIZE */ "CONSTRAINT_NAME"`))
+          .from('USER_CONSTRAINTS')
+          .where({
+            TABLE_NAME: table,
+            CONSTRAINT_TYPE: 'P',
+          })
+      )
+      .select(
+        this.knex.raw(`
+          /*+ OPTIMIZER_FEATURES_ENABLE('${OPTIMIZER_FEATURES}') */
+            "ucc"."COLUMN_NAME"
+          FROM "USER_CONS_COLUMNS" "ucc"
+          INNER JOIN "uc" "pk"
+            ON "ucc"."CONSTRAINT_NAME" = "pk"."CONSTRAINT_NAME"
+        `)
+      );
+
+    return results.map((r: any) => r.COLUMN_NAME);
+  }
+
   // Foreign Keys
   // ===============================================================================================
 

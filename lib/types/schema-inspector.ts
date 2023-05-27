@@ -22,6 +22,7 @@ export interface SchemaInspector {
   hasColumn(table: string, column: string): Promise<boolean>;
   primary(table: string): Promise<string | null>;
 
+  primaryKeys(table: string): Promise<string[]>;
   foreignKeys(table?: string): Promise<ForeignKey[]>;
 
   // Not in MySQL

@@ -562,6 +562,13 @@ describe('mssql', () => {
     });
   });
 
+  describe('.primaryKeys', () => {
+    it('returns primary keys for a table', async () => {
+      expect(await inspector.primaryKeys('teams')).to.deep.equal(['id']);
+      expect(await inspector.primaryKeys('page_visits')).to.deep.equal([]);
+    });
+  });
+
   describe('.foreignKeys', () => {
     it('returns foreign keys for all tables', async () => {
       expect(await inspector.foreignKeys()).to.deep.equal([

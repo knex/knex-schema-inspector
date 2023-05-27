@@ -703,6 +703,12 @@ describe('postgres-with-search-path', () => {
     });
   });
 
+  describe('.primaryKeys', () => {
+    it('returns primary keys for a table', async () => {
+      expect(await inspector.primaryKeys('users')).to.deep.equal(['id']);
+    });
+  });
+
   describe('.transaction', () => {
     it('works with transactions transaction', async () => {
       database.transaction(async (trx) => {

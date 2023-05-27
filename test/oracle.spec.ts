@@ -576,6 +576,13 @@ describe('oracledb', () => {
     });
   });
 
+  describe('.primaryKeys', () => {
+    it('returns primary keys for a table', async () => {
+      expect(await inspector.primaryKeys('TEAMS')).to.deep.equal(['ID']);
+      expect(await inspector.primaryKeys('PAGE_VISITS')).to.deep.equal([]);
+    });
+  });
+
   describe('.foreignKeys', () => {
     it('returns foreign keys for all tables', async () => {
       expect(await inspector.foreignKeys()).to.deep.equal([
