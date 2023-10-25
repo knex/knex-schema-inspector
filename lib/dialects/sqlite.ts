@@ -136,7 +136,7 @@ export default class SQLite implements SchemaInspector {
         await this.knex
           .select('name')
           .from('sqlite_master')
-          .whereRaw(`sql LIKE "%AUTOINCREMENT%"`)
+          .whereRaw(`sql LIKE '%AUTOINCREMENT%'`)
       ).map(({ name }) => name);
 
       const columns: RawColumn[] = await this.knex.raw(
