@@ -342,6 +342,17 @@ export default class MSSQL implements SchemaInspector {
     return columnName as string;
   }
 
+    /**
+   * Get the primarys key column for the given table
+   */
+     async primarys(table: string) {
+       
+      const results = await this.knex.raw("EXEC sp_pkeys ?",[table])
+    
+      const columnName = results.length > 0 ? results : null;
+      return columnName as object;
+    }
+
   // Foreign Keys
   // ===============================================================================================
 
