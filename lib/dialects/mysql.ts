@@ -43,6 +43,7 @@ export function rawColumnToColumn(rawColumn: RawColumn): Column {
   return {
     name: rawColumn.COLUMN_NAME,
     table: rawColumn.TABLE_NAME,
+    collation: rawColumn.COLLATION_NAME,
     data_type: dataType,
     default_value: parseDefaultValue(rawColumn.COLUMN_DEFAULT),
     generation_expression: rawColumn.GENERATION_EXPRESSION || null,
