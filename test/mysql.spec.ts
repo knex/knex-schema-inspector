@@ -100,6 +100,7 @@ describe('mysql', () => {
         { table: 'users', column: 'email' },
         { table: 'users', column: 'password' },
         { table: 'users', column: 'status' },
+        { table: 'users', column: 'role' },
       ]);
     });
 
@@ -120,7 +121,7 @@ describe('mysql', () => {
   describe('.columnInfo', () => {
     it('returns information for all columns in all tables', async () => {
       const columnInfo = await inspector.columnInfo();
-      expect(columnInfo).to.have.length(16);
+      expect(columnInfo).to.have.length(17);
       expect(columnInfo).to.deep.include.members([
         {
           name: 'team_id',
@@ -139,6 +140,7 @@ describe('mysql', () => {
           foreign_key_column: 'id',
           foreign_key_table: 'teams',
           comment: '',
+          enum_values: null,
         },
         {
           name: 'id',
@@ -157,6 +159,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'uuid',
@@ -175,6 +178,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'id',
@@ -193,6 +197,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'request_path',
@@ -211,6 +216,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'user_agent',
@@ -229,6 +235,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'created_at',
@@ -247,6 +254,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'name',
@@ -265,6 +273,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'name_upper',
@@ -283,6 +292,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'description',
@@ -301,6 +311,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'credits',
@@ -319,6 +330,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
+          enum_values: null,
         },
         {
           name: 'created_at',
@@ -337,6 +349,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'activated_at',
@@ -355,6 +368,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'email',
@@ -373,6 +387,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'password',
@@ -391,6 +406,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'status',
@@ -409,6 +425,26 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
+        },
+        {
+          name: 'role',
+          table: 'users',
+          data_type: 'enum',
+          default_value: null,
+          max_length: 9,
+          numeric_precision: null,
+          numeric_scale: null,
+          is_generated: false,
+          generation_expression: null,
+          is_nullable: true,
+          is_unique: false,
+          is_primary_key: false,
+          has_auto_increment: false,
+          foreign_key_column: null,
+          foreign_key_table: null,
+          comment: '',
+          enum_values: ['admin', 'moderator', 'user'],
         },
       ]);
     });
@@ -432,6 +468,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'uuid',
@@ -450,6 +487,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'name',
@@ -468,6 +506,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'name_upper',
@@ -486,6 +525,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'description',
@@ -504,6 +544,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'credits',
@@ -522,6 +563,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: 'Remaining usage credits',
+          enum_values: null,
         },
         {
           name: 'created_at',
@@ -540,6 +582,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
         {
           name: 'activated_at',
@@ -558,6 +601,7 @@ describe('mysql', () => {
           foreign_key_column: null,
           foreign_key_table: null,
           comment: '',
+          enum_values: null,
         },
       ]);
     });
@@ -580,6 +624,7 @@ describe('mysql', () => {
         foreign_key_column: null,
         foreign_key_table: null,
         comment: '',
+        enum_values: null,
       });
     });
   });
