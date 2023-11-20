@@ -4,6 +4,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -315,5 +316,42 @@ export default class MySQL implements SchemaInspector {
     }
     const result: ForeignKey[] = await query;
     return result;
+  }
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    const { knex } = this;
+
+    const query = knex
+      .select(
+        'stat.table_name AS table_name',
+        'stat.index_name AS constraint_name',
+        knex.raw(
+          "group_concat(stat.column_name ORDER BY stat.seq_in_index separator ', ') AS columns"
+        )
+      )
+      .from('information_schema.statistics stat')
+      .join('information_schema.table_constraints tco', function () {
+        this.on('stat.table_schema', '=', 'tco.table_schema')
+          .andOn('stat.table_name', '=', 'tco.table_name')
+          .andOn('stat.index_name', '=', 'tco.constraint_name');
+      })
+      .where('stat.non_unique', '=', 0)
+      .andWhere('tco.constraint_type', '=', 'UNIQUE')
+      .andWhere('stat.table_schema', knex.client.database())
+      .groupBy(['stat.table_name', 'stat.index_name', 'tco.constraint_type']);
+
+    if (table) query.andWhere('stat.table_name', '=', table);
+
+    const result: {
+      table_name: string;
+      constraint_name: string;
+      columns: [];
+    }[] = await query;
+
+    return result.map((v) => ({
+      table: v.table_name,
+      constraint_name: v.constraint_name,
+      columns: v.columns,
+    }));
   }
 }

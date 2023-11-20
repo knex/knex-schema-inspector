@@ -2,6 +2,7 @@ import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
+import assert from 'assert';
 
 describe('postgres-no-search-path', () => {
   let database: Knex;
@@ -729,6 +730,37 @@ describe('postgres-with-search-path', () => {
 
     it('filters based on table param', async () => {
       expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
+    });
+  });
+
+  describe('.uniqueConstraints', () => {
+    it('ensure that uniqueConstraints exists', () => {
+      expect(inspector.uniqueConstraints).to.not.equal(undefined);
+    });
+    it('return unique constraints for all tables', async () => {
+      assert(inspector.uniqueConstraints);
+      expect(await inspector.uniqueConstraints()).to.deep.equal([
+        {
+          table: 'teams',
+          constraint_name: 'teams_uuid_key',
+          columns: ['uuid'],
+        },
+        {
+          table: 'users',
+          constraint_name: 'team_id_email_unique',
+          columns: ['team_id', 'email'],
+        },
+      ]);
+    });
+    it('filters based on table param', async () => {
+      assert(inspector.uniqueConstraints);
+      expect(await inspector.uniqueConstraints('users')).to.deep.equal([
+        {
+          table: 'users',
+          constraint_name: 'team_id_email_unique',
+          columns: ['team_id', 'email'],
+        },
+      ]);
     });
   });
 });

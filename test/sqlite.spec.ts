@@ -2,6 +2,7 @@ import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
+import assert from 'assert';
 
 for (const sqliteClientName of ['sqlite3', 'better-sqlite3']) {
   describe(sqliteClientName, () => {
@@ -562,6 +563,36 @@ for (const sqliteClientName of ['sqlite3', 'better-sqlite3']) {
 
       it('filters based on table param', async () => {
         expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
+      });
+    });
+
+    describe('.uniqueConstraints', () => {
+      it('ensure that uniqueConstraints exists', () => {
+        expect(inspector.uniqueConstraints).to.not.equal(undefined);
+      });
+      it('return unique constraints for all tables', async () => {
+        assert(inspector.uniqueConstraints);
+        expect(await inspector.uniqueConstraints()).to.deep.equal([
+          {
+            table: 'teams',
+            constraint_name: 'unique_name_description',
+            columns: ['name', 'description'],
+          },
+          {
+            table: 'teams',
+            constraint_name: 'uuid',
+            columns: ['uuid'],
+          },
+          {
+            table: 'teams',
+            constraint_name: 'sqlite_autoindex_teams_1',
+            columns: ['uuid'],
+          },
+        ]);
+      });
+      it('filters based on table param', async () => {
+        assert(inspector.uniqueConstraints);
+        expect(await inspector.uniqueConstraints('users')).to.deep.equal([]);
       });
     });
   });

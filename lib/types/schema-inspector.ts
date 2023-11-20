@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { Table } from './table';
 import { Column } from './column';
 import { ForeignKey } from './foreign-key';
+import { UniqueConstraint } from './unique-constraint';
 
 export interface SchemaInspector {
   knex: Knex;
@@ -23,6 +24,8 @@ export interface SchemaInspector {
   primary(table: string): Promise<string | null>;
 
   foreignKeys(table?: string): Promise<ForeignKey[]>;
+  // Implemented for sqlite, postgresql, mysql
+  uniqueConstraints?(table?: string): Promise<UniqueConstraint[]>;
 
   // Not in MySQL
   withSchema?(schema: string): void;
