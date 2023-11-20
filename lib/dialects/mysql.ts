@@ -329,8 +329,8 @@ export default class MySQL implements SchemaInspector {
           "group_concat(stat.column_name ORDER BY stat.seq_in_index separator ', ') AS columns"
         )
       )
-      .from('information_schema.statistics stat')
-      .join('information_schema.table_constraints tco', function () {
+      .from('information_schema.statistics AS stat')
+      .join('information_schema.table_constraints AS tco', function () {
         this.on('stat.table_schema', '=', 'tco.table_schema')
           .andOn('stat.table_name', '=', 'tco.table_name')
           .andOn('stat.index_name', '=', 'tco.constraint_name');
@@ -345,13 +345,13 @@ export default class MySQL implements SchemaInspector {
     const result: {
       table_name: string;
       constraint_name: string;
-      columns: [];
+      columns: string;
     }[] = await query;
 
     return result.map((v) => ({
       table: v.table_name,
       constraint_name: v.constraint_name,
-      columns: v.columns,
+      columns: v.columns.split(',').map((c) => c.trim()),
     }));
   }
 }
