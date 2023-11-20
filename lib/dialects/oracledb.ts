@@ -4,6 +4,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 /**
  * NOTE: Use previous optimizer for better data dictionary performance.
@@ -329,5 +330,9 @@ export default class oracleDB implements SchemaInspector {
     }
 
     return await query;
+  }
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    return [];
   }
 }
