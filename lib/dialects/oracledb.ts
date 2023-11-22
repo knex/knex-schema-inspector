@@ -333,6 +333,36 @@ export default class oracleDB implements SchemaInspector {
   }
 
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
-    return [];
+    const { knex } = this;
+
+    const tables: string[] =
+      table !== undefined ? [table] : await this.tables();
+
+    const query = knex
+      .select(
+        'uc.TABLE_NAME as TABLE_NAME',
+        'uic.INDEX_NAME as CONSTRAINT_NAME',
+        knex.raw('LISTAGG("uic".COLUMN_NAME, \',\') as columns')
+      )
+      .from('USER_CONSTRAINTS AS uc')
+      .join('USER_IND_COLUMNS as uic', function () {
+        this.on('uic.INDEX_NAME', '=', 'uc.INDEX_NAME');
+      })
+      .groupBy(['uc.TABLE_NAME', 'uic.INDEX_NAME'])
+      .orderBy(['uc.TABLE_NAME', 'uic.INDEX_NAME']);
+
+    if (table) query.where('uc.TABLE_NAME', '=', table);
+
+    const result: {
+      TABLE_NAME: string;
+      CONSTRAINT_NAME: string;
+      COLUMNS: string;
+    }[] = await query.then();
+
+    return result.map((v) => ({
+      table: v.TABLE_NAME,
+      constraint_name: v.CONSTRAINT_NAME,
+      columns: v.COLUMNS.split(','),
+    }));
   }
 }

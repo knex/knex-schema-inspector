@@ -505,7 +505,8 @@ export default class Postgres implements SchemaInspector {
       WHERE con.contype = 'u'
         AND con.connamespace IN (${schemaIn})
         ${table ? `AND rel.relname = ?` : ''}
-      GROUP BY con.oid, con.conrelid, con.conname;
+      GROUP BY con.oid, con.conrelid, con.conname
+      ORDER BY con.conrelid::regclass, con.conname
       `,
       bindings
     );

@@ -602,11 +602,48 @@ describe('oracledb', () => {
     });
     it('return unique constraints for all tables', async () => {
       assert(inspector.uniqueConstraints);
-      expect(await inspector.uniqueConstraints()).to.deep.equal([]);
+      expect(await inspector.uniqueConstraints()).to.deep.equal([
+        {
+          table: 'TEAMS',
+          constraint_name: 'SYS_C005542',
+          columns: ['ID'],
+        },
+        {
+          table: 'TEAMS',
+          constraint_name: 'UUID',
+          columns: ['UUID'],
+        },
+        {
+          table: 'USERS',
+          constraint_name: 'SYS_C005546',
+          columns: ['ID'],
+        },
+        {
+          table: 'USERS',
+          constraint_name: 'TEAM_ID_EMAIL_UNIQUE',
+          columns: ['TEAM_ID', 'EMAIL'],
+        },
+        {
+          table: 'USERS',
+          constraint_name: 'TEAM_ID_UNIQUE',
+          columns: ['TEAM_ID'],
+        },
+      ]);
     });
     it('filters based on table param', async () => {
       assert(inspector.uniqueConstraints);
-      expect(await inspector.uniqueConstraints()).to.deep.equal([]);
+      expect(await inspector.uniqueConstraints('TEAMS')).to.deep.equal([
+        {
+          table: 'TEAMS',
+          constraint_name: 'SYS_C005542',
+          columns: ['ID'],
+        },
+        {
+          table: 'TEAMS',
+          constraint_name: 'UUID',
+          columns: ['UUID'],
+        },
+      ]);
     });
   });
 });

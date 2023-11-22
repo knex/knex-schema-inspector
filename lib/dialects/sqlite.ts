@@ -290,10 +290,13 @@ export default class SQLite implements SchemaInspector {
             constraint_name: index.name,
             columns: info.map((c) => c.name),
           };
+        })
+        .sort(function (a, b) {
+          return a.constraint_name.localeCompare(a.constraint_name);
         });
     }
 
-    const tables = await this.tables();
+    const tables = (await this.tables()).sort();
 
     const constraintsPerTable = await Promise.all(
       tables.map(async (table) => await this.uniqueConstraints(table))
