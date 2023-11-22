@@ -571,17 +571,17 @@ for (const sqliteClientName of ['sqlite3', 'better-sqlite3']) {
         expect(await inspector.uniqueConstraints()).to.deep.equal([
           {
             table: 'teams',
+            constraint_name: 'sqlite_autoindex_teams_1',
+            columns: ['uuid'],
+          },
+          {
+            table: 'teams',
             constraint_name: 'unique_name_description',
             columns: ['name', 'description'],
           },
           {
             table: 'teams',
             constraint_name: 'uuid',
-            columns: ['uuid'],
-          },
-          {
-            table: 'teams',
-            constraint_name: 'sqlite_autoindex_teams_1',
             columns: ['uuid'],
           },
         ]);

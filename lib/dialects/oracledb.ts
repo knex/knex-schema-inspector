@@ -335,9 +335,6 @@ export default class oracleDB implements SchemaInspector {
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
     const { knex } = this;
 
-    const tables: string[] =
-      table !== undefined ? [table] : await this.tables();
-
     const query = knex
       .select(
         'uc.TABLE_NAME as TABLE_NAME',

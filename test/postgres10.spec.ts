@@ -2,7 +2,6 @@ import knex, { Knex } from 'knex';
 import { expect } from 'chai';
 import schemaInspector from '../lib';
 import { SchemaInspector } from '../lib/types/schema-inspector';
-import assert from 'assert';
 
 describe('postgres10-no-search-path', () => {
   let database: Knex;

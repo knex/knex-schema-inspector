@@ -292,7 +292,7 @@ export default class SQLite implements SchemaInspector {
           };
         })
         .sort(function (a, b) {
-          return a.constraint_name.localeCompare(a.constraint_name);
+          return a.constraint_name.localeCompare(b.constraint_name);
         });
     }
 
