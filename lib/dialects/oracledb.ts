@@ -332,6 +332,10 @@ export default class oracleDB implements SchemaInspector {
     return await query;
   }
 
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
     const { knex } = this;
 

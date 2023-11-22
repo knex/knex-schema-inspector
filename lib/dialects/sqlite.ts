@@ -265,6 +265,10 @@ export default class SQLite implements SchemaInspector {
     return flatten(keysPerTable);
   }
 
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
     if (table) {
       const indexList = await this.knex.raw<

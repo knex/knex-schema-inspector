@@ -373,6 +373,11 @@ export default class MSSQL implements SchemaInspector {
 
     return result;
   }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
     const { knex } = this;
 

@@ -471,6 +471,11 @@ export default class CockroachDB implements SchemaInspector {
       ) as ForeignKey;
     }
   }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
     const { knex } = this;
 
