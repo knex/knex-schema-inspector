@@ -582,4 +582,15 @@ describe('mssql', () => {
       expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
     });
   });
+
+  //TODO: implement
+  describe('.uniqueConstraints', () => {
+    it('return unique constraints for all tables', async () => {
+      expect(await inspector.uniqueConstraints()).to.deep.equal([]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.uniqueConstraints('users')).to.deep.equal([]);
+    });
+  });
 });

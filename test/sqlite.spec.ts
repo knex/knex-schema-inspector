@@ -567,11 +567,7 @@ for (const sqliteClientName of ['sqlite3', 'better-sqlite3']) {
     });
 
     describe('.uniqueConstraints', () => {
-      it('ensure that uniqueConstraints exists', () => {
-        expect(inspector.uniqueConstraints).to.not.equal(undefined);
-      });
       it('return unique constraints for all tables', async () => {
-        assert(inspector.uniqueConstraints);
         expect(await inspector.uniqueConstraints()).to.deep.equal([
           {
             table: 'teams',

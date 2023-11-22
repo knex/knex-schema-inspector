@@ -514,7 +514,10 @@ export default class Postgres implements SchemaInspector {
     return result.rows.map((v) => {
       const columns: string[] = Array.isArray(v.columns)
         ? v.columns
-        : v.columns.substring(1, v.columns.length - 1).split(',');
+        : v.columns
+            .substring(1, v.columns.length - 1)
+            .split(',')
+            .map((c) => c.trim());
 
       return {
         table: v.table_name,

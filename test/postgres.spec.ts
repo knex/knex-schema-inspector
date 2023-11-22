@@ -734,11 +734,7 @@ describe('postgres-with-search-path', () => {
   });
 
   describe('.uniqueConstraints', () => {
-    it('ensure that uniqueConstraints exists', () => {
-      expect(inspector.uniqueConstraints).to.not.equal(undefined);
-    });
     it('return unique constraints for all tables', async () => {
-      assert(inspector.uniqueConstraints);
       expect(await inspector.uniqueConstraints()).to.deep.equal([
         {
           table: 'teams',
@@ -752,8 +748,8 @@ describe('postgres-with-search-path', () => {
         },
       ]);
     });
+
     it('filters based on table param', async () => {
-      assert(inspector.uniqueConstraints);
       expect(await inspector.uniqueConstraints('users')).to.deep.equal([
         {
           table: 'users',

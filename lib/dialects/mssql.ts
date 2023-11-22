@@ -4,6 +4,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 type RawTable = {
   TABLE_NAME: string;
@@ -371,5 +372,8 @@ export default class MSSQL implements SchemaInspector {
     }
 
     return result;
+  }
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    return [];
   }
 }

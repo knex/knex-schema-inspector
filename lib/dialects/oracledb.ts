@@ -349,9 +349,9 @@ export default class oracleDB implements SchemaInspector {
         this.on('uic.INDEX_NAME', '=', 'uc.INDEX_NAME');
       })
       .groupBy(['uc.TABLE_NAME', 'uic.INDEX_NAME'])
-      .orderBy(['uc.TABLE_NAME', 'uic.INDEX_NAME']);
-
-    if (table) query.where('uc.TABLE_NAME', '=', table);
+      .orderBy(['uc.TABLE_NAME', 'uic.INDEX_NAME'])
+      .where('uc.CONSTRAINT_TYPE', '=', 'U');
+    if (table) query.andWhere('uc.TABLE_NAME', '=', table);
 
     const result: {
       TABLE_NAME: string;
@@ -362,7 +362,7 @@ export default class oracleDB implements SchemaInspector {
     return result.map((v) => ({
       table: v.TABLE_NAME,
       constraint_name: v.CONSTRAINT_NAME,
-      columns: v.COLUMNS.split(','),
+      columns: v.COLUMNS.split(',').map((c) => c.trim()),
     }));
   }
 }

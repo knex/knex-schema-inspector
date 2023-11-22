@@ -626,11 +626,7 @@ describe('mysql', () => {
     });
   });
   describe('.uniqueConstraints', () => {
-    it('ensure that uniqueConstraints exists', () => {
-      expect(inspector.uniqueConstraints).to.not.equal(undefined);
-    });
     it('return unique constraints for all tables', async () => {
-      assert(inspector.uniqueConstraints);
       expect(await inspector.uniqueConstraints()).to.deep.equal([
         {
           table: 'teams',
@@ -649,8 +645,8 @@ describe('mysql', () => {
         },
       ]);
     });
+
     it('filters based on table param', async () => {
-      assert(inspector.uniqueConstraints);
       expect(await inspector.uniqueConstraints('teams')).to.deep.equal([
         {
           table: 'teams',

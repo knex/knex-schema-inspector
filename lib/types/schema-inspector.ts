@@ -25,7 +25,7 @@ export interface SchemaInspector {
 
   foreignKeys(table?: string): Promise<ForeignKey[]>;
   // Implemented for sqlite, postgresql, mysql
-  uniqueConstraints?(table?: string): Promise<UniqueConstraint[]>;
+  uniqueConstraints(table?: string): Promise<UniqueConstraint[]>;
 
   // Not in MySQL
   withSchema?(schema: string): void;
