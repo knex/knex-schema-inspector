@@ -374,6 +374,33 @@ export default class MSSQL implements SchemaInspector {
     return result;
   }
   async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
-    return [];
+    const { knex } = this;
+
+    const query = knex
+      .select(
+        'tc.TABLE_NAME as TABLE_NAME',
+        'tc.CONSTRAINT_NAME as CONSTRAINT_NAME',
+        knex.raw('STRING_AGG("ccu".COLUMN_NAME, \',\') as COLUMNS')
+      )
+      .from('INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS tc')
+      .join('INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE AS ccu', function () {
+        this.on('ccu.CONSTRAINT_NAME', '=', 'tc.CONSTRAINT_NAME');
+      })
+      .groupBy(['tc.TABLE_NAME', 'tc.CONSTRAINT_NAME'])
+      .orderBy(['tc.TABLE_NAME', 'tc.CONSTRAINT_NAME'])
+      .where('tc.CONSTRAINT_TYPE', '=', 'UNIQUE');
+    if (table) query.andWhere('tc.TABLE_NAME', '=', table);
+
+    const result: {
+      TABLE_NAME: string;
+      CONSTRAINT_NAME: string;
+      COLUMNS: string;
+    }[] = await query.then();
+
+    return result.map((v) => ({
+      table: v.TABLE_NAME,
+      constraint_name: v.CONSTRAINT_NAME,
+      columns: v.COLUMNS.split(',').map((c) => c.trim()),
+    }));
   }
 }

@@ -339,7 +339,7 @@ export default class oracleDB implements SchemaInspector {
       .select(
         'uc.TABLE_NAME as TABLE_NAME',
         'uic.INDEX_NAME as CONSTRAINT_NAME',
-        knex.raw('LISTAGG("uic".COLUMN_NAME, \',\') as columns')
+        knex.raw('LISTAGG("uic".COLUMN_NAME, \',\') as COLUMNS')
       )
       .from('USER_CONSTRAINTS AS uc')
       .join('USER_IND_COLUMNS as uic', function () {
