@@ -211,11 +211,16 @@ export default class MySQL implements SchemaInspector {
         'rc.MATCH_OPTION'
       )
       .from('INFORMATION_SCHEMA.COLUMNS as c')
-      .leftJoin('INFORMATION_SCHEMA.KEY_COLUMN_USAGE as fk', function () {
-        this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
-          .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
-          .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
-      })
+      .leftJoin(
+        this.knex.raw(
+          `(SELECT *, (ROW_NUMBER() OVER ( PARTITION BY COLUMN_NAME, TABLE_NAME, TABLE_SCHEMA )) AS UID FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE) as fk`
+        ),
+        function () {
+          this.on('c.TABLE_NAME', '=', 'fk.TABLE_NAME')
+            .andOn('fk.COLUMN_NAME', '=', 'c.COLUMN_NAME')
+            .andOn('fk.CONSTRAINT_SCHEMA', '=', 'c.TABLE_SCHEMA');
+        }
+      )
       .leftJoin(
         'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as rc',
         function () {
@@ -226,7 +231,8 @@ export default class MySQL implements SchemaInspector {
       )
       .where({
         'c.TABLE_SCHEMA': this.knex.client.database(),
-      });
+      })
+      .andWhereRaw('IFNULL(fk.UID, 1) = 1');
 
     if (table) {
       query.andWhere({ 'c.TABLE_NAME': table });
