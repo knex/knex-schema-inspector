@@ -624,4 +624,35 @@ describe('mysql', () => {
       ]);
     });
   });
+  describe('.uniqueConstraints', () => {
+    it('return unique constraints for all tables', async () => {
+      expect(await inspector.uniqueConstraints()).to.deep.equal([
+        {
+          table: 'teams',
+          constraint_name: 'uuid',
+          columns: ['uuid'],
+        },
+        {
+          table: 'users',
+          constraint_name: 'fk_team_unique',
+          columns: ['team_id'],
+        },
+        {
+          table: 'users',
+          constraint_name: 'team_id_email_unique',
+          columns: ['team_id', 'email'],
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.uniqueConstraints('teams')).to.deep.equal([
+        {
+          table: 'teams',
+          constraint_name: 'uuid',
+          columns: ['uuid'],
+        },
+      ]);
+    });
+  });
 });

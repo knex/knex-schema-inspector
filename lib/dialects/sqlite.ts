@@ -7,6 +7,7 @@ import extractMaxLength from '../utils/extract-max-length';
 import extractType from '../utils/extract-type';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 type RawColumn = {
   cid: number;
@@ -262,5 +263,49 @@ export default class SQLite implements SchemaInspector {
     );
 
     return flatten(keysPerTable);
+  }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    if (table) {
+      const indexList = await this.knex.raw<
+        { name: string; unique: boolean }[]
+      >(`PRAGMA index_list(??)`, table);
+
+      const indexInfoList = await Promise.all(
+        indexList.map((index) =>
+          this.knex.raw<{ seqno: number; cid: number; name: string }[]>(
+            `PRAGMA index_info(??)`,
+            index.name
+          )
+        )
+      );
+
+      return indexList
+        .filter((i) => i.unique)
+        .map((index, i) => {
+          const info = indexInfoList[i];
+
+          return {
+            table,
+            constraint_name: index.name,
+            columns: info.map((c) => c.name),
+          };
+        })
+        .sort(function (a, b) {
+          return a.constraint_name.localeCompare(b.constraint_name);
+        });
+    }
+
+    const tables = (await this.tables()).sort();
+
+    const constraintsPerTable = await Promise.all(
+      tables.map(async (table) => await this.uniqueConstraints(table))
+    );
+
+    return flatten(constraintsPerTable);
   }
 }

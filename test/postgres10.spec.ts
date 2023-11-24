@@ -731,4 +731,31 @@ describe('postgres10-with-search-path', () => {
       expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
     });
   });
+
+  describe('.uniqueConstraints', () => {
+    it('return unique constraints for all tables', async () => {
+      expect(await inspector.uniqueConstraints()).to.deep.equal([
+        {
+          table: 'teams',
+          constraint_name: 'teams_uuid_key',
+          columns: ['uuid'],
+        },
+        {
+          table: 'users',
+          constraint_name: 'team_id_email_unique',
+          columns: ['team_id', 'email'],
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.uniqueConstraints('users')).to.deep.equal([
+        {
+          table: 'users',
+          constraint_name: 'team_id_email_unique',
+          columns: ['team_id', 'email'],
+        },
+      ]);
+    });
+  });
 });

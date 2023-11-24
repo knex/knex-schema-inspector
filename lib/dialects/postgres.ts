@@ -3,6 +3,8 @@ import { SchemaInspector } from '../types/schema-inspector';
 import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { stripQuotes } from '../utils/strip-quotes';
+import { ForeignKey } from '../types/foreign-key';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 type RawColumn = {
   name: string;
@@ -410,7 +412,7 @@ export default class Postgres implements SchemaInspector {
   // Foreign Keys
   // ===============================================================================================
 
-  async foreignKeys(table?: string) {
+  async foreignKeys(table?: string): Promise<ForeignKey[]> {
     const schemaIn = this.explodedSchema.map(
       (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
     );
@@ -471,5 +473,61 @@ export default class Postgres implements SchemaInspector {
     );
 
     return result.rows;
+  }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    const { knex } = this;
+
+    const schemaIn = this.explodedSchema.map(
+      (schemaName) => `${this.knex.raw('?', [schemaName])}::regnamespace`
+    );
+
+    const bindings: any[] = [];
+    if (table) bindings.push(table);
+
+    const result = await knex.raw<{
+      rows: {
+        table_name: string;
+        constraint_name: string;
+        columns: string[] | string;
+      }[];
+    }>(
+      `
+      SELECT
+        con.conrelid::regclass AS table_name,
+        con.conname AS constraint_name,
+        array_agg(a.attname ORDER BY k.n) AS columns
+      FROM
+        pg_constraint AS con
+      CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS k(con,n)
+      LEFT JOIN pg_class rel ON con.conrelid = rel.oid
+      JOIN pg_attribute AS a ON a.attnum = k.con AND a.attrelid = con.conrelid
+      WHERE con.contype = 'u'
+        AND con.connamespace IN (${schemaIn})
+        ${table ? `AND rel.relname = ?` : ''}
+      GROUP BY con.oid, con.conrelid, con.conname
+      ORDER BY con.conrelid::regclass, con.conname
+      `,
+      bindings
+    );
+
+    return result.rows.map((v) => {
+      const columns: string[] = Array.isArray(v.columns)
+        ? v.columns
+        : v.columns
+            .substring(1, v.columns.length - 1)
+            .split(',')
+            .map((c) => c.trim());
+
+      return {
+        table: v.table_name,
+        constraint_name: v.constraint_name,
+        columns,
+      };
+    });
   }
 }

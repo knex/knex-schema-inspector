@@ -4,6 +4,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 /**
  * NOTE: Use previous optimizer for better data dictionary performance.
@@ -329,5 +330,40 @@ export default class oracleDB implements SchemaInspector {
     }
 
     return await query;
+  }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    const { knex } = this;
+
+    const query = knex
+      .select(
+        'uc.TABLE_NAME as TABLE_NAME',
+        'uic.INDEX_NAME as CONSTRAINT_NAME',
+        knex.raw('LISTAGG("uic".COLUMN_NAME, \',\') as COLUMNS')
+      )
+      .from('USER_CONSTRAINTS AS uc')
+      .join('USER_IND_COLUMNS as uic', function () {
+        this.on('uic.INDEX_NAME', '=', 'uc.INDEX_NAME');
+      })
+      .groupBy(['uc.TABLE_NAME', 'uic.INDEX_NAME'])
+      .orderBy(['uc.TABLE_NAME', 'uic.INDEX_NAME'])
+      .where('uc.CONSTRAINT_TYPE', '=', 'U');
+    if (table) query.andWhere('uc.TABLE_NAME', '=', table);
+
+    const result: {
+      TABLE_NAME: string;
+      CONSTRAINT_NAME: string;
+      COLUMNS: string;
+    }[] = await query.then();
+
+    return result.map((v) => ({
+      table: v.TABLE_NAME,
+      constraint_name: v.CONSTRAINT_NAME,
+      columns: v.COLUMNS.split(',').map((c) => c.trim()),
+    }));
   }
 }

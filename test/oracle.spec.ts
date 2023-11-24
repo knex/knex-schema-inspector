@@ -595,4 +595,35 @@ describe('oracledb', () => {
       expect(await inspector.foreignKeys('teams')).to.deep.equal([]);
     });
   });
+  describe('.uniqueConstraints', () => {
+    it('return unique constraints for all tables', async () => {
+      expect(await inspector.uniqueConstraints()).to.deep.equal([
+        {
+          table: 'TEAMS',
+          constraint_name: 'UUID',
+          columns: ['UUID'],
+        },
+        {
+          table: 'USERS',
+          constraint_name: 'TEAM_ID_EMAIL_UNIQUE',
+          columns: ['TEAM_ID', 'EMAIL'],
+        },
+        {
+          table: 'USERS',
+          constraint_name: 'TEAM_ID_UNIQUE',
+          columns: ['TEAM_ID'],
+        },
+      ]);
+    });
+
+    it('filters based on table param', async () => {
+      expect(await inspector.uniqueConstraints('TEAMS')).to.deep.equal([
+        {
+          table: 'TEAMS',
+          constraint_name: 'UUID',
+          columns: ['UUID'],
+        },
+      ]);
+    });
+  });
 });

@@ -4,6 +4,7 @@ import { Table } from '../types/table';
 import { Column } from '../types/column';
 import { ForeignKey } from '../types/foreign-key';
 import { stripQuotes } from '../utils/strip-quotes';
+import { UniqueConstraint } from '../types/unique-constraint';
 
 type RawTable = {
   table_name: string;
@@ -469,5 +470,41 @@ export default class CockroachDB implements SchemaInspector {
         })
       ) as ForeignKey;
     }
+  }
+
+  /**
+   * Get all unique constraints. Limit to single table by specifying optional parameter
+   */
+
+  async uniqueConstraints(table?: string): Promise<UniqueConstraint[]> {
+    const { knex } = this;
+
+    const query = knex
+      .select(
+        'tc.table_name as table_name',
+        'tc.constraint_name as constraint_name',
+        knex.raw('array_agg("ccu"."column_name") as columns')
+      )
+      .from('information_schema.table_constraints as tc')
+      .join('information_schema.constraint_column_usage as ccu', function () {
+        this.on('ccu.constraint_name', '=', 'tc.constraint_name');
+      })
+      .groupBy(['tc.table_name', 'tc.constraint_name'])
+      .orderBy(['tc.table_name', 'tc.constraint_name'])
+      .where('tc.constraint_type', '=', 'UNIQUE');
+
+    if (table) query.andWhere('tc.table_name', '=', table);
+
+    const result: {
+      table_name: string;
+      constraint_name: string;
+      columns: string[];
+    }[] = await query.then();
+
+    return result.map((v) => ({
+      table: v.table_name,
+      constraint_name: v.constraint_name,
+      columns: v.columns,
+    }));
   }
 }
