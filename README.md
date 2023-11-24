@@ -77,6 +77,10 @@ Note 3: MSSQL doesn't support comment for either tables or columns
 
 - [`foreignKeys(): Promise<ForeignKey>`](#foreign-keys)
 
+**Unique Constraints**
+
+- [`uniqueConstraints(): Promise<UniqueConstraint[]>`](#unique-constraints)
+
 **Misc.**
 
 - [`withSchema(schema: string): void`](#withschemaschema-string-void)
@@ -240,6 +244,21 @@ await inspector.foreignKeys();
 //     constraint_name: 'directus_files_modified_by_foreign',
 //     on_update: 'CASCADE',
 //     on_delete: 'SET NULL'
+//   }
+// ]
+```
+
+### Unique Constraints
+
+Retrieve all user created unique constraints.
+
+```ts
+await inspector.uniqueConstraints();
+// => [
+//   {
+//     table: 'users',
+//     constraint_name: 'users_firstnamelastname_unique'
+//     columns: ['firstname', 'lastname'],
 //   }
 // ]
 ```
